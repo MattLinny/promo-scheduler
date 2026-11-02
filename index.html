@@ -70,6 +70,31 @@ input,select,textarea{font:400 .95rem var(--body);padding:8px 10px;border:1px so
 .ref{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 .ref ul{margin:6px 0 0;padding-left:18px}
 .legend{display:flex;flex-wrap:wrap;gap:8px}
+.gscroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel);margin-top:12px}
+.g{position:relative;min-width:100%}
+.grow{position:relative;display:flex;border-top:1px solid var(--line);min-height:40px}
+.grow.sub{min-height:28px;background:var(--soft);border-top-style:dashed}
+.glab{position:sticky;left:0;z-index:3;flex:0 0 170px;width:170px;background:var(--panel);border-right:1px solid var(--line);padding:6px 8px;font-size:.82rem;display:flex;align-items:center;gap:6px;min-width:0}
+.grow.sub .glab{background:var(--soft);font:500 .7rem var(--mono);color:var(--muted);padding-left:26px}
+.glab button{all:unset;cursor:pointer;display:flex;gap:6px;align-items:center;min-width:0;font-weight:600}
+.glab button:focus-visible{outline:2px solid var(--accent)}
+.glab .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gtrack{position:relative;flex:1}
+.gwk{position:absolute;top:0;bottom:0;border-left:1px solid var(--line);pointer-events:none}
+.gwk.m{border-left:1px solid var(--muted);opacity:.6}
+.gtoday{position:absolute;top:0;bottom:0;border-left:2px solid var(--l1);z-index:2;pointer-events:none}
+.ghead{display:flex;position:sticky;top:0;z-index:4;background:var(--panel)}
+.ghead .glab{font:600 .7rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.ghead .gtrack{height:42px}
+.gwl{position:absolute;top:4px;font:500 .66rem var(--mono);color:var(--muted);padding-left:4px;white-space:nowrap}
+.gwl b{display:block;color:var(--ink);font-weight:600}
+.gseg{position:absolute;top:9px;height:22px;display:flex;align-items:center;justify-content:center;font:600 .62rem var(--mono);color:#fff;overflow:hidden;white-space:nowrap}
+.gseg:first-of-type{border-radius:5px 0 0 5px}
+.gev{position:absolute;top:8px;width:16px;height:16px;margin-left:-8px;transform:rotate(45deg) translate(3px,-3px);border:2px solid var(--panel);z-index:2}
+.gdot{position:absolute;top:8px;width:12px;height:12px;margin-left:-6px;border-radius:50%;border:2px solid var(--c);background:var(--panel);z-index:1}
+.gdot.done{background:var(--c)}
+.gdot.opt{border-style:dashed}
+.gdot.late{box-shadow:0 0 0 2px var(--warn)}
 @media (max-width:620px){.day{grid-template-columns:1fr;gap:6px}.cell{min-height:60px}.cell .evname{display:none}}
 @media (prefers-reduced-motion:no-preference){.task{transition:background .15s}}
 </style>
@@ -82,6 +107,7 @@ input,select,textarea{font:400 .95rem var(--body);padding:8px 10px;border:1px so
   </div>
   <nav aria-label="Views">
     <button data-view="week" aria-pressed="true">This week</button>
+    <button data-view="gantt" aria-pressed="false">Timeline</button>
     <button data-view="cal" aria-pressed="false">Calendar</button>
     <button data-view="camps" aria-pressed="false">Campaigns</button>
     <button data-view="ref" aria-pressed="false">Playbook rules</button>
@@ -108,6 +134,7 @@ input,select,textarea{font:400 .95rem var(--body);padding:8px 10px;border:1px so
   </section>
 
   <section id="v-week"></section>
+  <section id="v-gantt" hidden></section>
   <section id="v-cal" hidden></section>
   <section id="v-camps" hidden></section>
   <section id="v-ref" hidden></section>
@@ -179,7 +206,7 @@ function allTasks(){return events.flatMap(ev=>plan(ev).map(t=>({...t,ev,id:ev.id
 // ---------- views ----------
 function setView(v){view=v;try{localStorage.setItem('opp-view',v)}catch(e){}
   document.querySelectorAll('nav button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===v));
-  ['week','cal','camps','ref'].forEach(k=>$('v-'+k).hidden=k!==v);render()}
+  ['week','gantt','cal','camps','ref'].forEach(k=>$('v-'+k).hidden=k!==v);render()}
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>setView(b.dataset.view));
 
 function taskHTML(t,showEv=true){const c=CH[t.ch];
@@ -256,7 +283,34 @@ function renderRef(){
   <div><h3>Post-event</h3><p>Live behind-the-scenes on event day. Next day: recap post and email, then remove expired promos straight away.</p></div>
   <div><h3>Not in the playbook</h3><p>Facebook events are an Oceanside add-on, scheduled with the week-1 launch. Change or drop them if your process differs.</p></div></div>`;
 }
-function render(){({week:renderWeek,cal:renderCal,camps:renderCamps,ref:renderRef})[view]();
+const PX=13,openRows=new Set();
+function renderGantt(){
+  const list=[...events].sort((a,b)=>a.date.localeCompare(b.date)).filter(e=>S(add(D(e.date),7))>=TODAY||showPast);
+  const head=`<div class="row"><h2>Campaign timeline</h2><span class="spacer"></span><label class="row" style="font-weight:500"><input type="checkbox" id="gPast" style="width:auto" ${showPast?'checked':''}> Show past</label><button id="gAll">${openRows.size?'Collapse all':'Expand all'}</button></div>`;
+  if(!list.length){$('v-gantt').innerHTML=`<div class="panel">${head}${emptyHTML()}</div>`;bindG();return}
+  const starts=list.map(e=>add(sunOf(D(e.date)),-((e.level==1?8:(+e.weeks||4))-1)*7));
+  let r0=new Date(Math.min(...starts,sunOf(new Date()))),r1=new Date(Math.max(...list.map(e=>+add(D(e.date),2))));
+  r0=add(sunOf(r0),-7);r1=add(sunOf(r1),14);
+  const days=Math.round((r1-r0)/864e5),W=days*PX,x=d=>Math.round((D(d)-r0)/864e5)*PX;
+  let wk='',wl='';for(let d=new Date(r0);d<r1;d=add(d,7)){const ds=S(d),m=d.getDate()<=7;wk+=`<div class="gwk${m?' m':''}" style="left:${x(ds)}px"></div>`;wl+=`<div class="gwl" style="left:${x(ds)}px">${m?`<b>${fmt(d,{month:'short'})}</b>`:'<b>&nbsp;</b>'}${d.getDate()}</div>`}
+  const today=`<div class="gtoday" style="left:${x(TODAY)+PX/2}px" title="Today"></div>`;
+  const tr=inner=>`<div class="gtrack" style="width:${W}px">${wk}${today}${inner}</div>`;
+  const PH={a:['var(--l5)','Awareness'],i:['var(--accent)','Interest'],u:['var(--l1)','Urgency']};
+  const rows=list.map(ev=>{const n=ev.level==1?8:(+ev.weeks||4),map=ev.level==1?[1,2,3,4,5,6,7,8]:WEEKMAP[n],last=sunOf(D(ev.date)),pb=PB[ev.level];
+    const segs=map.map((tw,i)=>{const s=add(last,-(n-1-i)*7),e=i==n-1?add(D(ev.date),1):add(s,7),ph=PH[pb.phase(tw)];return `<div class="gseg" style="left:${x(S(s))}px;width:${Math.max(PX,(e-s)/864e5*PX)-1}px;background:${ph[0]}" title="Week ${i+1} · ${ph[1]} · ${fmt(s)}">W${i+1}</div>`}).join('');
+    const evm=`<div class="gev" style="left:${x(ev.date)+PX/2}px;background:var(--l${ev.level})" title="${esc(ev.name)} · ${fmt(D(ev.date))}"></div>`;
+    const ts=plan(ev).map(t=>({...t,done:!!checks[ev.id+'~'+t.key]})),open=openRows.has(ev.id),dn=ts.filter(t=>t.done).length;
+    let out=`<div class="grow"><div class="glab"><button data-g="${ev.id}" aria-expanded="${open}"><span aria-hidden="true">${open?'▾':'▸'}</span><span class="lvl" data-l="${ev.level}">L${ev.level}</span><span class="nm" title="${esc(ev.name)}">${esc(ev.name)}</span></button><span class="mono muted" style="margin-left:auto;font-size:.7rem">${dn}/${ts.length}</span></div>${tr(segs+evm)}</div>`;
+    if(open){const chs=[...new Set(ts.map(t=>t.ch))];out+=chs.map(c=>`<div class="grow sub"><div class="glab">${CH[c][0]}</div>${tr(ts.filter(t=>t.ch===c).map(t=>`<div class="gdot${t.done?' done':''}${t.opt?' opt':''}${!t.done&&!t.opt&&t.date<TODAY?' late':''}" style="--c:${CH[c][1]};left:${x(t.date)+PX/2}px" title="${fmt(D(t.date),{weekday:'short',month:'short',day:'numeric'})} · ${esc(t.what)}${t.opt?' (optional)':''}${t.done?' ✓':''}"></div>`).join(''))}</div>`).join('')}
+    return out}).join('');
+  $('v-gantt').innerHTML=`<div class="panel">${head}<div class="gscroll" id="gs"><div class="g" style="width:${W+170}px"><div class="ghead"><div class="glab">Campaign</div>${tr(wl)}</div>${rows}</div></div>
+  <div class="legend" style="margin-top:12px"><span class="chip" style="background:var(--l5);color:#fff">Awareness</span><span class="chip" style="background:var(--accent);color:var(--accent-ink)">Interest</span><span class="chip" style="background:var(--l1);color:#fff">Urgency</span><span class="chip">◆ event day</span><span class="chip">● done · ○ to do · dashed = optional · orange ring = overdue</span><span class="chip" style="color:var(--l1)">│ today</span></div></div>`;
+  const gs=$('gs');gs.scrollLeft=Math.max(0,x(TODAY)-PX*21);bindG();
+}
+function bindG(){$('gPast').onchange=e=>{showPast=e.target.checked;render()};
+  $('gAll').onclick=()=>{if(openRows.size)openRows.clear();else events.forEach(e=>openRows.add(e.id));render()};
+  document.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{const id=b.dataset.g;openRows.has(id)?openRows.delete(id):openRows.add(id);const sl=$('gs')?.scrollLeft;render();if($('gs')&&sl!=null)$('gs').scrollLeft=sl})}
+function render(){({week:renderWeek,gantt:renderGantt,cal:renderCal,camps:renderCamps,ref:renderRef})[view]();
   document.querySelectorAll('.task input').forEach(i=>i.onchange=()=>toggle(i.dataset.id,i.checked,i))}
 
 // ---------- form ----------
