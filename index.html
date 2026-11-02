@@ -1,0 +1,298 @@
+<title>Oceanside Promo Planner</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: sticky header with view tabs; one working column; campaign weeks laid out Sun / Tue / Thu like the playbooks */
+:root{
+  --bg:#f3f6f6; --panel:#ffffff; --ink:#122427; --muted:#5b6d70; --line:#d8e2e2; --accent:#0f6e74; --accent-ink:#ffffff;
+  --l1:#d9573b; --l2:#0f8a7e; --l3:#c98a12; --l4:#7056b8; --l5:#6b7b80; --warn:#b4471d; --ok:#2e8a4f; --soft:#e7efef;
+  --display:"Familjen Grotesk",system-ui,sans-serif; --body:"Instrument Sans",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1719;--panel:#142124;--ink:#e3eeee;--muted:#93a7a9;--line:#26393c;--accent:#4fb8bc;--accent-ink:#0d1719;--l1:#f07a5e;--l2:#3cc2b2;--l3:#e8ae3c;--l4:#a08ae6;--l5:#9aabb0;--warn:#f0875e;--ok:#5cc47f;--soft:#1b2c2f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0d1719;--panel:#142124;--ink:#e3eeee;--muted:#93a7a9;--line:#26393c;--accent:#4fb8bc;--accent-ink:#0d1719;--l1:#f07a5e;--l2:#3cc2b2;--l3:#e8ae3c;--l4:#a08ae6;--l5:#9aabb0;--warn:#f0875e;--ok:#5cc47f;--soft:#1b2c2f;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1100px;margin:0 auto}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:16px 10px;border-bottom:1px solid var(--line)}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+h1{font:700 1.45rem/1.1 var(--display);margin:0;letter-spacing:-.01em}
+h1 small{display:block;font:500 .72rem var(--mono);color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:4px}
+h2{font:700 1.15rem var(--display);margin:0;text-wrap:balance}
+h3{font:600 .75rem var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0}
+nav{display:flex;gap:4px;flex-wrap:wrap;margin-top:12px}
+button,.btn{font:600 .85rem var(--body);border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:7px 12px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+nav button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+main{display:grid;gap:18px;margin-top:18px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.spacer{flex:1}
+.muted{color:var(--muted)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.lvl{display:inline-flex;align-items:center;gap:6px;font:600 .72rem var(--mono);padding:2px 8px;border-radius:99px;color:#fff;white-space:nowrap}
+.lvl[data-l="1"]{background:var(--l1)}.lvl[data-l="2"]{background:var(--l2)}.lvl[data-l="3"]{background:var(--l3)}.lvl[data-l="4"]{background:var(--l4)}.lvl[data-l="5"]{background:var(--l5)}
+.chip{font:500 .7rem var(--mono);padding:2px 7px;border-radius:5px;background:var(--soft);color:var(--muted);white-space:nowrap}
+.days{display:grid;gap:14px}
+.day{display:grid;grid-template-columns:110px 1fr;gap:14px;border-top:1px solid var(--line);padding-top:12px}
+.day:first-child{border-top:0;padding-top:0}
+.dayname{font:700 1rem var(--display)}
+.dayname span{display:block;font:400 .78rem var(--mono);color:var(--muted)}
+.tasks{display:grid;gap:6px;min-width:0}
+.task{display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:start;padding:7px 9px;border-radius:8px;border-left:4px solid var(--c,var(--line));background:var(--soft)}
+.task input{width:18px;height:18px;margin:2px 0 0;accent-color:var(--ok)}
+.task.done .what{text-decoration:line-through;color:var(--muted)}
+.task .meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:3px;align-items:center}
+.task .ev{font-weight:600}
+.opt{font-style:italic;color:var(--muted);font-size:.8rem}
+.warnbox{border:1px solid var(--warn);color:var(--warn);border-radius:8px;padding:8px 12px;font-size:.88rem}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal .hd{font:600 .7rem var(--mono);color:var(--muted);text-align:center;padding:4px 0}
+.cell{min-height:86px;border:1px solid var(--line);border-radius:8px;padding:5px;background:var(--panel);cursor:pointer;display:flex;flex-direction:column;gap:3px;min-width:0;text-align:left;font:inherit;color:inherit}
+.cell.out{opacity:.45}.cell.today{border-color:var(--accent);border-width:2px}
+.cell .n{font:600 .75rem var(--mono)}
+.cell .evname{font-size:.7rem;font-weight:600;color:#fff;border-radius:4px;padding:1px 4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.cell .cnt{font:.68rem var(--mono);color:var(--muted)}
+.camp{display:grid;gap:10px;padding:14px 0;border-top:1px solid var(--line)}
+.camp:first-child{border-top:0}
+.strip{display:grid;gap:3px}
+.strip div{height:26px;border-radius:5px;font:600 .66rem var(--mono);display:flex;align-items:center;justify-content:center;color:#fff;overflow:hidden;white-space:nowrap}
+.ph-a{background:var(--l5)}.ph-i{background:var(--accent)}.ph-u{background:var(--l1)}.ph-now{outline:3px solid var(--ink);outline-offset:-3px}
+.bar{height:6px;background:var(--soft);border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ok)}
+form{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+label{display:grid;gap:4px;font:600 .78rem var(--body);color:var(--muted)}
+input,select,textarea{font:400 .95rem var(--body);padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%}
+.full{grid-column:1/-1}
+.hint{font-size:.85rem;color:var(--muted);max-width:68ch}
+.empty{text-align:center;padding:36px 12px;color:var(--muted)}
+.ref{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.ref ul{margin:6px 0 0;padding-left:18px}
+.legend{display:flex;flex-wrap:wrap;gap:8px}
+@media (max-width:620px){.day{grid-template-columns:1fr;gap:6px}.cell{min-height:60px}.cell .evname{display:none}}
+@media (prefers-reduced-motion:no-preference){.task{transition:background .15s}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="top">
+    <h1>Oceanside Promo Planner<small>Mission Control · Promotions Playbook</small></h1>
+    <div class="row"><span id="sync" class="chip">Connecting…</span><button id="exportBtn" hidden>Export CSV</button><button class="primary" id="addBtn">+ Add event</button></div>
+  </div>
+  <nav aria-label="Views">
+    <button data-view="week" aria-pressed="true">This week</button>
+    <button data-view="cal" aria-pressed="false">Calendar</button>
+    <button data-view="camps" aria-pressed="false">Campaigns</button>
+    <button data-view="ref" aria-pressed="false">Playbook rules</button>
+  </nav>
+</header>
+
+<main>
+  <section class="panel" id="formPanel" hidden>
+    <form id="evForm">
+      <label class="full">Event or campaign name<input id="f-name" required placeholder="e.g. Christmas Eve Services"></label>
+      <label>Event date<input id="f-date" type="date" required></label>
+      <label>Ministry level<select id="f-level">
+        <option value="1">Level 1 · Impacts 80% of church</option>
+        <option value="2">Level 2 · Core next step</option>
+        <option value="3">Level 3 · Next Gen</option>
+        <option value="4">Level 4 · Individual ministry</option>
+        <option value="5" selected>Level 5 · Individual event</option></select></label>
+      <label>Campaign length<select id="f-weeks"><option value="4">4 weeks (default)</option><option value="3">3 weeks</option><option value="2">2 weeks</option></select></label>
+      <label>Ministry / owner<input id="f-owner" placeholder="e.g. Rooted, Ocean Youth"></label>
+      <label class="full">Notes (story idea, web link, anything the team needs)<textarea id="f-notes" rows="2"></textarea></label>
+      <p class="hint full" id="f-hint"></p>
+      <div class="row full"><button class="primary" type="submit" id="f-save">Save and build plan</button><button type="button" id="f-cancel">Cancel</button></div>
+    </form>
+  </section>
+
+  <section id="v-week"></section>
+  <section id="v-cal" hidden></section>
+  <section id="v-camps" hidden></section>
+  <section id="v-ref" hidden></section>
+</main>
+</div>
+
+<script>
+// ---------- dates ----------
+const D=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const S=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const add=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const sunOf=d=>add(d,-d.getDay());
+const fmt=(d,o)=>d.toLocaleDateString('en-CA',o||{month:'short',day:'numeric'});
+const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const TODAY=S(new Date());
+
+// ---------- channels ----------
+const CH={stage:['Booth / stage','var(--l1)'],slide:['Pre-service slide','var(--l3)'],desk:['Welcome desk','var(--l5)'],web:['Website','var(--accent)'],email:['Email','var(--l2)'],text:['Text','var(--l2)'],social:['Social','var(--l4)'],fb:['Facebook event','var(--l4)'],bulletin:['Weekly Bulletin','var(--l3)'],post:['Post-event','var(--ok)']};
+
+// ---------- playbooks: [templateWeek, weekday(0=Sun), channel, task, optional?] ----------
+const PB={};
+PB[1]={weeks:8,phase:w=>w<=4?'a':w<=7?'i':'u',tasks:[
+ [1,0,'stage','Launch announcement: 1 story + 1 next step'],[1,0,'slide','Run pre-service slide'],[1,0,'desk','Resource Welcome Desk with event info'],[1,0,'web','Publish Launcher action'],[1,0,'web','Publish dedicated web page and/or Info Card'],
+ [1,2,'email','Churchwide launch email'],[1,2,'text','Churchwide launch text'],[1,2,'social','Sprinkle promo: Story'],[1,2,'social','Sprinkle promo: Feed'],[1,2,'fb','Create Facebook event (Oceanside add-on)'],[1,4,'bulletin','Highlight in Featured section'],
+ [2,0,'slide','Run pre-service slide'],[2,0,'desk','Maintain Welcome Desk resources'],[2,4,'bulletin','Shift to Upcoming section. Skip stage, email & social this week'],
+ [3,0,'stage','Interactive announcement (The Handoff: connect in-person to online)'],[3,0,'slide','Run pre-service slide'],[3,0,'desk','Maintain Welcome Desk resources'],[3,2,'social','Sprinkle promo (poll / lighthearted engagement)'],[3,2,'email','Churchwide sprinkle email',1],[3,2,'text','Churchwide sprinkle text',1],[3,4,'bulletin','Highlight in Weekly Bulletin'],
+ [4,0,'stage','The Callback: recap last week and carry momentum'],[4,0,'slide','Run pre-service slide'],[4,0,'desk','Maintain Welcome Desk resources'],[4,2,'social','Sprinkle promo'],[4,2,'email','Churchwide sprinkle email',1],[4,2,'text','Churchwide sprinkle text',1],[4,4,'bulletin','Highlight in Weekly Bulletin'],
+ [5,0,'stage','Stage announcement (social, email & text rest this week)'],[5,0,'slide','Run pre-service slide'],[5,0,'desk','Maintain Welcome Desk resources'],[5,4,'bulletin','Highlight in Weekly Bulletin'],
+ [6,0,'stage','Values & voice announcement (pair creative with a value or Start Again Story)'],[6,0,'slide','Run pre-service slide'],[6,0,'desk','Maintain Welcome Desk resources'],[6,2,'social','Sprinkle promo (repurpose Sunday announcement)'],[6,2,'email','Churchwide sprinkle email (repurpose Sunday)'],[6,2,'text','Churchwide sprinkle text (repurpose Sunday)'],[6,4,'bulletin','Highlight in Bulletin (repurpose Sunday)'],
+ [7,0,'stage','Fresh creative announcement (keep variety)'],[7,0,'slide','Run pre-service slide'],[7,0,'desk','Maintain Welcome Desk resources'],[7,2,'social','Sprinkle promo (repurpose Sunday announcement)'],[7,2,'email','Churchwide sprinkle email (repurpose Sunday)'],[7,2,'text','Churchwide sprinkle text (repurpose Sunday)'],[7,4,'bulletin','Highlight in Bulletin (repurpose Sunday)'],
+ [8,0,'stage','Urgency announcement: SPRINT window opens'],[8,0,'slide','Run pre-service slide'],[8,0,'desk','Resource Welcome Desk'],[8,0,'web','Upgrade Launcher action to Featured'],[8,0,'web','Publish floating banner on website'],
+ ...[1,2,3,4,5,6].map(d=>[8,d,'social','Sprint: daily social / email / text promo',1])
+]};
+const mid=lvl=>{const who=lvl==2?'Churchwide':'Ministry-specific';return {weeks:4,phase:w=>w==4?'u':w==2&&lvl==3?'a':'i',tasks:[
+ [1,0,'stage','Launch announcement: 1 story + 1 next step'],[1,0,'slide','Run pre-service slide'],[1,0,'desk','Resource Welcome Desk'],[1,0,'web','Publish Launcher action'],[1,0,'web','Publish page / section on Next Steps page'],
+ [1,2,'social','Sprinkle promo (repurpose Sunday announcement)'],[1,2,'email',who+' sprinkle email (repurpose Sunday)'],[1,2,'text',who+' sprinkle text (repurpose Sunday)'],[1,2,'fb','Create Facebook event (Oceanside add-on)',1],[1,4,'bulletin','Highlight in Weekly Bulletin'],
+ [2,0,'slide','Run pre-service slide'],[2,0,'desk','Maintain Welcome Desk resources'],[2,4,'bulletin','Highlight in Weekly Bulletin'],
+ [3,0,'stage','Values & voice announcement',1],[3,0,'slide','Run pre-service slide'],[3,0,'desk','Maintain Welcome Desk resources'],[3,2,'social','Sprinkle promo (repurpose Sunday)'],[3,2,'email',who+' sprinkle email',lvl==2?1:0],[3,2,'text',who+' sprinkle text',lvl==2?1:0],[3,4,'bulletin','Highlight in Weekly Bulletin'],
+ [4,0,'stage','Urgency announcement (urgent language, not more promos)'],[4,0,'slide','Run pre-service slide'],[4,0,'desk','Maintain Welcome Desk resources'],[4,2,'social','Sprinkle promo (repurpose Sunday)'],[4,2,'email',who+' sprinkle email'],[4,2,'text',who+' sprinkle text'],[4,4,'bulletin','Highlight in Weekly Bulletin']
+]}};
+PB[2]=mid(2);PB[3]=mid(3);
+PB[4]=PB[5]={weeks:4,phase:w=>w==4?'u':'i',tasks:[
+ [1,0,'bulletin','Featured in Weekly Bulletin (pre-service bulletin slide)'],[1,0,'desk','Resource Welcome Desk'],[1,0,'web','Publish post in ministry Posts Collection'],[1,0,'web','Publish event on Calendar page'],[1,0,'web','Section on Next Steps page',1],
+ [1,2,'social','Sprinkle promo on main church social',1],[1,2,'email','Ministry-specific email'],[1,2,'text','Ministry-specific text'],[1,2,'fb','Create Facebook event (Oceanside add-on)',1],[1,4,'bulletin','Highlight in Weekly Bulletin'],
+ [2,0,'bulletin','Featured in Weekly Bulletin slide'],[2,0,'desk','Maintain Welcome Desk resources'],[2,4,'bulletin','Highlight in Weekly Bulletin'],
+ [3,0,'bulletin','Featured in Weekly Bulletin slide (new creative)'],[3,0,'desk','Resource Welcome Desk'],[3,2,'social','Sprinkle promo on main church social',1],[3,2,'email','Ministry-specific email (new creative)'],[3,2,'text','Ministry-specific text'],[3,4,'bulletin','Highlight in Weekly Bulletin'],
+ [4,0,'stage','Smuggle promo from stage under a Level 2 category',1],[4,0,'bulletin','Featured in Weekly Bulletin slide ("This weekend")'],[4,0,'desk','Resource Welcome Desk'],[4,2,'social','Sprinkle promo on main church social',1],[4,2,'email','Ministry-specific email ("Final chance")'],[4,2,'text','Ministry-specific text'],[4,4,'bulletin','Highlight in Weekly Bulletin']
+]};
+const POST=lvl=>[['ev','post','Post live updates & behind-the-scenes photos/video'],['p1','post','Publish recap post and email'],['p1','web',lvl==1?'Remove banner + Launcher action, Info Card':'Remove Launcher action / Next Steps section']];
+const WEEKMAP={4:[1,2,3,4],3:[1,3,4],2:[1,4]};
+
+function plan(ev){
+  const pb=PB[ev.level], n=ev.level==1?8:(+ev.weeks||4), map=ev.level==1?[1,2,3,4,5,6,7,8]:WEEKMAP[n];
+  const evD=D(ev.date), lastSun=sunOf(evD), out=[];
+  map.forEach((tw,i)=>{const sun=add(lastSun,-(n-1-i)*7);
+    pb.tasks.filter(t=>t[0]===tw).forEach((t,j)=>{const day=add(sun,t[1]); if(S(day)>ev.date) return;
+      out.push({key:'w'+tw+'-'+t[1]+'-'+t[2]+'-'+j,date:S(day),ch:t[2],what:t[3],opt:!!t[4],week:i+1,phase:pb.phase(tw)})});});
+  POST(ev.level).forEach((p,j)=>out.push({key:'post'+j,date:p[0]=='ev'?ev.date:S(add(evD,1)),ch:p[1],what:p[2],opt:false,week:'post',phase:'p'}));
+  return out;
+}
+
+// ---------- state ----------
+let events=[],checks={},db=null,view='week',weekStart=S(sunOf(new Date())),monthCur=new Date(),editing=null;
+try{const v=localStorage.getItem('opp-view');if(v)view=v}catch(e){}
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function allTasks(){return events.flatMap(ev=>plan(ev).map(t=>({...t,ev,id:ev.id+'~'+t.key,done:!!checks[ev.id+'~'+t.key]})))}
+
+// ---------- views ----------
+function setView(v){view=v;try{localStorage.setItem('opp-view',v)}catch(e){}
+  document.querySelectorAll('nav button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===v));
+  ['week','cal','camps','ref'].forEach(k=>$('v-'+k).hidden=k!==v);render()}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>setView(b.dataset.view));
+
+function taskHTML(t,showEv=true){const c=CH[t.ch];
+  return `<label class="task${t.done?' done':''}" style="--c:${c[1]}"><input type="checkbox" data-id="${t.id}" ${t.done?'checked':''} ${db?'':'disabled'}>
+  <span><span class="what">${showEv?`<span class="ev">${esc(t.ev.name)}</span> · `:''}${esc(t.what)}</span>${t.opt?' <span class="opt">optional</span>':''}
+  <span class="meta"><span class="chip">${c[0]}</span>${showEv?`<span class="lvl" data-l="${t.ev.level}">L${t.ev.level}</span>`:''}${t.week!=='post'?`<span class="chip">Week ${t.week}</span>`:''}${t.ev.owner&&showEv?`<span class="chip">${esc(t.ev.owner)}</span>`:''}</span></span></label>`}
+
+function renderWeek(){
+  const ws=D(weekStart),we=add(ws,6),tasks=allTasks().filter(t=>t.date>=weekStart&&t.date<=S(we));
+  const sunStage=tasks.filter(t=>t.date===weekStart&&t.ch==='stage');
+  const l1=sunStage.filter(t=>t.ev.level==1&&!t.opt).length;
+  let warn='';
+  if(sunStage.length>3) warn+=`<div class="warnbox">${sunStage.length} announcements are scheduled for Sunday. The weekly ceiling is 3 in The Booth and 1 from stage. Demote the lowest level to a sprinkle or the Weekly Bulletin.</div>`;
+  if(l1>1) warn+=`<div class="warnbox">${l1} Level 1 campaigns want the single stage slot this Sunday. Combine them into one announcement or put one in The Booth.</div>`;
+  const byDay=[0,1,2,3,4,5,6].map(i=>{const d=add(ws,i),ds=S(d),ts=tasks.filter(t=>t.date===ds);
+    const evs=events.filter(e=>e.date===ds);
+    if(!ts.length&&!evs.length) return '';
+    return `<div class="day"><div class="dayname">${DAYS[i]}<span>${fmt(d)}${ds===TODAY?' · today':''}</span></div><div class="tasks">${evs.map(e=>`<div><span class="lvl" data-l="${e.level}">EVENT DAY</span> <strong>${esc(e.name)}</strong></div>`).join('')}${ts.map(t=>taskHTML(t)).join('')}</div></div>`}).join('');
+  const done=tasks.filter(t=>t.done).length;
+  $('v-week').innerHTML=`<div class="panel"><div class="row"><button id="wPrev" aria-label="Previous week">←</button><h2>Week of ${fmt(ws,{month:'long',day:'numeric'})} – ${fmt(we)}</h2><button id="wNext" aria-label="Next week">→</button><button id="wToday">Today</button><span class="spacer"></span><span class="mono muted">${done}/${tasks.length} done</span></div>
+  <div style="display:grid;gap:8px;margin-top:12px">${warn}</div>
+  <div class="days" style="margin-top:14px">${byDay||(events.length?'<p class="empty">Nothing to promote this week.</p>':emptyHTML())}</div></div>`;
+  $('wPrev').onclick=()=>{weekStart=S(add(ws,-7));render()};$('wNext').onclick=()=>{weekStart=S(add(ws,7));render()};$('wToday').onclick=()=>{weekStart=S(sunOf(new Date()));render()};
+}
+function emptyHTML(){return `<div class="empty"><p><strong>No events yet.</strong></p><p>Add an event with its date and ministry level. The planner lays out every promo task from the matching playbook, week by week.</p><button class="primary" onclick="openForm()">+ Add your first event</button></div>`}
+
+function renderCal(){
+  const m=new Date(monthCur.getFullYear(),monthCur.getMonth(),1),start=sunOf(m),all=allTasks();
+  let cells='';for(let i=0;i<42;i++){const d=add(start,i),ds=S(d);if(i>=35&&d.getMonth()!==m.getMonth())break;
+    const evs=events.filter(e=>e.date===ds),ts=all.filter(t=>t.date===ds),open=ts.filter(t=>!t.done).length;
+    cells+=`<button class="cell${d.getMonth()!==m.getMonth()?' out':''}${ds===TODAY?' today':''}" data-d="${ds}"><span class="n">${d.getDate()}</span>${evs.map(e=>`<span class="evname" style="background:var(--l${e.level})">${esc(e.name)}</span>`).join('')}${ts.length?`<span class="cnt">${open?open+' to do':'✓ all done'}</span>`:''}</button>`}
+  $('v-cal').innerHTML=`<div class="panel"><div class="row" style="margin-bottom:12px"><button id="mPrev" aria-label="Previous month">←</button><h2>${fmt(m,{month:'long',year:'numeric'})}</h2><button id="mNext" aria-label="Next month">→</button><span class="spacer"></span><span class="hint">Tap a day to open its week.</span></div>
+  <div class="cal">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(x=>`<div class="hd">${x}</div>`).join('')}${cells}</div></div>`;
+  $('mPrev').onclick=()=>{monthCur=new Date(m.getFullYear(),m.getMonth()-1,1);render()};$('mNext').onclick=()=>{monthCur=new Date(m.getFullYear(),m.getMonth()+1,1);render()};
+  document.querySelectorAll('.cell').forEach(c=>c.onclick=()=>{weekStart=S(sunOf(D(c.dataset.d)));setView('week')});
+}
+
+function renderCamps(){
+  const list=[...events].sort((a,b)=>a.date.localeCompare(b.date)).filter(e=>S(add(D(e.date),7))>=TODAY||showPast);
+  const yr=new Date().getFullYear(),sprints=events.filter(e=>e.level==1&&e.date.startsWith(yr)).length;
+  $('v-camps').innerHTML=`<div class="panel"><div class="row"><h2>Campaigns</h2><span class="spacer"></span><span class="chip">${sprints} of 4 sprints used in ${yr}</span><label class="row" style="font-weight:500"><input type="checkbox" id="pastT" style="width:auto" ${showPast?'checked':''}> Show past</label></div>
+  ${sprints>4?'<div class="warnbox" style="margin-top:10px">More than 4 Level 1 sprints this year. Sprint promotions run 2–4 times a year max.</div>':''}
+  <div style="margin-top:8px">${list.length?list.map(campHTML).join(''):emptyHTML()}</div>
+  <div class="legend" style="margin-top:12px"><span class="chip" style="background:var(--l5);color:#fff">Awareness</span><span class="chip" style="background:var(--accent);color:var(--accent-ink)">Interest</span><span class="chip" style="background:var(--l1);color:#fff">Urgency</span></div></div>`;
+  $('pastT').onchange=e=>{showPast=e.target.checked;render()};
+  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>openForm(events.find(e=>e.id===b.dataset.edit)));
+  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>delEvent(b.dataset.del,b));
+  document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{const ev=events.find(e=>e.id===b.dataset.open);const p=$('d-'+ev.id);p.hidden=!p.hidden});
+}
+let showPast=false;
+function campHTML(ev){
+  const ts=plan(ev).map(t=>({...t,ev,id:ev.id+'~'+t.key,done:!!checks[ev.id+'~'+t.key]})),done=ts.filter(t=>t.done).length;
+  const n=ev.level==1?8:(+ev.weeks||4),map=ev.level==1?[1,2,3,4,5,6,7,8]:WEEKMAP[n],last=sunOf(D(ev.date)),pb=PB[ev.level];
+  const strip=map.map((tw,i)=>{const s=add(last,-(n-1-i)*7),now=TODAY>=S(s)&&TODAY<=S(add(s,6)),ph=pb.phase(tw);
+    return `<div class="ph-${ph}${now?' ph-now':''}" title="Week ${i+1}: ${fmt(s)}">W${i+1} · ${fmt(s)}</div>`}).join('');
+  const start=add(last,-(n-1)*7),late=TODAY>S(start)&&ts.some(t=>t.date<TODAY&&!t.done&&!t.opt);
+  const weeks=[...new Set(ts.map(t=>t.week))];
+  return `<div class="camp"><div class="row"><span class="lvl" data-l="${ev.level}">LEVEL ${ev.level}</span><h2>${esc(ev.name)}</h2><span class="mono muted">${fmt(D(ev.date),{weekday:'short',month:'short',day:'numeric',year:'numeric'})}</span>${ev.owner?`<span class="chip">${esc(ev.owner)}</span>`:''}<span class="spacer"></span>
+  <button data-open="${ev.id}">Checklist</button><button data-edit="${ev.id}">Edit</button><button data-del="${ev.id}">Delete</button></div>
+  <div class="row muted" style="font-size:.85rem">Promo starts <strong class="mono">${fmt(start,{weekday:'short',month:'short',day:'numeric'})}</strong>${late?' · <span style="color:var(--warn)">has overdue tasks</span>':''}${ev.notes?' · '+esc(ev.notes):''}</div>
+  <div class="strip" style="grid-template-columns:repeat(${n},minmax(0,1fr))">${strip}</div>
+  <div class="row"><div class="bar" style="flex:1"><i style="width:${ts.length?done/ts.length*100:0}%"></i></div><span class="mono muted">${done}/${ts.length}</span></div>
+  <div id="d-${ev.id}" hidden class="days">${weeks.map(w=>`<div class="day"><div class="dayname">${w==='post'?'Post-event':'Week '+w}</div><div class="tasks">${ts.filter(t=>t.week===w).map(t=>taskHTML({...t,what:DAYS[D(t.date).getDay()].slice(0,3)+' '+fmt(D(t.date))+' · '+t.what},false)).join('')}</div></div>`).join('')}</div></div>`;
+}
+
+function renderRef(){
+  $('v-ref').innerHTML=`<div class="panel ref">
+  <div><h3>The formula</h3><p><strong>One story + one next step.</strong> Every announcement ends with: “Head to oceansidechurch.ca and click the Next Steps button.” One destination for every promo.</p></div>
+  <div><h3>Weekly ceiling</h3><p>3 announcements in The Booth, 1 from stage. The planner flags any Sunday that goes over.</p></div>
+  <div><h3>Weekly rhythm</h3><ul><li><strong>Sunday:</strong> Booth/stage, pre-service slide, Welcome Desk, website updates</li><li><strong>Tuesday:</strong> email, text, social sprinkle</li><li><strong>Thursday:</strong> Weekly Bulletin</li></ul></div>
+  <div><h3><span class="lvl" data-l="1">L1</span> Impacts 80%</h3><p>8 weeks. Awareness wks 1–4, Interest 5–7, Urgency wk 8 with a Sprint (daily promos allowed, max 7 days, 2–4 sprints a year). Week 2 rests stage, email and social; week 5 rests social, email and text.</p></div>
+  <div><h3><span class="lvl" data-l="2">L2</span> Core next steps · <span class="lvl" data-l="3">L3</span> Next Gen</h3><p>2–4 weeks (4 default, drop week 2 for 3, weeks 1 + 4 for 2). Urgency lives in the language, not more promos. L2 email/text is churchwide; L3 is ministry-specific.</p></div>
+  <div><h3><span class="lvl" data-l="4">L4</span> Ministries · <span class="lvl" data-l="5">L5</span> Events</h3><p>Weekly Bulletin, ministry Posts Collection, Calendar page, ministry email/text, optional social sprinkle. No stage, except an optional smuggle under a Level 2 category in the final week.</p></div>
+  <div><h3>Post-event</h3><p>Live behind-the-scenes on event day. Next day: recap post and email, then remove expired promos straight away.</p></div>
+  <div><h3>Not in the playbook</h3><p>Facebook events are an Oceanside add-on, scheduled with the week-1 launch. Change or drop them if your process differs.</p></div></div>`;
+}
+function render(){({week:renderWeek,cal:renderCal,camps:renderCamps,ref:renderRef})[view]();
+  document.querySelectorAll('.task input').forEach(i=>i.onchange=()=>toggle(i.dataset.id,i.checked,i))}
+
+// ---------- form ----------
+function hint(){const l=$('f-level').value;$('f-weeks').disabled=l==1;
+  const d=$('f-date').value;let h=l==1?'Level 1 runs a fixed 8-week campaign with a 1-week sprint at the end.':'';
+  if(d){const n=l==1?8:+$('f-weeks').value,st=add(sunOf(D(d)),-(n-1)*7);h+=` Promo starts ${fmt(st,{weekday:'long',month:'long',day:'numeric'})}.`;if(S(st)<TODAY)h+=' That date has passed, so catch up on the earlier tasks.'}
+  $('f-hint').textContent=h}
+['f-level','f-weeks','f-date'].forEach(i=>$(i).addEventListener('input',hint));
+function openForm(ev){editing=ev||null;$('formPanel').hidden=false;
+  $('f-name').value=ev?.name||'';$('f-date').value=ev?.date||'';$('f-level').value=ev?.level||5;$('f-weeks').value=ev?.weeks||4;$('f-owner').value=ev?.owner||'';$('f-notes').value=ev?.notes||'';
+  $('f-save').textContent=ev?'Save changes':'Save and build plan';hint();$('f-name').focus();window.scrollTo({top:0})}
+$('addBtn').onclick=()=>openForm();$('f-cancel').onclick=()=>{$('formPanel').hidden=true};
+$('evForm').addEventListener('submit',async e=>{e.preventDefault();if(!db){$('f-hint').textContent='Not connected to the shared calendar, so this event cannot be saved.';return}
+  const data={name:$('f-name').value.trim(),date:$('f-date').value,level:+$('f-level').value,weeks:+$('f-weeks').value,owner:$('f-owner').value.trim(),notes:$('f-notes').value.trim()};
+  try{if(editing)await db.doc('events/'+editing.id).set(data);else await db.collection('events').add(data);
+    $('formPanel').hidden=true;weekStart=S(sunOf(new Date()));}catch(err){$('f-hint').textContent='Could not save: '+(err.message||err.code)}});
+async function delEvent(id,btn){if(btn.dataset.confirm!=='1'){btn.dataset.confirm='1';btn.textContent='Confirm delete';btn.style.color='var(--warn)';return}
+  try{await db.doc('events/'+id).delete()}catch(e){btn.textContent='Delete failed'}}
+async function toggle(id,on,el){if(!db)return;checks[id]=on;render();
+  try{if(on)await db.doc('checks/'+id.replace(/[^\w~-]/g,'_')).set({id,done:true,at:new Date().toISOString()});else await db.doc('checks/'+id.replace(/[^\w~-]/g,'_')).delete()}catch(e){checks[id]=!on;render()}}
+
+// ---------- CSV export ----------
+async function exportCSV(){const dl=await claude.use('downloads');if(!dl)return;
+  const rows=[['Date','Day','Event','Level','Owner','Week','Channel','Task','Optional','Done']].concat(allTasks().sort((a,b)=>a.date.localeCompare(b.date)).map(t=>[t.date,DAYS[D(t.date).getDay()],t.ev.name,t.ev.level,t.ev.owner||'',t.week,CH[t.ch][0],t.what,t.opt?'yes':'',t.done?'yes':'']));
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  try{await dl.save({filename:'promo-plan.csv',data:csv})}catch(e){}}
+$('exportBtn').onclick=exportCSV;
+
+// ---------- boot ----------
+render();setView(view);
+(async()=>{
+  const timer=setTimeout(()=>{if(!db)$('sync').textContent='Offline: view only'},10000);
+  db=window.claude?await claude.use('db'):null;
+  if(!db){clearTimeout(timer);$('sync').textContent='Sign in to edit';render();return}
+  if(await claude.use('downloads'))$('exportBtn').hidden=false;
+  db.collection('events').onSnapshot(s=>{clearTimeout(timer);events=s.docs.map(d=>({id:d.id,...d.data()}));$('sync').textContent='Shared · live';render()},e=>{$('sync').textContent='Sync error: '+e.code});
+  db.collection('checks').onSnapshot(s=>{checks={};s.docs.forEach(d=>{const x=d.data();if(x&&x.id)checks[x.id]=true});render()});
+})();
+</script>
