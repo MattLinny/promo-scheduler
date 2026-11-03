@@ -212,7 +212,7 @@ a.group-h:hover{text-decoration:underline}
 .tl-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
 .tl{overflow-x:auto;background:var(--white);border-radius:26px;padding-bottom:14px}
 .tl-in{position:relative}
-.tl-grid{--g:repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px var(--col));background-image:var(--g),var(--g);background-size:calc(2*var(--col)) 100%,100% 100%;background-position:0 0,calc(3*var(--col)) 0;background-repeat:no-repeat}
+.tl-grid{--g:repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px var(--col));background-image:var(--g),var(--g);background-size:calc(2*var(--col) - 1px) 100%,100% 100%;background-position:0 0,calc(3*var(--col)) 0;background-repeat:no-repeat}
 .tl-now{position:absolute;top:0;bottom:0;width:calc(2*var(--col));background:rgba(113,67,254,.07);pointer-events:none}
 .tl-head{display:flex;position:sticky;top:0}
 .tl-name{position:sticky;left:0;z-index:3;flex:none;width:var(--name);background:var(--white);padding:6px 8px 6px 16px;box-shadow:1px 0 0 var(--line);display:block}
@@ -281,15 +281,17 @@ a.tl-name{text-decoration:none;color:var(--ink)}
 .cz-now{margin-top:2px;font-size:15.5px;opacity:.85;line-height:1.3}
 .cz-next{color:var(--ink);--mute:#66666E;display:inline-flex;align-items:center;gap:12px;background:var(--white);border-radius:18px;padding:7px 18px 7px 14px;margin-top:12px;max-width:100%}
 .cz-next>span{font-size:14.5px;color:var(--mute)}
-.strip{display:flex;gap:3px;margin:10px 0 14px;overflow-x:auto;scrollbar-width:none}
+.strip{position:relative;display:flex;gap:3px;margin:10px 0 14px;overflow-x:auto;scrollbar-width:none}
 .strip::-webkit-scrollbar{display:none}
 .strip a{flex:1 0 78px;border-radius:9px;padding:7px 9px;text-decoration:none;font-size:13px;line-height:1.2;font-weight:600}
 .strip a small{display:block;font-weight:400;font-size:13px}
 .strip a.now{box-shadow:inset 0 0 0 2px var(--ink)}
 .pw{display:grid;grid-template-columns:230px minmax(0,1fr);gap:clamp(14px,2.4vw,30px);padding:14px 0;border-top:1px solid var(--line);scroll-margin-top:12px}
 .pw.now{background:var(--white);border-radius:24px;border:0;padding:18px 20px;margin:6px -4px}
+.pw-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px}
+.pw-when{display:inline-flex;align-items:center;gap:8px}
 .pw-date{font-size:17px;font-weight:600;letter-spacing:-.012em;line-height:1.2}
-.pw-tag{display:inline-block;font-size:13px;font-weight:600;padding:2px 9px;border-radius:99px;margin:6px 6px 0 0}
+.pw-tag{display:inline-block;font-size:13px;font-weight:600;padding:2px 9px;border-radius:99px;white-space:nowrap}
 .pw-tag.tw{background:var(--indigo);color:#fff}
 .pw-tag.nx{background:var(--aw);color:var(--ink)}
 .said-past{opacity:.55}
@@ -323,9 +325,9 @@ textarea{line-height:1.4;resize:vertical;min-height:110px}
 .railbar .arrow{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--white)}
 .railbar .arrow:hover{background:var(--band)}
 .railbar .btn{flex:none}
-.rail a{padding:8px 14px;border-radius:99px;background:var(--white);text-decoration:none;font-weight:500;font-size:15px;white-space:nowrap}
-.rail a:hover{background:var(--band)}
-.rail a[aria-current=true]{background:var(--ink);color:var(--white)}
+.rail a,.rail button{padding:8px 14px;border-radius:99px;background:var(--white);text-decoration:none;font-weight:500;font-size:15px;white-space:nowrap;flex:none}
+.rail a:hover,.rail button:hover{background:var(--band)}
+.rail a[aria-current=true],.rail button[aria-current=true]{background:var(--ink);color:var(--white)}
 .rail small{font-size:13px;opacity:.65;margin-left:5px}
 .slots{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr);gap:12px}
 .slot{display:flex;flex-direction:column;justify-content:space-between;gap:18px;min-height:250px;padding:16px 18px;border-radius:24px;width:100%}
@@ -542,6 +544,55 @@ dialog.tourd{width:min(680px,calc(100vw - 32px))}
 .err{font-weight:600;background:var(--white);color:var(--red);padding:10px 16px;border-radius:14px}
 .hp{position:absolute;left:-9999px}
 
+/* ---------- timeline on a phone: one week per screen ---------- */
+.twk-rail{position:sticky;top:0;z-index:4;background:var(--paper);margin:0 calc(-1 * var(--gutter));padding:6px var(--gutter)}
+.twk-pages{display:flex;align-items:flex-start;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;margin:0 calc(-1 * var(--gutter))}
+.twk-pages::-webkit-scrollbar{display:none}
+.twk-page{flex:0 0 100%;min-width:0;scroll-snap-align:start;scroll-snap-stop:always;padding:0 var(--gutter) 6px;display:grid;gap:6px}
+.twk-h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 2px 3px}
+.twk-h b{font-size:18px;font-weight:700;letter-spacing:-.015em;margin-right:7px}
+.twk-h .mute{font-size:13.5px}
+.twk-h .tl-n{margin:0;font-size:12.5px;padding:1px 8px;white-space:nowrap}
+.twk-row{background:var(--white);border-radius:14px;overflow:hidden}
+.twk-head{display:grid;gap:6px;width:100%;padding:9px 10px 10px}
+.twk-top{display:flex;align-items:center;gap:5px;font-size:14.5px;line-height:1.2}
+.twk-top b{font-weight:600;min-width:0}
+.twk-top .tl-lv{margin:0;flex:none}
+.twk-top .chev{margin:0;flex:none;display:grid}
+.twk-ev{margin-left:auto;font-size:12px;color:var(--mute);white-space:nowrap;flex:none;padding-left:6px}
+.tl-flag.inl{position:static;translate:none;margin:0 0 0 auto;font-size:12px;padding:2px 8px;flex:none}
+.twk-bar{display:flex;align-items:center;gap:5px;min-height:30px;padding:0 10px;border-radius:8px;font-size:13px;font-weight:600}
+.twk-l{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.twk-n{margin-left:auto;flex:none;font-weight:500;font-size:12.5px}
+.twk-late{color:var(--red);font-size:12.5px;font-weight:600}
+.twk-tasks{padding:8px 12px 6px;border-top:1px solid var(--faint)}
+.twk-tasks .todo-t small{display:none}
+.twk-f{background:var(--white);border-radius:14px;padding:9px 10px 5px}
+.twk-name{display:flex;align-items:center;gap:5px;font-size:14.5px;line-height:1.2;margin-bottom:6px;text-decoration:none}
+.twk-name b{font-weight:600}
+.twk-name .tl-lv{margin:0}
+.twk-f .tl-chip{font-size:13px;padding:5px 8px}
+.twk-later{display:grid;gap:1px;padding:6px 2px 0;font-size:13.5px}
+.twk-later h4{margin:0 0 2px;font-size:13px;font-weight:400;color:var(--mute)}
+.twk-later a{display:flex;justify-content:space-between;gap:10px;padding:3px 0;text-decoration:none}
+.twk-later .mute{white-space:nowrap;flex:none}
+.rail small svg{vertical-align:-1px;margin-right:1px}
+/* one-line rows, for phones */
+.pw-row{display:flex;align-items:center;gap:8px;width:100%;padding:10px 2px;border-top:1px solid var(--line);font-size:14.5px;scroll-margin-top:60px}
+.pw-row .chev{display:grid;margin:0;flex:none}
+.pw-row-d{font-weight:600;flex:none;min-width:46px}
+.pw-row-n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pw-row-m{display:inline-flex;align-items:center;gap:6px;flex:none;font-size:12.5px;color:var(--mute)}
+.pw-row-m span{display:inline-grid;place-items:center}
+.pw-row-m .late{color:var(--red);font-weight:600}
+.cz-bar{display:grid;grid-template-columns:36px minmax(0,1fr) 36px;align-items:center;gap:8px}
+.ask-row{display:flex;align-items:center;gap:10px;width:100%;background:var(--white);border-radius:14px;padding:7px 10px;box-shadow:inset 0 0 0 1.5px var(--violet)}
+.ask-t{flex:1;min-width:0;line-height:1.2}
+.ask-t b{display:block;font-size:15px;font-weight:600}
+.ask-t small{display:block;font-size:12.5px;color:var(--mute)}
+.lv-card{display:grid;gap:10px;background:var(--white);border-radius:16px;padding:12px 14px;margin-top:8px}
+.opt-row svg{flex:none;color:var(--mute)}
+
 @media (max-width:1040px){
   .slots{grid-template-columns:1fr 1fr}
   .slot.stage{grid-column:1/-1;min-height:260px}
@@ -567,10 +618,7 @@ dialog.tourd{width:min(680px,calc(100vw - 32px))}
   .bh-wh{display:none}
   .bd{grid-template-columns:minmax(0,1fr)}
   .bd-date{padding-top:0}
-  .sel{flex:1 1 150px}
-  .sel select{flex:1;max-width:none}
-  .slot,.slot.stage{min-height:0;gap:30px}
-  .slot-open.slot{flex-direction:row;min-height:78px;padding:14px;border-radius:24px}
+  .slot,.slot.stage{min-height:0}
   .pw-cols{grid-template-columns:minmax(0,1fr)}
   .pw.now{margin-inline:-6px;padding:16px}
   .cz{border-radius:26px}
@@ -582,6 +630,180 @@ dialog.tourd{width:min(680px,calc(100vw - 32px))}
   dialog.tourd{width:100vw}
   .tour{padding-bottom:calc(18px + env(safe-area-inset-bottom));min-height:min(560px,88dvh)}
   @keyframes riseup{from{transform:translateY(40px)}}
+
+  /* frame: the title takes the top line, with help and add beside it */
+  body{font-size:15px;line-height:1.4}
+  .top{position:absolute;top:10px;right:var(--gutter);z-index:5;gap:6px;padding:0;margin:0;max-width:none}
+  .logo{display:none}
+  .helpbtn,.fab{width:36px;height:36px}
+  .helpbtn{font-size:15px}
+  .top:has(+main>.cz) .helpbtn,.top:has(+main>.cz) .fab{display:none}
+  main{padding:12px var(--gutter) 24px}
+  h1{font-size:27px;line-height:1.1;padding-right:84px}
+  h2{font-size:17px}
+  .nav a{padding:10px 4px;font-size:13px}
+  .toast{white-space:normal;width:max-content;max-width:88vw;text-align:center;border-radius:18px}
+  .empty{font-size:15px;padding:8px 2px}
+  .sect{margin-top:24px}
+
+  /* dropdowns: one tidy line, with the value doing the labelling. 16px stops iOS zooming in. */
+  .sels{flex:1;min-width:0;flex-wrap:nowrap;gap:6px}
+  .sel{flex:1 1 0;min-width:0;min-height:36px;padding:0 4px 0 8px;border-radius:10px}
+  .sel>span{display:none}
+  .sel select{flex:1;width:100%;min-width:0;max-width:none;min-height:36px;padding:0 2px;font-size:16px;font-weight:500;text-overflow:ellipsis}
+  .rules-sel{margin:10px 0}
+
+  /* to do */
+  .wkbar{margin-top:8px}
+  .wkbar-n{font-size:13px}
+  .requests{margin-top:12px}
+  .overview{margin-top:12px}
+  .side-h{margin-bottom:6px}
+  .side-h h2{font-size:15px}
+  .side-h .btn{font-size:13.5px}
+  .ask-ic{width:30px;height:30px;border-radius:9px}
+  .cgrid{gap:6px}
+  .cgrid .ccard{flex:0 0 172px;padding:8px 10px;gap:4px;border-radius:14px}
+  .cgrid .cc-head{gap:6px;align-items:center}
+  .cgrid .cc-name b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cgrid .cc-name small{display:none}
+  .cgrid .cc-mid .pbar{height:5px;margin:0 0 3px}
+  .cgrid .cc-where{font-size:12px}
+  .cgrid .stat{font-size:12px}
+  .todo-sec{margin-top:16px}
+  .todo-bar{flex-wrap:nowrap;margin-bottom:8px;gap:8px}
+  .todo-bar h2{flex:none}
+  .todo-bar .sel:first-child{flex-grow:1.5}
+  .blocks{gap:8px}
+  .block{border-radius:16px}
+  .bh{padding:6px 12px;gap:8px}
+  .bh-t b{font-size:15px}
+  .bb{padding:2px 12px 6px}
+  .bd{padding:4px 0;gap:0}
+  .bd-date{font-size:13px}
+  .todo{gap:9px;padding:5px 0}
+  .box{width:20px;height:20px}
+  .todo-t small{font-size:12.5px}
+  .linkbtn{width:26px;height:26px}
+  .storyline,.linkish,.held{padding-left:29px;font-size:13.5px}
+  .held .todo-t small{font-size:12.5px}
+  .overdue{padding:10px 12px;border-radius:16px;margin-bottom:12px}
+  .wk-h{margin-bottom:6px}
+  .wk-h .mute{font-size:13.5px}
+  .dayg .day-h{font-size:15.5px;margin-bottom:6px}
+  .day-h .tg,.tg{font-size:11.5px}
+  .todo-weeks{gap:14px}
+
+  /* campaign list */
+  .clist{gap:6px;margin-top:8px}
+  .ccard.wide{padding:10px 12px;gap:5px;border-radius:14px}
+  .ccard.wide .cc-head{gap:8px;align-items:center}
+  .ccard.wide .cc-name b{font-size:15.5px}
+  .cc-name small{font-size:12.5px}
+  .ccard.wide .tl-lv{flex:none;margin:0}
+  .ccard.wide .pbar{height:6px;margin:1px 0}
+  .cc-foot{font-size:13px}
+  .cc-next{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* one campaign */
+  .cz{padding:10px 12px 12px;gap:4px;border-radius:20px}
+  .cz .back{width:36px;height:36px;margin:0}
+  .cz h1{font-size:23px;line-height:1.1;padding:0}
+  .cz-top{gap:6px}
+  .cz .btn{min-height:36px;padding:0 14px;font-size:14px}
+  .cz-date{margin:4px 0 0;font-size:14px}
+  .cz-now{margin:0;font-size:13.5px}
+  .cz-next{display:flex;width:100%;gap:10px;padding:4px 12px;margin-top:8px;border-radius:14px}
+  .cz-next>span{font-size:13px}
+  .strip{position:sticky;top:0;z-index:4;background:var(--paper);margin:0 calc(-1 * var(--gutter));padding:8px var(--gutter)}
+  .strip a{flex:0 0 auto;min-width:70px;padding:5px 9px;font-size:12.5px;white-space:nowrap}
+  .strip a small{font-size:12px}
+  .pw{gap:8px;padding:10px 0;scroll-margin-top:60px}
+  .pw.now{margin:2px -6px 6px;padding:12px 14px;border-radius:18px}
+  .pw-date{font-size:16px}
+  .pw-tag{font-size:12px;padding:1px 8px}
+  .pw-angle{font-size:15px;margin-top:4px}
+  .pw-why{font-size:13px;margin-top:1px}
+  .pw-pb{font-size:12px}
+  .pw-also{font-size:12.5px;margin:0}
+  .pw-cols{gap:8px}
+  .pw-col h4{font-size:13px;margin-bottom:1px}
+  .pw-done{gap:8px;padding:8px 2px;font-size:14px}
+  .edit-bar{position:fixed;top:auto;left:10px;right:10px;bottom:calc(68px + env(safe-area-inset-bottom));margin:0;z-index:15;padding:5px 5px 5px 16px}
+  .edit-bar .btn{min-height:36px}
+  main:has(.edit-bar){padding-bottom:84px}
+
+  /* timeline */
+  .tl-bar{flex-wrap:nowrap;gap:6px;margin:8px 0 2px}
+  .tl-bar .btn{flex:none;min-height:36px;padding:0 12px;font-size:14px}
+
+  /* sunday */
+  .railbar{flex-wrap:wrap;gap:4px;margin:6px 0 10px}
+  .twk-rail{margin:0 calc(-1 * var(--gutter));padding:6px var(--gutter)}
+  .railbar .arrow{width:34px;height:34px}
+  .rail-scroll{flex:1 1 0}
+  .rail a,.rail button{padding:6px 10px;font-size:14px}
+  .rail small{font-size:12px;margin-left:4px}
+  .railbar .btn{order:3;flex:0 0 100%;min-height:30px;font-size:13.5px}
+  .slots{gap:8px}
+  .slot,.slot.stage{gap:10px;padding:12px 14px;border-radius:18px}
+  .slot-name{font-size:21px}
+  .stage .slot-name{font-size:25px}
+  .slot>div:last-child{gap:8px!important}
+  .slot-foot{grid-template-columns:auto minmax(0,1fr);align-items:baseline;column-gap:8px;row-gap:3px;padding-top:8px;font-size:14px}
+  .slot-foot .sub{font-size:13px}
+  .slot-foot p,.slot-foot .todo{grid-column:1/-1}
+  .slot-foot p{font-size:15px}
+  .tag{min-height:24px;padding:0 10px;font-size:13px}
+  .slot-acts{gap:12px}
+  .slot-acts .btn{font-size:14px}
+  .slot-open.slot{flex-direction:row;min-height:52px;padding:8px 14px;gap:8px}
+  .slot-open .plus{width:32px;height:32px}
+  .sun-tools{margin-top:10px}
+  .quiet{margin-top:12px;gap:8px}
+  .quiet dt{font-size:13px}
+  .quiet dd{font-size:15px}
+
+  /* rules */
+  .choices{gap:4px}
+  .choice{min-height:36px;padding:0 12px;font-size:14px}
+  .choices.lv{display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
+  .choices.lv .choice{padding:0;text-align:center}
+  .steps-ask{gap:12px}
+  .step-n{font-size:14.5px;margin-bottom:5px}
+  .verdict{padding:12px 14px;border-radius:16px;gap:6px}
+  .verdict .big{font-size:19px}
+  .verdict .instead{font-size:15px}
+  .gets{gap:10px}
+  .gets dt{font-size:12.5px}
+  .gets dd{font-size:15px;font-weight:400}
+  .rules{gap:12px}
+  .rules b{font-size:16px}
+  .gloss{gap:10px}
+
+  /* sheets and questions */
+  dialog{border-radius:22px 22px 0 0}
+  .sheet{gap:12px;padding:16px 16px calc(18px + env(safe-area-inset-bottom))}
+  .sheet h2{font-size:22px}
+  .sheet-sub{font-size:14.5px;margin-top:2px}
+  .x{width:36px;height:36px}
+  .opts{gap:5px}
+  .opt-row{padding:11px 14px;border-radius:14px}
+  input[type=text],input[type=date],input[type=email],input[type=password],input:not([type]),select,textarea{min-height:44px;padding:10px 14px;border-radius:12px}
+  .sel select{min-height:36px;padding:0 2px}
+  .dp-btn{min-height:44px;border-radius:12px}
+  .dp-grid button{height:40px}
+  .quiz{gap:12px;padding:16px}
+  .q-text{font-size:26px}
+  .q-opts{gap:6px}
+  .q-opt{padding:11px 14px;border-radius:16px}
+  .q-opt b{font-size:16px}
+  .q-opt span{font-size:13.5px}
+  .q-why{font-size:15.5px}
+  .plan-list{padding:4px 14px;border-radius:16px}
+  .plan-list li{padding:7px 0}
+  .tour h2{font-size:28px}
+  .tour-body>p{font-size:15.5px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -608,6 +830,8 @@ const add=(s,n)=>{const x=D(s);x.setDate(x.getDate()+n);return S(x)};
 const sunOf=s=>add(s,-D(s).getDay());
 const fmt=(s,o)=>D(s).toLocaleDateString('en-CA',o||{month:'short',day:'numeric'});
 const long=s=>fmt(s,{month:'long',day:'numeric'});
+const isPhone=()=>innerWidth<760;
+const weekSpan=s=>{const e=add(s,6);return `${fmt(s)} – ${e.slice(0,7)===s.slice(0,7)?D(e).getDate():fmt(e)}`};
 const full=s=>fmt(s,{weekday:'long',month:'long',day:'numeric'});
 const TODAY=(DEV&&qs.get('today'))||S(new Date());
 const nextSun=s=>D(s).getDay()===0?s:add(sunOf(s),7);
@@ -639,6 +863,7 @@ const ICON={
   right:'<path d="m9 5 7 7-7 7"/>',
   rocket:'<path d="M12 2.800c3.600 2.200 5 6 5 9.700l-2 3.500H9l-2-3.500c0-3.700 1.400-7.500 5-9.700z"/><circle cx="12" cy="9.800" r="1.700"/><path d="M8.600 14.800 6 17.500V21l3.300-2.500M15.400 14.800 18 17.500V21l-3.300-2.500M12 18.500V22"/>',
   inbox:'<path d="M4 13.500 6.500 5h11L20 13.500V19H4z"/><path d="M4 13.500h5l1 2.500h4l1-2.500h5"/>',
+  more:'<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
   pen:'<path d="M4 20h4L19 9l-4-4L4 16v4z"/>',
   link:'<path d="M10 14a4 4 0 0 0 5.700 0l3-3a4 4 0 0 0-5.700-5.700l-1 1"/><path d="M14 10a4 4 0 0 0-5.700 0l-3 3a4 4 0 0 0 5.700 5.700l1-1"/>',
   mega:'<path d="M3 10.5v3a1 1 0 0 0 1 1h3l9 5V4.500l-9 5H4a1 1 0 0 0-1 1z"/><path d="M19 9.500a3.500 3.500 0 0 1 0 5M8 14.500l1 5.500h2.500l-1-4.200"/>',
@@ -964,8 +1189,9 @@ function burst(x,y,n=10){
   }
 }
 function weekProgress(){
-  const end=nextSun(TODAY),keys=[...dueBetween(TODAY,end),...sharedBetween(TODAY,end)].map(t=>t.key);
-  const l=lineup(end);[l.stage,...l.booth].filter(Boolean).forEach(it=>keys.push(itemSayKey(it,end)));
+  const chan=view.schedCh||'',keep=t=>chanHas(chan,t.ch);
+  const end=nextSun(TODAY),keys=[...dueBetween(TODAY,end).filter(keep),...sharedBetween(TODAY,end).filter(keep)].map(t=>t.key);
+  if(chanHas(chan,'say')){const l=lineup(end);[l.stage,...l.booth].filter(Boolean).forEach(it=>keys.push(itemSayKey(it,end)))}
   return {total:keys.length,done:keys.filter(isDone).length};
 }
 
@@ -1058,7 +1284,7 @@ function chrome(active,body){
 }
 
 // ---------- to do ----------
-const CHGROUP={print:['print'],prep:['prep'],sunday:['say'],slide:['slide'],desk:['desk'],bulletin:['bulletin'],msg:['email','text'],social:['social','fb'],web:['web'],after:['post']};
+const CHGROUP={prep:['prep'],sunday:['say'],slide:['slide'],desk:['desk'],bulletin:['bulletin'],msg:['email','text'],social:['social','fb'],web:['web'],after:['post'],print:['print','slide','desk','bulletin']};
 const OWNERS=[['prep','Story and graphics'],['sunday','Sunday announcements'],['slide','Pre-service slides'],['desk','Welcome Desk'],['bulletin','Weekly Bulletin'],['msg','Email and text'],['social','Social'],['web','Website'],['after','After the event']];
 const groupOf=ch=>Object.keys(CHGROUP).find(k=>CHGROUP[k].includes(ch));
 const ownerOf=ch=>DB.owners[groupOf(ch)]||'';
@@ -1164,11 +1390,17 @@ function campCard(c,wide){
   const mid=hasPlan?`<div class="cc-mid">${pbar(c)}<div class="cc-where">${esc(where)}</div></div>`:'';
   if(!wide)return `<a class="ccard" href="#/c/${esc(c.id)}"><div class="cc-head"><span class="cc-ic">${isLaunching(c)?rocket(18):I(ICON.mega,18)}</span><div class="cc-name"><b>${esc(c.name)}</b><small>${esc(spanShort(c))}</small></div></div>${mid}${cls==='late'?`<span class="stat late">${esc(st)}</span>`:''}</a>`;
   const nextLine=next&&c.status!=='done'?`Next: ${next.say?`Announce on ${fmt(next.date)}`:`${next.label}, ${shortDay(next.date)}`}`:'';
+  if(isPhone()){
+    const line=next&&c.status!=='done'?`${shortDay(next.date)}: ${next.say?`Announce ${next.label}`:next.label}`:c.ongoing?st:'';
+    return `<a class="ccard wide" href="#/c/${esc(c.id)}"><div class="cc-head"><span class="cc-ic">${isLaunching(c)?rocket(16):I(ICON.mega,17)}</span><div class="cc-name"><b>${esc(c.name)}</b><small>${esc([hasPlan?spanShort(c):'',where].filter(Boolean).join(', ')||'Always on')}</small></div><span class="tl-lv" title="Level ${c.level}">L${c.level}</span></div>${hasPlan?pbar(c):''}<div class="cc-foot">${cls==='late'?`<span class="stat late">${esc(st)}</span>`:''}<span class="cc-next">${esc(line)}</span></div></a>`;
+  }
   return `<a class="ccard wide" href="#/c/${esc(c.id)}"><div class="cc-head"><span class="cc-ic">${isLaunching(c)?rocket(20):I(ICON.mega,20)}</span><div class="cc-name"><b>${esc(c.name)}</b><small>${esc(spanOf(c))}, Level ${c.level}</small></div></div>
     ${mid||'<div></div>'}<div class="cc-foot">${cls==='late'?`<span class="stat late">${esc(st)}</span>`:''}<span class="cc-next">${esc(nextLine||(c.ongoing?st:''))}</span></div></a>`;
 }
 function asksHTML(asks){
   if(!asks.length)return '';
+  // On a phone a request is one line. The details are in the review sheet.
+  if(isPhone())return `<section class="requests asks">${asks.map(c=>`<button class="ask-row" data-act="triage" data-id="${esc(c.id)}"><span class="ask-ic">${I(ICON.inbox,17)}</span><span class="ask-t"><b>${esc(c.name)}</b><small>New request${c.date?`, ${esc(fmt(c.date))}`:''}</small></span>${I(ICON.right,15)}</button>`).join('')}</section>`;
   return `<section class="requests"><h2>${asks.length===1?'New promo request':`${asks.length} new promo requests`}</h2><div class="asks">${asks.map(c=>`<div class="ask"><span class="ask-ic">${I(ICON.inbox,22)}</span><div><b>${esc(c.name)}</b><div class="mute">${c.date?esc(full(c.date)):'Ongoing'}${c.ministry?`, ${esc(c.ministry)}`:''}${c.requester?`. Asked by ${esc(c.requester)}`:''}${c.level?`. Looks like Level ${c.level}`:''}</div>${c.notes?`<div style="margin-top:3px">${esc(c.notes)}</div>`:''}</div><button class="btn solid" data-act="triage" data-id="${esc(c.id)}">Review request</button></div>`).join('')}</div></section>`;
 }
 function weekBar(){
@@ -1182,8 +1414,7 @@ function pageTodo(){
   const starting=list.filter(c=>stateOf(c)==='next'&&startOf(c)<=add(TODAY,21)).sort((a,b)=>startOf(a).localeCompare(startOf(b)));
   const asks=DB.campaigns.filter(c=>c.status==='request');
   const end=nextSun(TODAY),chan=view.schedCh||'',by=view.todoBy||'campaign';
-  const n=weekCount(TODAY,end,'');
-  const shown=weekCount(TODAY,end,chan);
+  const n=weekCount(TODAY,end,chan),shown=n;
   const late=overdue();
   const head=n?`<em>${n===1?'One thing':cap(word(n))+' things'}</em> to do this week.`:`<em>All clear</em> this week. Nice work.`;
   const wkOpen=view.wkOpen=view.wkOpen||new Set();
@@ -1201,7 +1432,7 @@ function pageTodo(){
   ${asksHTML(asks)}
   ${running.length+starting.length?`<section class="overview"><div class="side-h"><h2>Current campaigns</h2><a class="btn bare" href="#/campaigns" style="min-height:0">All campaigns</a></div><div class="cgrid">${running.map(c=>campCard(c)).join('')}${starting.map(c=>campCard(c).replace('class="ccard"','class="ccard soon"')).join('')}</div></section>`:''}
   <section class="todo-sec">
-    <div class="todo-bar"><h2>This week${chan?` <span class="mute" style="font-weight:400">${shown} shown</span>`:''}</h2><div class="sels">${pickSel('schedCh','Show',SHOW,chan)}${pickSel('todoBy','Group by',[['campaign','Campaign'],['day','Day']],by)}</div></div>
+    <div class="todo-bar"><h2>This week</h2><div class="sels">${pickSel('schedCh','Show',SHOW,chan)}${pickSel('todoBy','Group by',[['campaign',isPhone()?'By campaign':'Campaign'],['day',isPhone()?'By day':'Day']],by)}</div></div>
     ${late.length?`<section class="overdue"><h2>${late.length} overdue</h2><div class="blocks">${Object.values(late.reduce((m,t)=>((m[t.c.id]=m[t.c.id]||{c:t.c,ts:[]}).ts.push(t),m),{})).map(({c,ts})=>campBlock(c,ts,false)).join('')}</div><button class="btn bare" data-act="skipLate" style="padding:0;margin-top:8px">Clear all ${late.length}</button></section>`:''}
     <div class="todo-weeks"><div>${shown?weekView(TODAY,end,chan,by):'<p class="empty">Nothing due. Enjoy the quiet.</p>'}</div>${more}</div>
     <button class="btn" data-act="schedMore" style="margin-top:20px">Show 6 more weeks</button>
@@ -1247,8 +1478,79 @@ const tlRotation=(s,chan)=>{
   return ['social','msg'].includes(chan)?highlightTasks(s).filter(t=>chanHas(chan,t.ch)).map(t=>({day:fmt(t.date,{weekday:'short'}),label:chipName(t.label),title:`${shortDay(t.date)}: ${t.label}`,opt:t.opt,done:isDone(t.key),rank:contested(t)?t.rank:''})):[];
 };
 const tlChip=(x,href)=>{const tag=x.rank==='lead'?'Lead':x.rank==='sprinkle'?'Sprinkle':x.rank==='hold'?'Hold':x.day;return `<a class="tl-chip${x.rank==='lead'&&!x.opt?' lead':''}${x.opt?' opt':''}${x.done?' done':''}" href="${href}" title="${esc(x.title||x.label)}">${tag?`<b>${esc(tag)}</b> `:''}${esc(x.label)}</a>`};
+// What a campaign is doing in one week, for the phone view.
+function tlWeekSeg(c,s){
+  const w=c.date>=s?weekAt(c,s):null;
+  if(w)return {label:angleOf(w,c),cls:liveClass(w,c),launch:w.i===1};
+  if(s===add(startOf(c),-7))return {label:'Get ready',cls:'ph-prep'};
+  const here=tasksOf(c).filter(t=>sunOf(t.date)===s);
+  const early=here.filter(t=>t.w==='early');
+  if(early.length)return {label:early.length>1?`${early.length} early tasks`:early[0].label,cls:s>TODAY?'ph-prep':'ph-Awareness'};
+  return here.some(t=>t.w==='after')?{label:'Wrap up',cls:'ph-after'}:null;
+}
+function pageTimelinePhone(list){
+  const nowSun=sunOf(TODAY),first=add(nowSun,-7),chan=view.tlCh||'',open=view.tlOpen||new Set();
+  const lastEv=list.length?list.map(c=>c.date).reduce((a,b)=>a>b?a:b):add(first,70);
+  const n=Math.max(10,Math.round((D(sunOf(lastEv))-D(first))/6048e5)+3);
+  const wks=[];for(let i=0;i<n;i++)wks.push(add(first,i*7));
+  const order=[...list].sort((a,b)=>a.level-b.level||a.date.localeCompare(b.date));
+  const name=s=>s===nowSun?'This week':s===add(nowSun,-7)?'Last week':s===add(nowSun,7)?'Next week':`Week of ${fmt(s)}`;
+  const lv=c=>`<span class="tl-lv" title="Level ${c.level}">L${c.level}</span>`;
+  const NOUN={social:'post',msg:'send',sunday:'announcement',web:'update'};
+  const pages=wks.map(s=>{
+    const launching=list.filter(c=>startOf(c)===s).length;
+    let body,side='',count=0;
+    if(chan){
+      const rows=[...order.map(c=>({c,href:`#/c/${esc(c.id)}`,items:tlItems(c,s,chan)})),{title:'Next Steps',href:'#/sunday',items:tlRotation(s,chan)}].filter(r=>r.items.length);
+      count=rows.reduce((a,r)=>a+r.items.filter(x=>!x.opt).length,0);
+      const noun=NOUN[chan]||'item';
+      if(count)side=`<span class="tl-n">${count} ${noun}${count===1?'':'s'}</span>`;
+      body=rows.length?rows.map(r=>`<section class="twk-f"><a class="twk-name" href="${r.href}"><b>${esc(r.c?r.c.name:r.title)}</b>${r.c?lv(r.c):''}</a>${r.items.map(x=>tlChip(x,r.href)).join('')}</section>`).join(''):'<p class="empty">Nothing this week.</p>';
+    }else{
+      const here=order.filter(c=>tlWeekSeg(c,s));
+      count=here.length;
+      if(launching>=2)side=`<span class="tl-n busy">${I(ICON.rocket,12)}${launching} launching</span>`;
+      const later=list.filter(c=>add(startOf(c),-7)>s&&!tlWeekSeg(c,s)).slice(0,3);
+      body=(here.length?here.map(c=>{
+        const seg=tlWeekSeg(c,s),k=`${c.id}~${s}`,on=open.has(c.id)||open.has(k),ev=sunOf(c.date)===s;
+        const ts=tasksOf(c).filter(t=>!t.opt&&sunOf(t.date)===s).sort((a,b)=>a.date.localeCompare(b.date)),done=ts.filter(t=>isDone(t.key)).length;
+        const late=s===nowSun?lateCount(c):0;
+        return `<section class="twk-row"><button class="twk-head" data-act="tlOpen" data-id="${esc(c.id)}" data-k="${esc(k)}" aria-expanded="${on}"><span class="twk-top"><span class="chev${on?' on':''}">${I(ICON.right,13)}</span><b>${esc(c.name)}</b>${lv(c)}<span class="${ev?'tl-flag inl':'twk-ev'}">Event ${esc(fmt(c.date))}</span></span><span class="twk-bar ${seg.cls}">${seg.launch?I(ICON.rocket,15):''}<span class="twk-l">${esc(seg.label)}</span>${ts.length?`<span class="twk-n">${done} of ${ts.length}</span>`:''}</span>${late?`<small class="twk-late">${late} overdue</small>`:''}</button>${on?`<div class="twk-tasks">${ts.map((t,i)=>`${i&&ts[i-1].date===t.date?'':`<div class="tl-day${t.date<TODAY?' past':''}">${esc(fmt(t.date,{weekday:'long',month:'short',day:'numeric'}))}</div>`}${todo(t.key,t.say?`Announce: ${t.label}`:t.label)}`).join('')||'<p class="mute">Nothing to do this week.</p>'}<a class="btn bare" href="#/c/${esc(c.id)}" style="padding:0;min-height:30px">Open campaign</a></div>`:''}</section>`;
+      }).join(''):'<p class="empty">Nothing this week.</p>')+(later.length?`<div class="twk-later"><h4>Coming up</h4>${later.map(c=>`<a href="#/c/${esc(c.id)}"><span>${esc(c.name)}</span><span class="mute">Starts ${esc(fmt(startOf(c)))}</span></a>`).join('')}</div>`:'');
+    }
+    return {s,count,launching,html:`<article class="twk-page" data-s="${s}"><div class="twk-h"><div><b>${esc(name(s))}</b><span class="mute">${esc(weekSpan(s))}</span></div>${side}</div>${body}</article>`};
+  });
+  const at=wks.includes(view.tlWeek)?view.tlWeek:nowSun;
+  return chrome('timeline',`
+  <h1>Timeline.</h1>
+  <div class="tl-bar"><div class="sels">${pickSel('tlCh','Show',TL_SHOW,chan)}</div>${chan?'':`<button class="btn" data-act="tlAll">${open.size?'Hide tasks':'Show tasks'}</button>`}</div>
+  ${list.length?`<div class="railbar twk-rail"><button class="arrow" data-act="tlStep" data-d="-1" aria-label="Previous week">${I(ICON.left)}</button><div class="rail rail-scroll">${pages.map(p=>`<button data-act="tlGo" data-s="${p.s}" aria-current="${p.s===at}">${esc(fmt(p.s))}${chan&&p.count?`<small>${p.count}</small>`:!chan&&p.launching>=2?`<small>${I(ICON.rocket,12)}</small>`:''}</button>`).join('')}</div><button class="arrow" data-act="tlStep" data-d="1" aria-label="Next week">${I(ICON.right)}</button></div>
+  <div class="twk-pages">${pages.map(p=>p.html).join('')}</div>`:'<p class="empty">No campaigns yet. Tap + to launch your first one.</p>'}`);
+}
+// Moves the rail and the page height to a week. The arrows do this as soon as they're tapped, so quick taps count.
+function tlMark(pg,smooth){
+  const p=$('.twk-pages');if(!p||!pg)return;
+  view.tlWeek=pg.dataset.s;p.style.height=pg.offsetHeight+'px';
+  const rs=$('.twk-rail .rail-scroll');let on;
+  rs.querySelectorAll('[data-s]').forEach(b=>{const m=b.dataset.s===pg.dataset.s;b.setAttribute('aria-current',m);if(m)on=b});
+  if(on)rs.scrollTo({left:on.offsetLeft-rs.clientWidth/2+on.offsetWidth/2,behavior:smooth?'smooth':'auto'});
+}
+function tlGoTo(s,smooth){
+  const p=$('.twk-pages');if(!p)return;
+  const i=[...p.children].findIndex(x=>x.dataset.s===s);if(i<0)return;
+  // The rail moves at once. Chrome cancels a smooth scroll if another starts beside it.
+  tlMark(p.children[i],false);
+  p.scrollTo({left:i*p.clientWidth,behavior:smooth?'smooth':'auto'});
+}
+// Swiping changes the week, and the page takes the height of the week showing.
+function tlPager(){
+  const p=$('.twk-pages');if(!p)return;
+  let t;p.onscroll=()=>{clearTimeout(t);t=setTimeout(()=>tlMark(p.children[Math.round(p.scrollLeft/p.clientWidth)],true),120)};
+  tlGoTo($('.twk-rail [aria-current=true]')?.dataset.s,false);
+}
 function pageTimeline(){
   const list=dated().filter(c=>stateOf(c)!=='done').sort((a,b)=>startOf(a).localeCompare(startOf(b))||a.level-b.level);
+  if(isPhone())return pageTimelinePhone(list);
   const running=list.filter(c=>['running','wrap'].includes(stateOf(c))).length;
   const open=view.tlOpen||new Set(),chan=view.tlCh||'';
   const COL=TL_COL(),NAME=innerWidth<760?116:220;
@@ -1259,7 +1561,6 @@ function pageTimeline(){
   const W=(n+1)*COL,x=d=>{const days=Math.round((D(d)-D(first))/864e5);return Math.round((days<=7?days:days<=14?2*days-7:days+7)*COL/7)};
   const wks=[];for(let i=0;i<n;i++)wks.push(add(first,i*7));
   const nowSun=sunOf(TODAY);
-  const weekSpan=s=>{const e=add(s,6);return `${fmt(s)} – ${e.slice(0,7)===s.slice(0,7)?D(e).getDate():fmt(e)}`};
   // With a filter on, each week counts what's in it, and flags weeks where three or more campaigns compete.
   const filtered=chan?[...list.map(c=>({c,href:`#/c/${esc(c.id)}`,items:wks.map(s=>tlItems(c,s,chan))})),{name:'Next Steps',href:'#/sunday',items:wks.map(s=>tlRotation(s,chan))}].filter(r=>r.items.some(i=>i.length)):[];
   const mark=(s,i)=>{
@@ -1311,23 +1612,29 @@ function pageCampaign(id){
     `<a class="ph-after" href="#pw-after" data-jump="pw-after">Wrap up<small>${esc(fmt(add(c.date,1)))}</small></a>`].join('');
   const prep=ts.filter(t=>t.w==='prep'),editing=view.editTasks===c.id;
   const early=ts.filter(t=>t.w==='early').sort((a,b)=>a.date.localeCompare(b.date));
-  const earlyRow=early.length?rowShell('pw-early',`<div class="pw-date">${esc(fmt(early[0].date))}</div><span class="pw-tag ph-prep">Early</span>`,`<div class="pw-col">${early.map(t=>earlyLine(c,t)).join('')}</div>`,false,''):'';
+  const earlyRow=early.length?rowShell('pw-early',pwHead(fmt(early[0].date),'Early','ph-prep'),`<div class="pw-col">${early.map(t=>earlyLine(c,t)).join('')}</div>`,false,'',{date:fmt(early[0].date),name:'Before launch',meta:rowMeta(early,false,c)}):'';
   const removed=editing?planTasks(c).filter(t=>editsOf(c).del.includes(t.key)):[];
-  const prepRow=!prep.length?'':rowShell('pw-prep',`<div class="pw-date">${esc(shortDay(prep[0].date))}</div><span class="pw-tag ph-prep">Get ready</span>`,
-    `<div class="pw-col">${prep.map((t,j)=>taskLine(t,j===0&&storyIdea(c)?`Idea: ${storyIdea(c)}`:'',true)).join('')}</div>`,state==='next'&&startOf(c)<=add(TODAY,14),!editing&&state!=='next'&&(prep.every(t=>isDone(t.key))||prep[0].date<(c.created||''))?`Get ready, ${shortDay(prep[0].date)}`:'');
+  const prepNow=state==='next'&&startOf(c)<=add(TODAY,14);
+  const prepRow=!prep.length?'':rowShell('pw-prep',pwHead(shortDay(prep[0].date),'Get ready','ph-prep',prepNow),
+    `<div class="pw-col">${prep.map((t,j)=>taskLine(t,j===0&&storyIdea(c)?`Idea: ${storyIdea(c)}`:'',true)).join('')}</div>`,prepNow,!editing&&state!=='next'&&(prep.every(t=>isDone(t.key))||prep[0].date<(c.created||''))?`Get ready, ${shortDay(prep[0].date)}`:'',{date:fmt(prep[0].date),name:'Get ready',meta:rowMeta(prep,false,c)});
   const after=ts.filter(t=>t.w==='after');
   const allAfter=after.every(t=>isDone(t.key));
-  const afterRow=rowShell('pw-after',`<div class="pw-date">${esc(fmt(c.date))}</div><span class="pw-tag ph-after">Wrap up</span><div class="pw-why">Show it was worth attending, and clean up expired promos straight away.</div>`,
+  const afterRow=rowShell('pw-after',`${pwHead(fmt(c.date),'Wrap up','ph-after',state==='wrap')}<div class="pw-why">Show it was worth attending, and clean up expired promos straight away.</div>`,
     `<div class="pw-col"><h4>${esc(fmt(c.date,{weekday:'long'}))}</h4>${after.filter(t=>t.date===c.date).map(t=>taskLine(t,'',true)).join('')}</div>
      <div class="pw-col"><h4>${esc(fmt(add(c.date,1),{weekday:'long'}))}</h4>${after.filter(t=>t.date!==c.date).map(t=>taskLine(t,t.added?shortDay(t.date):'',true)).join('')}</div>
-     <div class="pw-col" style="display:grid;gap:8px;justify-items:start;align-content:start;grid-column:1/-1;grid-auto-flow:row">${debriefOf(c)?`<div class="q-story"><span>Debrief</span>${esc(debriefText(c))}</div>`:''}${c.date<=TODAY?`<button class="btn" data-act="debrief" data-id="${esc(c.id)}">${debriefOf(c)?'Edit debrief':'Write debrief'}</button>`:''}<button class="btn" data-act="runAgain" data-id="${esc(c.id)}">Run again</button>${state==='done'?`<button class="btn" data-act="reopen" data-id="${esc(c.id)}">Reopen</button>`:c.date<=TODAY?`<button class="btn${allAfter?' solid':''}" data-act="close" data-id="${esc(c.id)}">Close campaign</button>`:''}</div>`,state==='wrap','');
-  return chrome('campaigns',`
-  <section class="cz ${field}">
+     <div class="pw-col" style="display:grid;gap:8px;justify-items:start;align-content:start;grid-column:1/-1;grid-auto-flow:row">${debriefOf(c)?`<div class="q-story"><span>Debrief</span>${esc(debriefText(c))}</div>`:''}${c.date<=TODAY?`<button class="btn" data-act="debrief" data-id="${esc(c.id)}">${debriefOf(c)?'Edit debrief':'Write debrief'}</button>`:''}<button class="btn" data-act="runAgain" data-id="${esc(c.id)}">Run again</button>${state==='done'?`<button class="btn" data-act="reopen" data-id="${esc(c.id)}">Reopen</button>`:c.date<=TODAY?`<button class="btn${allAfter?' solid':''}" data-act="close" data-id="${esc(c.id)}">Close campaign</button>`:''}</div>`,state==='wrap','',{date:fmt(c.date),name:'Wrap up',meta:rowMeta(after,false,c)});
+  const nextCard=next&&state!=='done'?`<div class="cz-next"><span>Next</span>${todo(next.key,next.say?`Announce: ${next.label}`:next.label,shortDay(next.date))}</div>`:'';
+  const hero=isPhone()?`<section class="cz ${field}">
+    <div class="cz-bar"><a class="back" href="#/campaigns" aria-label="Campaigns">${I(ICON.left)}</a><h1>${esc(c.name)}</h1><button class="back" data-act="campMore" data-id="${esc(c.id)}" aria-label="More" title="More">${I(ICON.more)}</button></div>
+    <p class="cz-date">${esc(spanShort(c))}, Level ${c.level}${state==='done'?', done':state==='wrap'?', wrap up':state==='next'?`, starts ${esc(fmt(startOf(c)))}`:''}</p>${now&&state==='running'?`<p class="cz-now">Week ${now.i} of ${now.n}: ${esc(angleOf(now,c))}</p>`:''}${nextCard}
+  </section>`:`<section class="cz ${field}">
     <div class="cz-top"><a class="back" href="#/campaigns" aria-label="Campaigns">${I(ICON.left)}</a><span class="spacer"></span>
       ${c.requester||c.contact?`<button class="btn" data-act="reply" data-id="${esc(c.id)}">Reply to ministry</button>`:''}${state==='done'||editing?'':`<button class="btn" data-act="taskMode" data-id="${esc(c.id)}">Edit tasks</button>`}<button class="btn" data-act="edit" data-id="${esc(c.id)}">Edit campaign</button></div>
     <div><h1>${esc(c.name)}</h1><p class="cz-date">${esc(spanOf(c))}</p>
-    <p class="cz-now">${esc(where)}</p>${next&&state!=='done'?`<div class="cz-next"><span>Next</span>${todo(next.key,next.say?`Announce: ${next.label}`:next.label,shortDay(next.date))}</div>`:''}</div>
-  </section>
+    <p class="cz-now">${esc(where)}</p>${nextCard}</div>
+  </section>`;
+  return chrome('campaigns',`
+  ${hero}
   <div class="strip">${early.length?`<a class="${early[0].date>TODAY?'ph-prep':'ph-Awareness'}" href="#pw-early" data-jump="pw-early">Early<small>${esc(fmt(early[0].date))}</small></a>`:''}${strip}</div>
   ${editing?`<div class="edit-bar"><b>Editing tasks</b><span class="spacer"></span><button class="btn solid" data-act="taskAdd" data-id="${esc(c.id)}">Add</button><button class="btn" data-act="taskMode" data-id="${esc(c.id)}">Done</button></div>`:''}
   ${earlyRow}${prepRow}${ws.map(w=>weekRow(c,w,now)).join('')}${afterRow}
@@ -1406,9 +1713,23 @@ function taskEditSheet(c,k){
     if(x){x.label=v;if(f.date?.value)x.date=f.date.value}else if(v===orig.label)delete e.ren[k];else e.ren[k]=v;done()};
   $('#taskOrig')?.addEventListener('click',()=>{delete e.ren[k];done()});
 }
-function rowShell(id,left,right,isNow,collapsed,isNext){
+function campMoreSheet(c){
+  openDlg(`<div class="sheet"><div class="sheet-head"><div><h2>${esc(c.name)}</h2></div>${closeBtn()}</div><div class="opts">
+    ${stateOf(c)==='done'?'':`<button class="opt-row" data-act="taskMode" data-id="${esc(c.id)}">${I(ICON.pen,17)}${view.editTasks===c.id?'Stop editing tasks':'Edit tasks'}</button>`}
+    <button class="opt-row" data-act="edit" data-id="${esc(c.id)}">${I(ICON.cal,17)}Edit campaign</button>
+    ${c.requester||c.contact?`<button class="opt-row" data-act="reply" data-id="${esc(c.id)}">${I(ICON.mega,17)}Reply to ministry</button>`:''}</div></div>`);
+}
+const pwHead=(date,tag,cls,isNow,isNext)=>`<div class="pw-top"><span class="pw-when"><span class="pw-date">${esc(date)}</span>${isNow?'<span class="pw-tag tw">This week</span>':isNext?'<span class="pw-tag nx">This Sunday</span>':''}</span><span class="pw-tag ${cls}">${esc(tag)}</span></div>`;
+const rowMeta=(ts,isNext,c)=>{
+  const open=ts.filter(t=>!t.opt&&!isDone(t.key)&&t.date>=(c.created||'')),late=open.filter(t=>t.date<TODAY&&!t.say).length;
+  return `${isNext?'<span class="pw-tag nx">This Sunday</span>':''}${ts.some(t=>t.say)?`<span title="Announcement">${I(ICON.say,14)}</span>`:''}${late?`<span class="late">${late} late</span>`:isNext?'':open.length?`<span>${open.length} ${open.length===1?'task':'tasks'}</span>`:''}`;
+};
+// On a phone only the current week stays open. The rest fold to one line until tapped.
+function rowShell(id,left,right,isNow,collapsed,sum){
   if(collapsed)return `<div class="pw-done" id="${id}">${I(ICON.check,16)}<span>${esc(collapsed)}</span></div>`;
-  return `<section class="pw${isNow?' now':''}" id="${id}"><div>${isNow?'<span class="pw-tag tw">This week</span>':isNext?'<span class="pw-tag nx">This Sunday</span>':''}${left}</div><div class="pw-cols">${right}</div></section>`;
+  const fold=sum&&isPhone()&&!view.editTasks&&!isNow,on=view.pwOpen?.has(id);
+  if(fold&&!on)return `<button class="pw-row" id="${id}" data-act="pwOpen" data-k="${id}" aria-expanded="false"><span class="chev">${I(ICON.right,14)}</span><span class="pw-row-d">${esc(sum.date)}</span><span class="pw-row-n">${esc(sum.name)}</span><span class="pw-row-m">${sum.meta||''}</span></button>`;
+  return `<section class="pw${isNow?' now':''}" id="${id}"><div${fold?` data-act="pwOpen" data-k="${id}" role="button" tabindex="0" aria-expanded="true"`:''}>${left}</div><div class="pw-cols">${right}</div></section>`;
 }
 function weekRow(c,w,now){
   const ts=tasksOf(c).filter(t=>t.w===w.i);
@@ -1434,10 +1755,11 @@ function weekRow(c,w,now){
   const also=[w.slide?'Pre-service slide':'',w.desk?'Welcome Desk':'',w.bull?'Weekly Bulletin':''].filter(Boolean).join(', ');
   const col=(h,inner)=>inner?`<div class="pw-col"><h4>${h}</h4>${inner}</div>`:'';
   const row=t=>taskLine(t,rankNote(t),true);
-  const left=`<div class="pw-date">${esc(fmt(w.sun))}</div><span class="pw-tag ph-${esc(w.phase)}">${esc(w.phase)}</span><div class="pw-angle">${esc(angleOf(w,c))}</div>${c.level<=3&&PLAYBOOK[angleOf(w,c)]?`<div class="pw-pb">Playbook: ${esc(PLAYBOOK[angleOf(w,c)])}</div>`:''}<div class="pw-why">${esc(WHYWEEK[c.level]?.[w.tw]||'')}</div>`;
+  const isNext=!isNow&&w.sun===nextSun(TODAY);
+  const left=`${pwHead(fmt(w.sun),w.phase,`ph-${esc(w.phase)}`,isNow,isNext)}<div class="pw-angle">${esc(angleOf(w,c))}</div>${c.level<=3&&PLAYBOOK[angleOf(w,c)]?`<div class="pw-pb">Playbook: ${esc(PLAYBOOK[angleOf(w,c)])}</div>`:''}<div class="pw-why">${esc(WHYWEEK[c.level]?.[w.tw]||'')}</div>`;
   const sunHead=w.sun===TODAY?'Today':w.sun<TODAY&&isNow?'Last Sunday':'Sunday';
   const right=col(sunHead,sayHTML+dayTasks(0).map(row).join(''))+col('Tuesday',dayTasks(2).map(row).join(''))+col('Other days',ts.filter(t=>!t.say&&![0,2].includes(D(t.date).getDay())).map(t=>taskLine(t,shortDay(t.date),true)).join(''))+`<p class="pw-also">Also on: ${esc(also)}</p>`;
-  return rowShell('pw-'+w.i,left,right,isNow,'',w.sun===nextSun(TODAY));
+  return rowShell('pw-'+w.i,left,right,isNow,'',{date:fmt(w.sun),name:angleOf(w,c),meta:rowMeta(ts,isNext,c)});
 }
 function pageOngoing(c){
   const sundays=[];
@@ -1543,12 +1865,16 @@ function pageRules(){
   const tabs=[['levels','What each level gets'],['more','Someone asked for more'],['who','Who does what'],['policy','Our policy'],['words','Words we use']];
   const rowsM=[['Website','web'],['Email and text','msg'],['Social','social'],['Sunday','sun'],['Length','len']];
   let body='';
-  if(tab==='levels')body=`<div class="matrix-wrap"><table class="matrix"><thead><tr><th></th>${[1,2,3,4,5].map(l=>`<th>Level ${l}<small>${esc(LEVEL[l].name)}</small></th>`).join('')}</tr></thead>
+  if(tab==='levels'&&isPhone()){
+    const l=view.ruleLevel||1;
+    body=`<div class="choices lv">${[1,2,3,4,5].map(x=>`<button class="choice" data-act="ruleLevel" data-l="${x}" aria-pressed="${x===l}">L${x}</button>`).join('')}</div>
+    <div class="lv-card"><div><h2>Level ${l}</h2><p class="mute">${esc(LEVEL[l].name)}</p></div><dl class="gets">${[['For example','eg'],...rowsM].map(([t,k])=>`<div><dt>${t}</dt><dd>${esc(LEVEL[l][k])}</dd></div>`).join('')}</dl></div>`;
+  }else if(tab==='levels')body=`<div class="matrix-wrap"><table class="matrix"><thead><tr><th></th>${[1,2,3,4,5].map(l=>`<th>Level ${l}<small>${esc(LEVEL[l].name)}</small></th>`).join('')}</tr></thead>
     <tbody><tr><th>For example</th>${[1,2,3,4,5].map(l=>`<td>${esc(LEVEL[l].eg)}</td>`).join('')}</tr>${rowsM.map(([t,k])=>`<tr><th>${t}</th>${[1,2,3,4,5].map(l=>`<td>${esc(LEVEL[l][k])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
   if(tab==='more'){
     const lvl=view.askLevel||4,ask=view.ask||'stage',a=ASKS[ask],[v,headline,instead]=a.at(lvl),big={no:'No',yes:'Yes',some:'Sometimes'}[v];
     body=`<div class="steps-ask">
-      <div><div class="step-n">What level is it?</div><div class="choices">${[1,2,3,4,5].map(l=>`<button class="choice" data-act="askLevel" data-l="${l}" aria-pressed="${l===lvl}">Level ${l}</button>`).join('')}</div></div>
+      <div><div class="step-n">What level is it?</div><div class="choices${isPhone()?' lv':''}">${[1,2,3,4,5].map(l=>`<button class="choice" data-act="askLevel" data-l="${l}" aria-pressed="${l===lvl}">${isPhone()?'L':'Level '}${l}</button>`).join('')}</div></div>
       <div><div class="step-n">What do they want?</div><div class="choices">${Object.entries(ASKS).map(([k,x])=>`<button class="choice" data-act="askWhat" data-k="${k}" aria-pressed="${k===ask}">${esc(x.label)}</button>`).join('')}</div></div>
       <div class="verdict" aria-live="polite"><div class="big">${big}. ${esc(headline)}</div><p class="instead">${esc(instead)}</p><p class="because">Policy: ${esc(a.rule)}</p><div><button class="btn solid" data-act="copyVerdict">Copy reply</button></div></div></div>`;
   }
@@ -1559,7 +1885,7 @@ function pageRules(){
     <h2 style="margin:clamp(26px,3vw,36px) 0 12px">The limits</h2><div class="rules"><div><b>1 on stage, 2 in the Booth.</b><span>Three or fewer each Sunday.</span></div><div><b>1 lead, 1 sprinkle a week.</b><span>Social and churchwide email and text. The rest wait for a quieter week.</span></div><div><b>Sprints, 2 to 4 a year.</b><span>Level 1 only, 7 days at most. ${sprintsUsed(TODAY.slice(0,4))} used in ${TODAY.slice(0,4)}.</span></div><div><b>Sunday, Tuesday, Thursday.</b><span>Booth and slides, then email and social, then the Weekly Bulletin.</span></div></div>`;
   if(tab==='words')body=`<dl class="gloss">${WORDS.map(([t,d])=>`<div><dt>${esc(t)}</dt><dd>${esc(d)}</dd></div>`).join('')}</dl>`;
   return chrome('rules',`<h1>Rules.</h1>
-  <div class="choices" style="margin:clamp(12px,1.6vw,18px) 0 clamp(16px,2vw,24px)">${tabs.map(([k,l])=>`<button class="choice" data-act="rulesTab" data-k="${k}" aria-pressed="${k===tab}">${l}</button>`).join('')}</div>${body}`);
+  ${isPhone()?`<div class="sels rules-sel">${pickSel('rulesTab','Section',tabs,tab)}</div>`:`<div class="choices" style="margin:clamp(12px,1.6vw,18px) 0 clamp(16px,2vw,24px)">${tabs.map(([k,l])=>`<button class="choice" data-act="rulesTab" data-k="${k}" aria-pressed="${k===tab}">${l}</button>`).join('')}</div>`}${body}`);
 }
 const rung=(sel,act)=>l=>`<button class="rung l${l}" data-act="${act}" data-l="${l}" aria-pressed="${l===sel}"><span>Level ${l}</span><small>${esc(LEVEL[l].name)}</small></button>`;
 function replyFor(c,opts={}){
@@ -1838,7 +2164,7 @@ const ACT={
   qSave:()=>{const c=quizRecord('active');saveCampaign(c);closeDlg();go('c/'+c.id)},
   qSend:()=>quizSend(),
     wkToggle:b=>{const o=view.wkOpen,k=b.dataset.s;o.has(k)?o.delete(k):o.add(k);render()},
-  taskMode:b=>{view.editTasks=view.editTasks===b.dataset.id?'':b.dataset.id;render()},
+  taskMode:b=>{view.editTasks=view.editTasks===b.dataset.id?'':b.dataset.id;closeDlg();render()},
   taskAdd:b=>{const c=DB.campaigns.find(x=>x.id===b.dataset.id);taskAddSheet(c,'task','',TODAY,'')},
   taskKind:b=>{const c=DB.campaigns.find(x=>x.id===b.dataset.id),f=$('#taskForm');taskAddSheet(c,b.dataset.kind,f.label.value,f.date?.value||TODAY,f.sun?.value||'',f.ch?.value||'other')},
   taskEdit:b=>taskEditSheet(DB.campaigns.find(x=>x.id===b.dataset.id),b.dataset.k),
@@ -1846,7 +2172,12 @@ const ACT={
   taskDel:b=>{const c=DB.campaigns.find(x=>x.id===b.dataset.id),e=editsOf(c),k=b.dataset.k,x=e.add.find(a=>addedKey(c,a)===k);
     if(x)e.add=e.add.filter(a=>a!==x);else e.del.push(k);saveEdits(c,e);render()},
   taskBack:b=>{const c=DB.campaigns.find(x=>x.id===b.dataset.id),e=editsOf(c);e.del=e.del.filter(k=>k!==b.dataset.k);saveEdits(c,e);render()},
-  tlOpen:b=>{const o=view.tlOpen=view.tlOpen||new Set(),id=b.dataset.id;o.has(id)?o.delete(id):o.add(id);render()},
+  tlOpen:b=>{const o=view.tlOpen=view.tlOpen||new Set(),{id,k}=b.dataset;if(o.has(id))o.delete(id);else if(k)o.has(k)?o.delete(k):o.add(k);else o.add(id);render()},
+  tlGo:b=>tlGoTo(b.dataset.s,true),
+  tlStep:b=>{const w=[...document.querySelectorAll('.twk-page')].map(x=>x.dataset.s),i=w.indexOf(view.tlWeek)+ +b.dataset.d;if(w[i])tlGoTo(w[i],true)},
+  pwOpen:b=>{const o=view.pwOpen=view.pwOpen||new Set(),k=b.dataset.k;o.has(k)?o.delete(k):o.add(k);render()},
+  campMore:b=>campMoreSheet(DB.campaigns.find(x=>x.id===b.dataset.id)),
+  ruleLevel:b=>{view.ruleLevel=+b.dataset.l;render()},
   tlAll:()=>{const o=view.tlOpen=view.tlOpen||new Set();if(o.size)o.clear();else dated().forEach(c=>o.add(c.id));render()},
 
   schedMore:()=>{view.schedWeeks=(view.schedWeeks||6)+6;render()},
@@ -1890,7 +2221,9 @@ document.addEventListener('click',e=>{
         const pr=weekProgress();
         if(pr.total&&pr.done===pr.total){burst(innerWidth/2,innerHeight/3,26);toast('That\'s the whole week. Go get a coffee.')}else toast(NICE[Math.floor(Math.random()*NICE.length)])}});return}
   const j=e.target.closest('[data-jump]');
-  if(j){e.preventDefault();document.getElementById(j.dataset.jump)?.scrollIntoView({behavior:'smooth',block:'start'});return}
+  if(j){e.preventDefault();const id=j.dataset.jump;
+    if(document.getElementById(id)?.matches('.pw-row')){(view.pwOpen=view.pwOpen||new Set()).add(id);render()}
+    document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'});return}
   const l=e.target.closest('a[href^="#/"]');
   if(l){e.preventDefault();closeDlg();setRoute(l.getAttribute('href'));return}
   const b=e.target.closest('[data-act]');
@@ -1907,7 +2240,7 @@ document.addEventListener('change',e=>{
 // ---------- routes ----------
 let route=location.hash||'#/todo';
 function setRoute(h){
-  if(h!==route)view.week=null;
+  if(h!==route){view.week=null;view.pwOpen=null}
   route=h;
   try{history.pushState(null,'',h)}catch(e){}
   render();
@@ -1925,14 +2258,20 @@ function render(){
   const y=scrollY;
   const[,name='todo',arg]=route.split('/');
   const html=name==='campaigns'?pageCampaigns():name==='timeline'?pageTimeline():name==='c'?pageCampaign(decodeURIComponent(arg||'')):name==='sunday'?pageSunday(arg):name==='rules'?pageRules():pageTodo();
-  const ss=$('.tl')?.scrollLeft;
+  const ss=$('.tl')?.scrollLeft,side=['.strip','.cgrid'].map(q=>[q,$(q)?.scrollLeft]);
   app.innerHTML=html;
+  render.phone=isPhone();
   if($('.tl')){const t=$('.tl');t.scrollLeft=render.at===route&&ss!=null?ss:Math.max(0,$('.tl-now',t).offsetLeft-$('.tl-name',t).offsetWidth-TL_COL())}
+  if(render.at===route)side.forEach(([q,v])=>{if(v!=null&&$(q))$(q).scrollLeft=v});
+  else{const n=$('.strip a.now');if(n)$('.strip').scrollLeft=n.offsetLeft-12}
+  tlPager();
   if(render.at===route)scrollTo(0,y);else scrollTo(0,0);
   const rs=$('.rail-scroll');if(rs){const a=$('[aria-current=true]',rs);rs.scrollLeft=a.offsetLeft-rs.clientWidth/2+a.offsetWidth/2}
   render.at=route;
 }
-const syncRoute=()=>{const h=location.hash||'#/todo';if(h!==route){view.week=null;route=h;render()}};
+const syncRoute=()=>{const h=location.hash||'#/todo';if(h!==route){view.week=null;view.pwOpen=null;route=h;render()}};
+// The phone and desktop layouts are drawn differently, so crossing the line redraws.
+addEventListener('resize',()=>{const p=isPhone();if(p!==render.phone)render()});
 addEventListener('hashchange',syncRoute);
 addEventListener('popstate',syncRoute);
 
