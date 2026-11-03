@@ -634,12 +634,13 @@ dialog.tourd{width:min(680px,calc(100vw - 32px))}
   /* frame: the title takes the top line, with help and add beside it */
   body{font-size:15px;line-height:1.4}
   .top{position:absolute;top:10px;right:var(--gutter);z-index:5;gap:6px;padding:0;margin:0;max-width:none}
-  .logo{display:none}
+  .top .logo{display:none}
   .helpbtn,.fab{width:36px;height:36px}
   .helpbtn{font-size:15px}
   .top:has(+main>.cz) .helpbtn,.top:has(+main>.cz) .fab{display:none}
   main{padding:12px var(--gutter) 24px}
-  h1{font-size:27px;line-height:1.1;padding-right:84px}
+  h1{font-size:27px;line-height:1.1}
+  .top+main h1{padding-right:84px}
   h2{font-size:17px}
   .nav a{padding:10px 4px;font-size:13px}
   .toast{white-space:normal;width:max-content;max-width:88vw;text-align:center;border-radius:18px}
@@ -673,7 +674,7 @@ dialog.tourd{width:min(680px,calc(100vw - 32px))}
   .todo-sec{margin-top:16px}
   .todo-bar{flex-wrap:nowrap;margin-bottom:8px;gap:8px}
   .todo-bar h2{flex:none}
-  .todo-bar .sel:first-child{flex-grow:1.5}
+  .todo-bar .sel:first-child{flex-grow:1.2}
   .blocks{gap:8px}
   .block{border-radius:16px}
   .bh{padding:6px 12px;gap:8px}
@@ -708,7 +709,7 @@ dialog.tourd{width:min(680px,calc(100vw - 32px))}
   /* one campaign */
   .cz{padding:10px 12px 12px;gap:4px;border-radius:20px}
   .cz .back{width:36px;height:36px;margin:0}
-  .cz h1{font-size:23px;line-height:1.1;padding:0}
+  .top+main .cz h1{font-size:23px;line-height:1.1;padding:0}
   .cz-top{gap:6px}
   .cz .btn{min-height:36px;padding:0 14px;font-size:14px}
   .cz-date{margin:4px 0 0;font-size:14px}
@@ -1204,7 +1205,7 @@ function withName(then){
 }
 const WRITES=new Set(['qSave','wizSave','fillPick','takeOff','close','reopen','skipLate']);
 
-const REMEMBER=['schedCh','todoBy','campShow','campSort'];
+const REMEMBER=['schedCh','todoBy','campShow','campSort','tlCh'];
 try{const v=JSON.parse(localStorage.getItem('pp-view')||'{}');REMEMBER.forEach(k=>{if(v[k]!==undefined)view[k]=v[k]})}catch(e){}
 document.addEventListener('change',e=>{
   const own=e.target.dataset?.owner;
@@ -1432,7 +1433,7 @@ function pageTodo(){
   ${asksHTML(asks)}
   ${running.length+starting.length?`<section class="overview"><div class="side-h"><h2>Current campaigns</h2><a class="btn bare" href="#/campaigns" style="min-height:0">All campaigns</a></div><div class="cgrid">${running.map(c=>campCard(c)).join('')}${starting.map(c=>campCard(c).replace('class="ccard"','class="ccard soon"')).join('')}</div></section>`:''}
   <section class="todo-sec">
-    <div class="todo-bar"><h2>This week</h2><div class="sels">${pickSel('schedCh','Show',SHOW,chan)}${pickSel('todoBy','Group by',[['campaign',isPhone()?'By campaign':'Campaign'],['day',isPhone()?'By day':'Day']],by)}</div></div>
+    <div class="todo-bar"><h2>This week</h2><div class="sels">${pickSel('schedCh','Show',SHOW,chan)}${pickSel('todoBy','Group by',[['campaign','Campaign'],['day','Day']],by)}</div></div>
     ${late.length?`<section class="overdue"><h2>${late.length} overdue</h2><div class="blocks">${Object.values(late.reduce((m,t)=>((m[t.c.id]=m[t.c.id]||{c:t.c,ts:[]}).ts.push(t),m),{})).map(({c,ts})=>campBlock(c,ts,false)).join('')}</div><button class="btn bare" data-act="skipLate" style="padding:0;margin-top:8px">Clear all ${late.length}</button></section>`:''}
     <div class="todo-weeks"><div>${shown?weekView(TODAY,end,chan,by):'<p class="empty">Nothing due. Enjoy the quiet.</p>'}</div>${more}</div>
     <button class="btn" data-act="schedMore" style="margin-top:20px">Show 6 more weeks</button>
@@ -1470,7 +1471,7 @@ function tlItems(c,s,chan){
   const w=c.level&&c.date>=s?weekAt(c,s):null;if(!w)return out;
   if((room||chan==='slide')&&w.slide)out.push({label:'Slide',title:CH.slide});
   if((room||chan==='desk')&&w.desk)out.push({label:'Welcome Desk',title:CH.desk});
-  if((room||chan==='bulletin')&&w.bull)out.push({label:room?'Bulletin':w.bull,title:`${CH.bulletin}: ${w.bull}`});
+  if((room||chan==='bulletin')&&w.bull)out.push({label:room?'Bulletin':w.bull,title:`${CH.bulletin}: ${w.bull}`,bull:w.bull});
   return out;
 }
 const tlRotation=(s,chan)=>{
@@ -1505,7 +1506,13 @@ function pageTimelinePhone(list){
       count=rows.reduce((a,r)=>a+r.items.filter(x=>!x.opt).length,0);
       const noun=NOUN[chan]||'item';
       if(count)side=`<span class="tl-n">${count} ${noun}${count===1?'':'s'}</span>`;
-      body=rows.length?rows.map(r=>`<section class="twk-f"><a class="twk-name" href="${r.href}"><b>${esc(r.c?r.c.name:r.title)}</b>${r.c?lv(r.c):''}</a>${r.items.map(x=>tlChip(x,r.href)).join('')}</section>`).join(''):'<p class="empty">Nothing this week.</p>';
+      // Whoever stocks the desk thinks in places, so this one groups by where each thing goes.
+      if(chan==='room'&&rows.length){
+        const spots=[['Slide','Pre-service slides'],['Welcome Desk','Welcome Desk'],['Bulletin','Weekly Bulletin'],['','In person and print']];
+        const known=spots.slice(0,3).map(x=>x[0]);
+        body=spots.map(([k,title])=>{const here=rows.flatMap(r=>r.items.filter(x=>k?x.label===k:!known.includes(x.label)).map(x=>tlChip(k?{title:x.title,label:r.c.name,day:x.bull}:{...x,label:`${r.c.name}: ${x.label}`},r.href)));
+          return here.length?`<section class="twk-f"><div class="twk-name"><b>${esc(title)}</b></div>${here.join('')}</section>`:''}).join('');
+      }else body=rows.length?rows.map(r=>`<section class="twk-f"><a class="twk-name" href="${r.href}"><b>${esc(r.c?r.c.name:r.title)}</b>${r.c?lv(r.c):''}</a>${r.items.map(x=>tlChip(x,r.href)).join('')}</section>`).join(''):'<p class="empty">Nothing this week.</p>';
     }else{
       const here=order.filter(c=>tlWeekSeg(c,s));
       count=here.length;
