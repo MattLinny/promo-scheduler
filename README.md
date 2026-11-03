@@ -22,7 +22,9 @@ Reading and editing need the office code. The public can only send a request.
 4. Deploy → New deployment → Web app. Execute as Me, access Anyone. Copy the URL.
 5. Put the URL in `CONFIG.apiUrl` in `index.html` and push.
 
-After changing `Code.gs`: Deploy → Manage deployments → pencil → New version.
+6. Optional: run `installTriggers` once for the Monday email (to `DIGEST_EMAIL` or `NOTIFY_EMAIL`) and the weekly backup.
+
+After changing `Code.gs`, also run `setup` so new tabs get made, then: Deploy → Manage deployments → pencil → New version.
 
 ## How the lineup is chosen
 
@@ -35,6 +37,10 @@ Anyone can change a Sunday by hand, but there are only three slots.
 
 Playbooks, level perks and policy answers are the `PB`, `LEVEL` and `ASKS` tables near the top of the script in `index.html`.
 
+## Tests
+
+`node tests/parity.test.js` checks the plan in the page and the script still match, and runs the script against a stand-in for Sheets.
+
 ## Local preview
 
-Serve the folder on localhost with no `apiUrl` and it runs on `_local/demo.js` (not committed). Add `?reset` to start over.
+Serve the folder on localhost and add `?demo` to run on `_local/demo.js` (not committed) instead of the real Sheet. Add `&reset` to start over.
