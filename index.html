@@ -968,12 +968,14 @@ function taskLine(t,sub,edit){
 }
 const weekNow=c=>weeksOf(c).find(w=>w.sun<=TODAY&&add(w.sun,6)>=TODAY);
 const phaseClass=(w,c)=>!w.say&&c.level<=3?'ph-rest':'ph-'+w.phase;
+// Grey until the week arrives, so a bar shows the span without looking under way.
+const liveClass=(w,c)=>w.sun>TODAY?'ph-prep':phaseClass(w,c);
 const angleOf=(w,c)=>w.say==='req'||w.say==='opt'||c.level>=4?w.angle:'Rest';
 function nextTask(c){return tasksOf(c).filter(t=>!t.opt&&!isDone(t.key)&&t.date>=(c.created||'')).sort((a,b)=>a.date.localeCompare(b.date))[0]}
 const shortDay=d=>fmt(d,{weekday:'short',month:'short',day:'numeric'});
 const lateCount=c=>tasksOf(c).filter(t=>!t.opt&&!t.say&&!isDone(t.key)&&t.date<TODAY&&t.date>=(c.created||'')).length;
 function pbar(c){
-  return `<div class="pbar" aria-hidden="true">${weeksOf(c).map(w=>`<i class="${phaseClass(w,c)}${add(w.sun,6)<TODAY?' past':''}${w.sun<=TODAY&&add(w.sun,6)>=TODAY?' now':''}"></i>`).join('')}</div>`;
+  return `<div class="pbar" aria-hidden="true">${weeksOf(c).map(w=>`<i class="${liveClass(w,c)}${add(w.sun,6)<TODAY?' past':''}${w.sun<=TODAY&&add(w.sun,6)>=TODAY?' now':''}"></i>`).join('')}</div>`;
 }
 
 // ---------- top ----------
@@ -1176,7 +1178,7 @@ function pageCampaign(id){
   const field=state==='done'||!now?'ph-prep':phaseClass(now,c);
   const where=state==='done'?`Done, Level ${c.level}`:state==='wrap'?`Wrap up, Level ${c.level}`:state==='next'?`Level ${c.level}`:`Week ${now.i} of ${now.n}: ${angleOf(now,c)}, Level ${c.level}`;
   const strip=[`<a class="ph-prep" href="#pw-prep" data-jump="pw-prep">Get ready<small>${esc(fmt(add(startOf(c),-3)))}</small></a>`,
-    ...ws.map(w=>`<a class="${phaseClass(w,c)}${now===w?' now':''}" href="#pw-${w.i}" data-jump="pw-${w.i}">${esc(angleOf(w,c))}<small>${esc(fmt(w.sun))}</small></a>`),
+    ...ws.map(w=>`<a class="${liveClass(w,c)}${now===w?' now':''}" href="#pw-${w.i}" data-jump="pw-${w.i}">${esc(angleOf(w,c))}<small>${esc(fmt(w.sun))}</small></a>`),
     `<a class="ph-after" href="#pw-after" data-jump="pw-after">Wrap up<small>${esc(fmt(add(c.date,1)))}</small></a>`].join('');
   const prep=ts.filter(t=>t.w==='prep');
   const prepRow=rowShell('pw-prep',`<div class="pw-date">${esc(shortDay(prep[0].date))}</div><span class="pw-tag ph-prep">Get ready</span>`,
