@@ -40,7 +40,7 @@ const pick = n => { const a = html.indexOf('const ' + n + '='); return html.slic
 const blockStart = gs.indexOf('// <plan>'), blockEnd = gs.indexOf('// </plan>');
 const block = gs.slice(blockStart, blockEnd);
 assert(block.includes(clientTables.trim()), 'playbook tables match index.html');
-['WEEKMAP', 'AFTER', 'HIGHLIGHT', 'PREP'].forEach(n => assert(block.includes(pick(n)), n + ' matches index.html'));
+['WEEKMAP', 'RUNMAP', 'RUNNAME', 'AFTER', 'HIGHLIGHT', 'PREP'].forEach(n => assert(block.includes(pick(n)), n + ' matches index.html'));
 
 ctx.setup();
 const code = props.OFFICE_CODE;
@@ -55,6 +55,18 @@ assert(ss.getSheetByName('Log').d.length === 3, 'writes go in the log');
 const c = ctx.norm_(get(code).campaigns[0]);
 const keys = ctx.tasksOf_(c).map(t => t.key + '|' + t.date);
 assert(keys.includes('c1~prep~0|2026-10-29') && keys.includes('c1~w1~email2|2026-11-03') && keys.includes('c1~after~1|2026-12-25'), 'task keys and dates as expected');
+
+// a fundraiser fills its whole run, and is cut short if it's already under way
+const run = (start, created) => ctx.norm_({ id: 'f1', name: 'Fundraiser', level: 4, status: 'active', date: '2026-12-06', start, created });
+const says = c => ctx.tasksOf_(c).filter(t => /~wr\d+~/.test(t.key)).map(t => t.date);
+const runKeys = ctx.tasksOf_(run('2026-11-03', '2026-11-03')).map(t => t.key);
+assert(says(run('2026-11-03', '2026-11-03'))[0] === '2026-11-08' && runKeys.includes('f1~wr3~email0') && runKeys.includes('f1~wr5~email0') && new Set(runKeys).size === runKeys.length, 'a five week run has launch, new story and last week, with unique task keys');
+assert(ctx.tasksOf_(run('2026-11-03', '2026-11-03')).find(t => t.key === 'f1~wr5~email0').date === '2026-12-01', 'the final push goes out before a run ends on a Sunday');
+assert(!runKeys.some(k => /~wr[24]~/.test(k)), 'rest weeks in a run have no tasks');
+assert(says(run('2026-10-01', '2026-11-20'))[0] === '2026-11-22', 'a run already under way starts from when it was added');
+assert(ctx.tasksOf_(ctx.norm_({ id: 'f2', level: 1, date: '2026-12-24', start: '2026-12-01', created: '2026-11-01' })).some(t => t.key === 'f2~w1~email2'), 'Level 1 keeps its 8 week plan');
+post({ action: 'request', name: 'Run request', date: '2027-03-01', start: '2027-01-10', requester: 'R', contact: 'r@x.ca', level: 5 });
+assert(get(code).campaigns.find(x => x.name === 'Run request').start === '2027-01-10', 'a request keeps its start date');
 
 const mcBad = JSON.parse(ctx.doGet({ parameter: { mc: 'nope' } }).t);
 assert(mcBad.ok === false, 'bad MC token refused');

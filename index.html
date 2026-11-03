@@ -646,6 +646,8 @@ const WHYWEEK={
 WHYWEEK[3]=WHYWEEK[2];WHYWEEK[5]=WHYWEEK[4];
 const PREP=l=>l<=3?['Find the story','Make the graphics','Build the web page']:['Find a story or photo','Write the post'];
 const WEEKMAP={8:[1,2,3,4,5,6,7,8],4:[1,2,3,4],3:[1,3,4],2:[1,4]};
+const RUNMAP=n=>n<2?[4]:n<5?WEEKMAP[n]:[1,...Array.from({length:n-2},(_,i)=>i%2?3:2),4];
+const RUNNAME={2:'Rest',3:'New story',4:'Last week'};
 const AFTER=l=>[[0,'post','Post live updates and behind-the-scenes'],[1,'post','Publish the recap post and email'],[1,'web',l==1?'Remove the banner, Launcher action and Info Card':'Remove the Launcher action and Next Steps section']];
 const HIGHLIGHT=[[2,'social','Post a spotlight sprinkle'],[2,'email','Send a churchwide sprinkle email',1],[2,'text','Send a churchwide sprinkle text',1]];
 
@@ -775,12 +777,18 @@ const rotation=()=>ongoing().filter(c=>c.level==2);
 
 function weeksOf(c){
   const k='w'+c.id;if(cache[k])return cache[k];
-  const n=lengthOf(c),map=WEEKMAP[n],last=sunOf(c.date),pb=PB[c.level]||PB[5];
-  return cache[k]=map.map((tw,i)=>({i:i+1,n,tw,sun:add(last,-(n-1-i)*7),...pb[tw]}));
+  const last=sunOf(c.date),pb=PB[c.level]||PB[5];
+  // A fundraiser or awareness campaign fills its whole run. If it's already under way, the plan starts from when it was added.
+  if(c.start&&c.level!=1){
+    const from=nextSun(c.created>c.start?c.created:c.start),n=Math.max(1,Math.round((D(last)-D(from))/6048e5)+1);
+    return cache[k]=RUNMAP(n).map((tw,i)=>({i:i+1,n,tw,k:'r'+(i+1),sun:add(last,-(n-1-i)*7),...pb[tw],angle:RUNNAME[tw]||pb[tw].angle,bull:String(pb[tw].bull).replace('this weekend','last week')}));
+  }
+  const n=lengthOf(c),map=WEEKMAP[n];
+  return cache[k]=map.map((tw,i)=>({i:i+1,n,tw,k:tw,sun:add(last,-(n-1-i)*7),...pb[tw]}));
 }
 const weekAt=(c,sun)=>weeksOf(c).find(w=>w.sun===sun);
 const startOf=c=>weeksOf(c)[0].sun;
-const sayKey=(c,w)=>`${c.id}~w${w.tw}~say`;
+const sayKey=(c,w)=>`${c.id}~w${w.k}~say`;
 
 function tasksOf(c){
   const k='t'+c.id;if(cache[k])return cache[k];
@@ -788,8 +796,8 @@ function tasksOf(c){
   PREP(c.level).forEach((label,j)=>out.push({key:`${c.id}~prep~${j}`,date:add(startOf(c),-3),ch:'prep',label,opt:false,c,w:'prep'}));
   weeksOf(c).forEach(w=>{
     if(w.say==='req'||w.say==='opt'){if(w.sun<=c.date)out.push({key:sayKey(c,w),date:w.sun,ch:'say',label:w.angle,opt:w.say==='opt',c,w:w.i,say:true})}
-    w.tasks.forEach((t,j)=>{const date=add(w.sun,t[0]);if(date>c.date)return;
-      out.push({key:`${c.id}~w${w.tw}~${t[1]}${j}`,date,ch:t[1],label:t[2],opt:!!t[3],c,w:w.i})});
+    w.tasks.forEach((t,j)=>{let date=add(w.sun,t[0]);if(date>c.date){if(!c.start||c.level==1)return;date=add(date,-7)}
+      out.push({key:`${c.id}~w${w.k}~${t[1]}${j}`,date,ch:t[1],label:t[2],opt:!!t[3],c,w:w.i})});
   });
   AFTER(c.level).forEach((t,j)=>out.push({key:`${c.id}~after~${j}`,date:add(c.date,t[0]),ch:t[1],label:t[2],opt:false,c,w:'after'}));
   return cache[k]=out;
@@ -1210,13 +1218,13 @@ function nextMonthSame(date){
 }
 function runAgainSheet(c){
   const def=nextMonthSame(c.date>TODAY?c.date:(c.date<TODAY?TODAY:c.date));
-  openDlg(`<form class="sheet" id="againForm"><div class="sheet-head"><div><h2>Run ${esc(c.name)} again</h2><p class="sheet-sub">Level ${c.level}, ${WEEKMAP[lengthOf(c)].length} weeks</p></div>${closeBtn()}</div>
-    ${dateField('New event date','date',def)}
+  openDlg(`<form class="sheet" id="againForm"><div class="sheet-head"><div><h2>Run ${esc(c.name)} again</h2><p class="sheet-sub">Level ${c.level}, ${weeksOf(c).length} weeks</p></div>${closeBtn()}</div>
+    ${dateField(c.start?'New end date':'New event date','date',def)}
     <div class="sheet-foot"><button class="btn solid">Start campaign</button></div></form>`);
   const f=$('#againForm');bindDate(f);
   f.onsubmit=e=>{e.preventDefault();if(dateMissing(f))return;const date=f.date.value;
     withName(()=>{const last=debriefText(c),notes=[(c.notes||'').replace(/\n*Last time:[\s\S]*$/,''),last&&`Last time: ${last}`].filter(Boolean).join('\n\n');
-      const n={...c,id:c.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,32)+'-'+Date.now().toString(36),date,notes,status:'active',created:TODAY,by:me,requester:'',contact:''};
+      const n={...c,id:c.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,32)+'-'+Date.now().toString(36),date,start:c.start?add(date,Math.round((D(c.start)-D(c.date))/864e5)):'',notes,status:'active',created:TODAY,by:me,requester:'',contact:''};
       saveCampaign(n);closeDlg();go('c/'+n.id)})};
 }
 function linkSheet(k){
@@ -1403,7 +1411,7 @@ function replySheet(c){
 // ---------- add / edit ----------
 let wiz=null;
 function openWizard(c,fromRequest){
-  wiz={id:c?.id||'',name:c?.name||'',date:c?.date||'',ministry:c?.ministry||'',notes:c?.notes||'',level:c?.level||MINISTRY[c?.ministry]||0,weeks:c?.weeks||0,story:c?.story||'',requester:c?.requester||'',contact:c?.contact||'',status:c?.status||'active',ongoing:!!c?.ongoing,created:c?.created||TODAY,step:fromRequest?2:1,isNew:!c,fromRequest:!!fromRequest};
+  wiz={id:c?.id||'',name:c?.name||'',date:c?.date||'',ministry:c?.ministry||'',notes:c?.notes||'',level:c?.level||MINISTRY[c?.ministry]||0,weeks:c?.weeks||0,start:c?.start||'',run:!!c?.start,story:c?.story||'',requester:c?.requester||'',contact:c?.contact||'',status:c?.status||'active',ongoing:!!c?.ongoing,created:fromRequest?TODAY:c?.created||TODAY,step:fromRequest?2:1,isNew:!c,fromRequest:!!fromRequest};
   drawWizard();
 }
 function fitWeeks(){
@@ -1418,7 +1426,8 @@ function drawWizard(){
   if(w.step===1){
     body=`<form class="sheet" id="wiz1"><div class="sheet-head"><h2>${esc(title)}</h2>${closeBtn()}</div>
     <label class="f">Name<input name="name" required value="${esc(w.name)}" autocomplete="off"></label>
-    ${w.ongoing?'':dateField('Event date','date',w.date)}
+    ${w.ongoing?'':w.run?dateField('Starts','start',w.start)+dateField('Ends','date',w.date):dateField('Event date','date',w.date)}
+    ${w.ongoing?'':`<div><button type="button" class="btn bare" style="min-height:0;padding:0" data-act="wizRun">${w.run?'Happens on one date':'Runs for several weeks'}</button></div>`}
     ${ministryField(w.ministry,true)}
     <label class="f">Notes<textarea name="notes" rows="2">${esc(w.notes)}</textarea></label>
     <div class="sheet-foot">${w.isNew?'':`<button type="button" class="btn bare left" data-act="delAsk" data-id="${esc(w.id)}">Delete</button>`}<button class="btn solid">Next</button></div></form>`;
@@ -1429,48 +1438,48 @@ function drawWizard(){
     <div class="sheet-foot"><button class="btn left" data-act="wizBack">Back</button><button class="btn solid" data-act="wizNext"${w.level?'':' disabled style="opacity:.4"'}>Next</button></div></div>`;
   }else{
     const n=fitWeeks();wiz.weeks=n;
-    const tmp={...w,weeks:n,id:'tmp'};cache={};
+    const tmp={...w,weeks:n,id:'tmp',start:w.run?w.start:''};cache={};
     const ws=weeksOf(tmp),L=LEVEL[w.level];
     const st=ws[0].sun;
     const past=st<TODAY;
     const sayN=ws.filter(x=>x.say==='req').length;
     cache={};
-    body=`<div class="sheet"><div class="sheet-head"><div><h2>Starts ${esc(long(st))}.</h2><p class="sheet-sub">${past?'Already passed. Earlier tasks stay off the overdue list.':`Event ${esc(full(w.date))}`}</p></div>${closeBtn()}</div>
-    ${w.level==1?'':`<div><span class="lbl">Weeks</span><div class="choices">${[4,3,2].map(x=>`<button class="choice" data-act="wizWeeks" data-n="${x}" aria-pressed="${x===n}">${x} weeks</button>`).join('')}</div></div>`}
-    ${planList(w.level,n,w.date)}
+    body=`<div class="sheet"><div class="sheet-head"><div><h2>Starts ${esc(long(st))}.</h2><p class="sheet-sub">${past?'Already passed. Earlier tasks stay off the overdue list.':`${w.run?'Ends':'Event'} ${esc(full(w.date))}`}</p></div>${closeBtn()}</div>
+    ${w.level==1||w.run?'':`<div><span class="lbl">Weeks</span><div class="choices">${[4,3,2].map(x=>`<button class="choice" data-act="wizWeeks" data-n="${x}" aria-pressed="${x===n}">${x} weeks</button>`).join('')}</div></div>`}
+    ${planList(w.level,n,w.date,w.run?w.start:'',w.created)}
     <div class="sheet-foot"><button class="btn left" data-act="wizBack">Back</button><button class="btn solid" data-act="wizSave">${w.isNew||w.fromRequest?'Start campaign':'Save'}</button></div></div>`;
   }
   openDlg(body);
   const f=$('#wiz1');
   if(f){
     bindDate(f);bindMinistry(f,v=>{const lv=MINISTRY[v];if(lv&&!wiz.level)wiz.level=lv});
-    f.onsubmit=e=>{e.preventDefault();if(dateMissing(f))return;wiz.name=f.name.value.trim();wiz.date=f.date?f.date.value:'';wiz.ministry=f.ministry.value.trim();wiz.notes=f.notes.value.trim();if(!wiz.level&&MINISTRY[wiz.ministry])wiz.level=MINISTRY[wiz.ministry];
+    f.onsubmit=e=>{e.preventDefault();if(dateMissing(f))return;wiz.name=f.name.value.trim();wiz.date=f.date?f.date.value:'';wiz.start=f.start?f.start.value:wiz.start;wiz.ministry=f.ministry.value.trim();wiz.notes=f.notes.value.trim();if(!wiz.level&&MINISTRY[wiz.ministry])wiz.level=MINISTRY[wiz.ministry];
       if(wiz.ongoing){finishWizard();return}wiz.step=2;drawWizard()};
   }
 }
 // One line per week: when it goes out and through what.
-function planList(level,weeks,date){
-  const tmp={id:'tmp-plan',level,weeks,date};
+function planList(level,weeks,date,start,created){
+  const tmp={id:'tmp-plan',level,weeks,date,start,created};
   cache={};
-  const rows=weeksOf(tmp).map(w=>{
+  const plan=weeksOf(tmp),st=plan[0].sun;
+  const rows=plan.map(w=>{
     const chs=[...new Set(w.tasks.filter(t=>!t[3]).map(t=>CH[t[1]]))];
     const parts=[w.say==='req'?'Announcement':'',w.slide?'Slide':'',w.desk?'Welcome Desk':'',...chs,w.bull?'Bulletin':''].filter(Boolean);
     return `<li><time>${esc(fmt(w.sun))}</time><div><b>${esc(w.say==='req'||w.say==='opt'||level>=4?w.angle:'Rest')}</b><span>${esc(parts.join(', '))}</span></div></li>`});
   cache={};
-  const st=add(sunOf(date),-(WEEKMAP[level==1?8:weeks].length-1)*7);
   return `<ul class="plan-list"><li><time>${esc(fmt(add(st,-3)))}</time><div><b>Get ready</b><span>${esc(PREP(level).join(', '))}</span></div></li>${rows.join('')}<li><time>${esc(fmt(add(date,1)))}</time><div><b>Wrap up</b><span>Recap post and email, take promos down</span></div></li></ul>`;
 }
 function finishWizard(){
   const w=wiz,id=w.id||(w.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,32)+'-'+Date.now().toString(36));
-  const c={story:w.story||'',id,name:w.name,date:w.date,level:w.level,weeks:w.level==1?8:w.weeks,ministry:w.ministry,notes:w.notes,status:w.status==='request'?'active':w.status,ongoing:w.ongoing,requester:w.requester,contact:w.contact,created:w.fromRequest?TODAY:w.created,by:me};
+  const c={story:w.story||'',id,name:w.name,date:w.date,level:w.level,weeks:w.level==1?8:w.weeks,start:w.run?w.start:'',ministry:w.ministry,notes:w.notes,status:w.status==='request'?'active':w.status,ongoing:w.ongoing,requester:w.requester,contact:w.contact,created:w.fromRequest?TODAY:w.created,by:me};
   saveCampaign(c);closeDlg();
   if(w.fromRequest){go('c/'+id);setTimeout(()=>replySheet(c),60)}else if(w.isNew)go('c/'+id);else render();
 }
 
 // ---------- fields ----------
 const dateField=(label,name,val)=>`<div class="dp"><span class="lbl">${label}</span><input type="hidden" name="${name}" value="${esc(val||'')}"><button type="button" class="dp-btn${val?'':' empty'}" aria-expanded="false"><span>${val?esc(full(val)):'Choose a date'}</span>${I(ICON.cal)}</button><div class="dp-cal" hidden></div><p class="dp-err" hidden>Choose a date to continue.</p></div>`;
-function bindDate(form){
-  const box=$('.dp',form);if(!box)return;
+function bindDate(form){form.querySelectorAll('.dp').forEach(bindDateBox)}
+function bindDateBox(box){
   const input=$('input',box),btn=$('.dp-btn',box),cal=$('.dp-cal',box);
   let month=(input.value||TODAY).slice(0,7);
   const shift=n=>{const x=D(month+'-01');x.setMonth(x.getMonth()+n);month=S(x).slice(0,7);draw()};
@@ -1480,13 +1489,17 @@ function bindDate(form){
       cells.push(`<button type="button" data-d="${d}" class="${d.slice(0,7)!==month?'out ':''}${d===TODAY?'today ':''}${d===input.value?'sel':''}" aria-label="${esc(full(d))}">${D(d).getDate()}</button>`)}
     cal.innerHTML=`<div class="dp-head"><button type="button" class="arrow" data-m="-1" aria-label="Previous month">${I(ICON.left)}</button><b>${esc(fmt(first,{month:'long',year:'numeric'}))}</b><button type="button" class="arrow" data-m="1" aria-label="Next month">${I(ICON.right)}</button></div><div class="dp-grid">${['S','M','T','W','T','F','S'].map(x=>`<span>${x}</span>`).join('')}${cells.join('')}</div>`;
   }
-  btn.onclick=()=>{cal.hidden=!cal.hidden;btn.setAttribute('aria-expanded',!cal.hidden);if(!cal.hidden)draw()};
+  btn.onclick=()=>{cal.hidden=!cal.hidden;btn.setAttribute('aria-expanded',!cal.hidden);if(cal.hidden)return;draw();
+    box.parentElement.querySelectorAll('.dp').forEach(o=>{if(o!==box){$('.dp-cal',o).hidden=true;$('.dp-btn',o).setAttribute('aria-expanded','false')}})};
   cal.onclick=e=>{const m=e.target.closest('[data-m]');if(m)return shift(+m.dataset.m);const c=e.target.closest('[data-d]');if(!c)return;
     input.value=c.dataset.d;month=input.value.slice(0,7);$('span',btn).textContent=full(input.value);btn.classList.remove('empty');cal.hidden=true;btn.setAttribute('aria-expanded','false');$('.dp-err',box).hidden=true};
 }
 function dateMissing(form){
-  const box=$('.dp',form);if(!box||$('input',box).value)return false;
-  $('.dp-err',box).hidden=false;const cal=$('.dp-cal',box);if(cal.hidden)$('.dp-btn',box).click();return true;
+  const show=(box,msg)=>{const err=$('.dp-err',box);err.textContent=msg;err.hidden=false;const cal=$('.dp-cal',box);if(cal.hidden)$('.dp-btn',box).click();return true};
+  const boxes=[...form.querySelectorAll('.dp')],empty=boxes.find(b=>!$('input',b).value);
+  if(empty)return show(empty,'Choose a date to continue.');
+  if(form.start&&form.date&&form.date.value<form.start.value)return show(boxes[1],'Choose a date after it starts.');
+  return false;
 }
 const ministryField=(val,showLevel)=>`<label class="f combo" data-levels="${showLevel?1:''}">Which ministry?<input name="ministry" maxlength="120" value="${esc(val||'')}" autocomplete="off"><div class="combo-list" hidden></div></label>`;
 function bindMinistry(form,onPick){
@@ -1508,7 +1521,7 @@ const quizOngoing=()=>Q.type==='ongoing'&&quizLevel()!==1;
 const WHY={1:Q=>Q.half==='bridge'?'It reaches people who do not come here yet.':'It reaches at least half the room.',
   2:()=>'It is a core next step.',3:()=>'Next gen gets its own level, whatever the numbers.',
   4:()=>'It serves one part of the church, so it gets its own permanent home.',5:()=>'It is one event for one group, so it goes through their channels.'};
-function startQuiz(mode){Q={mode,step:'type',hist:[],name:'',date:'',ministry:'',contact:'',requester:'',notes:''};drawQuiz()}
+function startQuiz(mode){Q={mode,step:'type',hist:[],name:'',date:'',start:'',ministry:'',contact:'',requester:'',notes:''};drawQuiz()}
 function qGo(step){Q.hist.push(Q.step);Q.step=step;drawQuiz()}
 function quizOpt(act,v,t,d){return `<button class="q-opt" data-act="${act}" data-v="${v}"><b>${t}</b>${d?`<span>${d}</span>`:''}</button>`}
 function quizFrame(n,inner){
@@ -1517,8 +1530,8 @@ function quizFrame(n,inner){
   return `<div class="quiz"><div class="q-top">${back}<div class="segs" aria-label="Step ${n} of 5">${dashes}</div>${Q.mode==='office'?closeBtn():''}</div>${inner}</div>`;
 }
 function quizBody(){
-  if(Q.step==='type')return quizFrame(1,`<p class="q-text">Is this a <em>one-off event</em>, or something <em>ongoing</em>?</p><div class="q-opts">
-    ${quizOpt('qType','event','A one-off event','A retreat, a fundraiser, a serve day')}${quizOpt('qType','ongoing','Something ongoing','A ministry, a next step, a weekly gathering')}</div>`);
+  if(Q.step==='type')return quizFrame(1,`<p class="q-text">What <em>kind</em> of campaign is this?</p><div class="q-opts">
+    ${quizOpt('qType','event','A single event','A serve day, a night out, a weekend retreat')}${quizOpt('qType','run','A fundraiser or awareness campaign','It runs for several weeks')}${quizOpt('qType','ongoing','Something ongoing','A ministry, a next step, a weekly gathering')}</div>`);
   if(Q.step==='aud')return quizFrame(2,`<p class="q-text">Who is this <em>really</em> for?</p><div class="q-opts">
     ${quizOpt('qAud','all','The whole church or the wider community','Christmas, Easter, Kick-Off Sunday, a service time change')}${quizOpt('qAud','core','Anyone taking a next step','Baptism, giving, serving, groups, newcomers')}${quizOpt('qAud','nextgen','Kids, youth or young adults','ONE80 Kids, Ocean Youth')}${quizOpt('qAud','ministry','One ministry or group','Rooted, Foster Care, Missions, Outreach')}</div>`);
   if(Q.step==='half')return quizFrame(3,`<p class="q-text">On a normal Sunday, would this reach <em>at least half</em> the room?</p><div class="q-opts">
@@ -1529,7 +1542,7 @@ function quizBody(){
     const ask=Q.mode==='ask';
     return quizFrame(4,`<form id="qForm" style="display:grid;gap:14px"><p class="q-text">A few <em>details</em>.</p>
     <label class="f">What is it called?<input name="name" required maxlength="120" value="${esc(Q.name)}" autocomplete="off"></label>
-    ${quizOngoing()?'':dateField('When is it?','date',Q.date)}
+    ${quizOngoing()?'':Q.type==='run'?dateField('When does it start?','start',Q.start)+dateField('When does it end?','date',Q.date):dateField('When is it?','date',Q.date)}
     ${ministryField(Q.ministry,!ask)}
     ${ask?`<div class="two"><label class="f">Your name<input name="requester" required maxlength="120" value="${esc(Q.requester)}" autocomplete="name"></label><label class="f">Your email<input name="contact" type="email" required maxlength="160" value="${esc(Q.contact)}" autocomplete="email"></label></div>
     <label class="hp" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label>`:`<label class="f">Who should we talk to?<input name="contact" maxlength="160" value="${esc(Q.contact)}" autocomplete="off"></label>`}
@@ -1545,14 +1558,15 @@ function quizBody(){
   const level=Q.level||quizLevel(),L=LEVEL[level],ong=quizOngoing()&&level!==1;
   const weeks=ong?0:Q.weeks&&(level!==1)?Q.weeks:level===1?8:fitWeeksFor(level,0,Q.date);
   if(!ong)Q.weeks=weeks;
-  const start=ong?null:(()=>{cache={};const st=weeksOf({id:'tmp-plan',level,weeks,date:Q.date})[0].sun;cache={};return st})();
+  const runStart=Q.type==='run'?Q.start:'';
+  const start=ong?null:(()=>{cache={};const st=weeksOf({id:'tmp-plan',level,weeks,date:Q.date,start:runStart,created:TODAY})[0].sun;cache={};return st})();
   const nots=NOTS[level];
   const ask=Q.mode==='ask';
   return quizFrame(5,`<div class="q-result l${level}"><small>${esc(L.name)}</small><b>Level ${level}</b><p>${esc((Q.level?'':WHY[level](Q)))}</p></div>
     ${ong?`<ul class="plan-list"><li><time>Weekly</time><div><b>Always on</b><span>${esc(L.web)}</span></div></li>${level===2?'<li><time>Rotates</time><div><b>Highlight week</b><span>A one-week spotlight every 4 to 6 weeks</span></div></li>':''}</ul>`:
     `<p class="q-text" style="font-size:clamp(24px,3vw,30px)">Starts <em>${esc(long(start))}</em>.</p>
-    ${level===1?'':`<div class="choices" style="margin:0">${[4,3,2].map(x=>`<button class="choice" data-act="qWeeks" data-n="${x}" aria-pressed="${x===weeks}">${x} weeks</button>`).join('')}</div>`}
-    ${planList(level,weeks,Q.date)}`}
+    ${level===1||runStart?'':`<div class="choices" style="margin:0">${[4,3,2].map(x=>`<button class="choice" data-act="qWeeks" data-n="${x}" aria-pressed="${x===weeks}">${x} weeks</button>`).join('')}</div>`}
+    ${planList(level,weeks,Q.date,runStart,TODAY)}`}
     ${Q.storyText?`<div class="q-story"><span>The story</span>${esc(Q.storyText)}${Q.teller?`<small>Told by ${esc(Q.teller)}</small>`:''}</div>`:'<div class="q-story none"><span>The story</span>Still needed. It goes on your Get ready list.</div>'}
     ${nots.length?`<div class="nots">${nots.map(n=>`<span>${esc(n)}</span>`).join('')}</div>`:''}
     ${Q.choose?`<div class="ladder">${[1,2,3,4,5].map(rung(level,'qLevel')).join('')}</div>`:''}
@@ -1566,7 +1580,7 @@ function drawQuiz(){
   if(sf)sf.onsubmit=e=>{e.preventDefault();Q.storyText=sf.story.value.trim();Q.teller=sf.teller.value.trim();Q.story=Q.storyText?'yes':'no';qGo('result')};
   const f=$('#qForm');if(!f)return;
   bindDate(f);bindMinistry(f);
-  f.onsubmit=e=>{e.preventDefault();if(dateMissing(f))return;Q.name=f.name.value.trim();Q.date=f.date?f.date.value:'';Q.ministry=f.ministry.value.trim();Q.contact=f.contact.value.trim();
+  f.onsubmit=e=>{e.preventDefault();if(dateMissing(f))return;Q.name=f.name.value.trim();Q.date=f.date?f.date.value:'';Q.start=f.start?f.start.value:'';Q.ministry=f.ministry.value.trim();Q.contact=f.contact.value.trim();
     if(f.requester)Q.requester=f.requester.value.trim();if(f.website)Q.website=f.website.value;qGo('story')};
 }
 function storyExamples(){
@@ -1585,7 +1599,7 @@ function fitWeeksFor(level,weeks,date){
 }
 function quizRecord(status){
   const level=Q.level||quizLevel(),ong=quizOngoing()&&level!==1;
-  return {id:Q.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,32)+'-'+Date.now().toString(36),name:Q.name,date:ong?'':Q.date,level,weeks:ong?0:Q.weeks,ministry:Q.ministry,notes:Q.storyText?`Story idea: ${Q.storyText}${Q.teller?` (${Q.teller})`:''}`:'',status,ongoing:ong,requester:Q.requester,contact:Q.contact,story:Q.story,created:TODAY,by:me};
+  return {id:Q.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,32)+'-'+Date.now().toString(36),name:Q.name,date:ong?'':Q.date,start:!ong&&Q.type==='run'?Q.start:'',level,weeks:ong?0:Q.weeks,ministry:Q.ministry,notes:Q.storyText?`Story idea: ${Q.storyText}${Q.teller?` (${Q.teller})`:''}`:'',status,ongoing:ong,requester:Q.requester,contact:Q.contact,story:Q.story,created:TODAY,by:me};
 }
 async function quizSend(){
   const c=quizRecord('request'),btn=$('[data-act=qSend]');btn.disabled=true;btn.textContent='Sending';
@@ -1661,6 +1675,7 @@ const ACT={
   closeDlg:()=>closeDlg(),
   wizLevel:b=>{wiz.level=+b.dataset.l;drawWizard()},
   wizNext:()=>{if(!wiz.level)return;if(wiz.ongoing){finishWizard();return}wiz.step=3;drawWizard()},
+  wizRun:()=>{const f=$('#wiz1');wiz.name=f.name.value;wiz.notes=f.notes.value;wiz.ministry=f.ministry.value;wiz.date=f.date?f.date.value:'';wiz.start=f.start?f.start.value:wiz.start;wiz.run=!wiz.run;drawWizard()},
   wizBack:()=>{wiz.step=wiz.step===3?2:1;drawWizard()},
   wizWeeks:b=>{wiz.weeks=+b.dataset.n;drawWizard()},
   wizSave:()=>finishWizard(),

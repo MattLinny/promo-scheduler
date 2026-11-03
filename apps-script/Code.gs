@@ -24,7 +24,7 @@ const TICKS = 'Ticks';
 const LINES = 'Stories';
 const SUNDAYS = 'Sundays';
 const TABS = {
-  Campaigns: ['id', 'name', 'date', 'level', 'weeks', 'ministry', 'notes', 'status', 'ongoing', 'requester', 'contact', 'created', 'by', 'story'],
+  Campaigns: ['id', 'name', 'date', 'level', 'weeks', 'ministry', 'notes', 'status', 'ongoing', 'requester', 'contact', 'created', 'by', 'story', 'start'],
   Ticks: ['key', 'by', 'at'],
   Stories: ['key', 'story', 'by', 'at'],
   Sundays: ['date', 'stage', 'booth', 'by', 'at'],
@@ -135,10 +135,10 @@ function onEdit() {
 /* ── A ministry leader's request. Public, so it can only add a row with status "request". ── */
 function request_(b) {
   if (b.website) return { ok: true }; // honeypot
-  const name = clean_(b.name, 120), date = clean_(b.date, 10), ongoing = b.ongoing ? '1' : '';
+  const name = clean_(b.name, 120), date = clean_(b.date, 10), start = /^\d{4}-\d{2}-\d{2}$/.test(String(b.start)) ? String(b.start) : '', ongoing = b.ongoing ? '1' : '';
   if (!name || (!ongoing && !/^\d{4}-\d{2}-\d{2}$/.test(date))) return { ok: false, error: 'missing' };
   const rec = {
-    id: 'r' + Utilities.getUuid().slice(0, 8), name, date, level: /^[1-5]$/.test(String(b.level)) ? String(b.level) : '', weeks: /^[234]$|^8$/.test(String(b.weeks)) ? String(b.weeks) : '',
+    id: 'r' + Utilities.getUuid().slice(0, 8), name, date, start, level: /^[1-5]$/.test(String(b.level)) ? String(b.level) : '', weeks: /^[234]$|^8$/.test(String(b.weeks)) ? String(b.weeks) : '',
     ministry: clean_(b.ministry, 120), notes: clean_(b.notes, 2000), status: 'request', ongoing, story: clean_(b.story, 10),
     requester: clean_(b.requester, 120), contact: clean_(b.contact, 160), created: stamp_().slice(0, 10), by: '',
   };
@@ -206,6 +206,8 @@ PB[4]=PB[5]={1:W('Interest','Launch',null,0,1,'Featured',[[0,'web','Publish the 
   3:W('Interest','New creative',null,0,1,'Featured',TUE('Send the ministry email, new creative','Send the ministry text','Post a sprinkle',{social:1})),
   4:W('Urgency','This weekend','smuggle',0,1,'Featured: this weekend',TUE('Send the ministry email: final chance','Send the ministry text','Post a sprinkle',{social:1}))};
 const WEEKMAP={8:[1,2,3,4,5,6,7,8],4:[1,2,3,4],3:[1,3,4],2:[1,4]};
+const RUNMAP=n=>n<2?[4]:n<5?WEEKMAP[n]:[1,...Array.from({length:n-2},(_,i)=>i%2?3:2),4];
+const RUNNAME={2:'Rest',3:'New story',4:'Last week'};
 const AFTER=l=>[[0,'post','Post live updates and behind-the-scenes'],[1,'post','Publish the recap post and email'],[1,'web',l==1?'Remove the banner, Launcher action and Info Card':'Remove the Launcher action and Next Steps section']];
 const HIGHLIGHT=[[2,'social','Post a spotlight sprinkle'],[2,'email','Send a churchwide sprinkle email',1],[2,'text','Send a churchwide sprinkle text',1]];
 const PREP=l=>l<=3?['Find the story','Make the graphics','Build the web page']:['Find a story or photo','Write the post'];
@@ -223,17 +225,24 @@ function norm_(c) {
 }
 const length_ = c => (c.level == 1 ? 8 : (WEEKMAP[c.weeks] ? c.weeks : 4));
 function weeksOf_(c) {
-  const n = length_(c), map = WEEKMAP[n], last = sunOf_(c.date), pb = PB[c.level] || PB[5];
-  return map.map((tw, i) => Object.assign({ i: i + 1, n, tw, sun: add_(last, -(n - 1 - i) * 7) }, pb[tw]));
+  const last = sunOf_(c.date), pb = PB[c.level] || PB[5];
+  if (c.start && c.level != 1) {
+    const from = nextSun_(c.created > c.start ? c.created : c.start), n = Math.max(1, Math.round((D_(last) - D_(from)) / 6048e5) + 1);
+    return RUNMAP(n).map((tw, i) => Object.assign({ i: i + 1, n, tw, k: 'r' + (i + 1), sun: add_(last, -(n - 1 - i) * 7) }, pb[tw], { angle: RUNNAME[tw] || pb[tw].angle, bull: String(pb[tw].bull).replace('this weekend', 'last week') }));
+  }
+  const n = length_(c), map = WEEKMAP[n];
+  return map.map((tw, i) => Object.assign({ i: i + 1, n, tw, k: tw, sun: add_(last, -(n - 1 - i) * 7) }, pb[tw]));
 }
 function tasksOf_(c) {
   const out = [], start = weeksOf_(c)[0].sun;
   PREP(c.level).forEach((label, j) => out.push({ key: c.id + '~prep~' + j, date: add_(start, -3), ch: 'prep', label, opt: false, c }));
   weeksOf_(c).forEach(w => {
-    if ((w.say === 'req' || w.say === 'opt') && w.sun <= c.date) out.push({ key: c.id + '~w' + w.tw + '~say', date: w.sun, ch: 'say', label: w.angle, opt: w.say === 'opt', c, say: true });
+    if ((w.say === 'req' || w.say === 'opt') && w.sun <= c.date) out.push({ key: c.id + '~w' + w.k + '~say', date: w.sun, ch: 'say', label: w.angle, opt: w.say === 'opt', c, say: true });
     w.tasks.forEach((t, j) => {
-      const date = add_(w.sun, t[0]);
-      if (date <= c.date) out.push({ key: c.id + '~w' + w.tw + '~' + t[1] + j, date, ch: t[1], label: t[2], opt: !!t[3], c });
+      let date = add_(w.sun, t[0]);
+      // A run's final push moves back a week rather than landing after it ends.
+      if (date > c.date && c.start && c.level != 1) date = add_(date, -7);
+      if (date <= c.date) out.push({ key: c.id + '~w' + w.k + '~' + t[1] + j, date, ch: t[1], label: t[2], opt: !!t[3], c });
     });
   });
   AFTER(c.level).forEach((t, j) => out.push({ key: c.id + '~after~' + j, date: add_(c.date, t[0]), ch: t[1], label: t[2], opt: false, c }));
