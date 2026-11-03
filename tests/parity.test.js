@@ -30,7 +30,7 @@ const ctx = { SpreadsheetApp: { getActive: () => ss }, PropertiesService: { getS
   Logger: { log() {} }, MailApp: { sendEmail: m => mails.push(m) }, ScriptApp: { getProjectTriggers: () => [], deleteTrigger() {}, WeekDay: {}, newTrigger: h => Object.assign(builder, { h }) },
   DriveApp: { getFileById: () => ({ getParents: () => ({ hasNext: () => false }) }) }, console };
 vm.createContext(ctx);
-vm.runInContext(gs + ';Object.assign(this,{setup,doGet,doPost,tasksOf_,weeksOf_,lineup_,digest_,norm_,sendWeeklyDigest,installTriggers,backupSheet});', ctx);
+vm.runInContext(gs + ';Object.assign(this,{RANKWEEKS,add_,sunOf_,setup,doGet,doPost,tasksOf_,weeksOf_,lineup_,digest_,norm_,sendWeeklyDigest,installTriggers,backupSheet});', ctx);
 const get = k => JSON.parse(ctx.doGet({ parameter: { key: k } }).t), post = b => JSON.parse(ctx.doPost({ postData: { contents: JSON.stringify(b) } }).t);
 
 // the plan in the page, without a browser
@@ -40,7 +40,7 @@ const pick = n => { const a = html.indexOf('const ' + n + '='); return html.slic
 const blockStart = gs.indexOf('// <plan>'), blockEnd = gs.indexOf('// </plan>');
 const block = gs.slice(blockStart, blockEnd);
 assert(block.includes(clientTables.trim()), 'playbook tables match index.html');
-['WEEKMAP', 'RUNMAP', 'RUNNAME', 'AFTER', 'HIGHLIGHT', 'PREP'].forEach(n => assert(block.includes(pick(n)), n + ' matches index.html'));
+['WEEKMAP', 'RUNMAP', 'RUNNAME', 'AFTER', 'HIGHLIGHT', 'RANKWEEKS', 'PREP'].forEach(n => assert(block.includes(pick(n)), n + ' matches index.html'));
 
 ctx.setup();
 const code = props.OFFICE_CODE;
@@ -76,6 +76,24 @@ const editedData = { campaigns: [edited], stories: [], ticks: [], sundays: [] };
 assert(ctx.lineup_('2026-11-15', editedData).stage.w.angle === 'Save the date', 'an early announcement goes on its Sunday');
 const firstSun = ctx.weeksOf_(edited)[0].sun;
 assert(!ctx.lineup_(firstSun, editedData).stage, 'a removed announcement comes off its Sunday');
+
+// a plan task can be renamed, and an added task can have a type
+const renamed = ctx.norm_({ id: 'e2', name: 'R', level: 1, status: 'active', date: '2027-03-20', created: '2026-11-03', edits: JSON.stringify({ add: [{ id: 'f', label: 'Hand out flyers', date: '2026-10-10', ch: 'print' }], del: [], ren: { 'e2~prep~0': 'Find two stories', 'e2~w1~say': 'Big reveal' } }) });
+const renTasks = ctx.tasksOf_(renamed);
+assert(renTasks.find(t => t.key === 'e2~prep~0').label === 'Find two stories' && renTasks.find(t => t.key === 'e2~x~f').ch === 'print', 'tasks can be renamed and typed');
+assert(ctx.lineup_(ctx.weeksOf_(renamed)[0].sun, { campaigns: [renamed], stories: [], ticks: [], sundays: [] }).stage.w.angle === 'Big reveal', 'a renamed announcement shows on Sunday');
+
+// four launches in a week: one leads, one rides along, the rest wait for room
+const rt = (id, level, end, date = '2026-11-03', extra = {}) => ({ key: id + '~s', id, level, end, date, opt: false, fixed: false, kind: 'social', ...extra });
+const four = ctx.RANKWEEKS([rt('xmas', 1, '2026-12-24'), rt('baby', 2, '2026-11-08'), rt('movie', 3, '2026-11-30'), rt('soul', 5, '2026-11-28')], {}, ctx.add_, ctx.sunOf_);
+assert(four['xmas~s'].rank === 'lead' && four['baby~s'].rank === 'sprinkle' && four['baby~s'].lead === 'xmas', 'highest level leads, next is the sprinkle');
+assert(four['movie~s'].rank === 'lead' && four['movie~s'].date === '2026-11-10' && four['movie~s'].moved && four['soul~s'].rank === 'sprinkle' && four['soul~s'].date === '2026-11-10', 'the rest move to the next week with room');
+const tooLate = ctx.RANKWEEKS([rt('a', 1, '2026-12-24'), rt('b', 2, '2026-12-24'), rt('c', 3, '2026-11-08')], {}, ctx.add_, ctx.sunOf_);
+assert(tooLate['c~s'].hold === 1 && tooLate['c~s'].date === '2026-11-03', 'a post with no room before its event goes on hold');
+const swapped = ctx.RANKWEEKS([rt('a', 1, '2026-12-24'), rt('b', 2, '2026-12-24')], { 'social~2026-11-01': 'b,a' }, ctx.add_, ctx.sunOf_);
+assert(swapped['b~s'].rank === 'lead' && swapped['a~s'].rank === 'sprinkle', 'a hand change wins');
+const small = ctx.RANKWEEKS([rt('m', 4, '2026-12-24')], {}, ctx.add_, ctx.sunOf_);
+assert(small['m~s'].rank === 'sprinkle', 'Level 4 and 5 never lead on their own');
 
 const mcBad = JSON.parse(ctx.doGet({ parameter: { mc: 'nope' } }).t);
 assert(mcBad.ok === false, 'bad MC token refused');

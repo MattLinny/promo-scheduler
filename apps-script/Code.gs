@@ -189,27 +189,28 @@ const TUE=(email,text,social,opt={})=>[[2,'email',email,opt.email],[2,'text',tex
 const PB={};
 PB[1]={1:W('Awareness','Launch','req',1,1,'Featured',[[0,'web','Publish the Launcher action'],[0,'web','Publish the web page and Info Card'],...TUE('Send the launch email','Send the launch text','Post a Story and feed sprinkle'),[2,'fb','Create the Facebook event']]),
   2:W('Awareness','Rest',null,1,1,'Upcoming'),
-  3:W('Awareness','The Handoff','req',1,1,'Highlight',TUE('Send a sprinkle email','Send a sprinkle text','Post a poll or something light',{email:1,text:1})),
-  4:W('Awareness','The Callback','req',1,1,'Highlight',TUE('Send a sprinkle email','Send a sprinkle text','Post a sprinkle',{email:1,text:1})),
-  5:W('Interest','Move to interest','req',1,1,'Highlight'),
-  6:W('Interest','Values and voice','req',1,1,'Highlight',TUE('Email: repurpose Sunday','Text: repurpose Sunday','Social: repurpose Sunday')),
-  7:W('Interest','Fresh creative','req',1,1,'Highlight',TUE('Email: repurpose Sunday','Text: repurpose Sunday','Social: repurpose Sunday')),
-  8:W('Urgency','Sprint','req',1,1,'Featured',[[0,'web','Upgrade the Launcher action to Featured'],[0,'web','Publish the floating banner'],[0,'social','Run the sprint: daily social, email or text, 7 days at most']])};
+  3:W('Awareness','Reminder','req',1,1,'Highlight',TUE('Send a sprinkle email','Send a sprinkle text','Post a poll or something light',{email:1,text:1})),
+  4:W('Awareness','Recap','req',1,1,'Highlight',TUE('Send a sprinkle email','Send a sprinkle text','Post a sprinkle',{email:1,text:1})),
+  5:W('Interest','Build interest','req',1,1,'Highlight'),
+  6:W('Interest','Why it matters','req',1,1,'Highlight',TUE("Email: reuse Sunday's story","Text: reuse Sunday's story","Social: reuse Sunday's story")),
+  7:W('Interest','New creative','req',1,1,'Highlight',TUE("Email: reuse Sunday's story","Text: reuse Sunday's story","Social: reuse Sunday's story")),
+  8:W('Urgency','Final sprint','req',1,1,'Featured',[[0,'web','Upgrade the Launcher action to Featured'],[0,'web','Publish the floating banner'],[0,'social','Run the sprint: daily social, email or text, 7 days at most']])};
 const MID=l=>{const who=l==2?'churchwide':'ministry';return {
-  1:W('Interest','Launch','req',1,1,'Highlight',[[0,'web','Publish the Launcher action'],[0,'web','Publish the page or Next Steps section'],...TUE(`Send the ${who} sprinkle email`,`Send the ${who} sprinkle text`,'Social: repurpose Sunday'),[2,'fb','Create the Facebook event',1]]),
+  1:W('Interest','Launch','req',1,1,'Highlight',[[0,'web','Publish the Launcher action'],[0,'web','Publish the page or Next Steps section'],...TUE(`Send the ${who} sprinkle email`,`Send the ${who} sprinkle text`,"Social: reuse Sunday's story"),[2,'fb','Create the Facebook event',1]]),
   2:W(l==3?'Awareness':'Interest','Rest',null,1,1,'Highlight'),
-  3:W('Interest','Values and voice','opt',1,1,'Highlight',TUE(`Send the ${who} sprinkle email`,`Send the ${who} sprinkle text`,'Social: repurpose Sunday',{email:l==2,text:l==2})),
-  4:W('Urgency','Final push','req',1,1,'Highlight',TUE(`Send the ${who} sprinkle email`,`Send the ${who} sprinkle text`,'Social: repurpose Sunday'))}};
+  3:W('Interest','Why it matters','opt',1,1,'Highlight',TUE(`Send the ${who} sprinkle email`,`Send the ${who} sprinkle text`,"Social: reuse Sunday's story",{email:l==2,text:l==2})),
+  4:W('Urgency','Final push','req',1,1,'Highlight',TUE(`Send the ${who} sprinkle email`,`Send the ${who} sprinkle text`,"Social: reuse Sunday's story"))}};
 PB[2]=MID(2);PB[3]=MID(3);
 PB[4]=PB[5]={1:W('Interest','Launch',null,0,1,'Featured',[[0,'web','Publish the post in the ministry collection'],[0,'web','Add the event to the Calendar page'],[0,'web','Add a Next Steps section',1],...TUE('Send the ministry email','Send the ministry text','Post a sprinkle',{social:1}),[2,'fb','Create the Facebook event',1]]),
-  2:W('Interest','Hold',null,0,1,'Featured'),
+  2:W('Interest','Rest',null,0,1,'Featured'),
   3:W('Interest','New creative',null,0,1,'Featured',TUE('Send the ministry email, new creative','Send the ministry text','Post a sprinkle',{social:1})),
-  4:W('Urgency','This weekend','smuggle',0,1,'Featured: this weekend',TUE('Send the ministry email: final chance','Send the ministry text','Post a sprinkle',{social:1}))};
+  4:W('Urgency','Last call','smuggle',0,1,'Featured: this weekend',TUE('Send the ministry email: final chance','Send the ministry text','Post a sprinkle',{social:1}))};
 const WEEKMAP={8:[1,2,3,4,5,6,7,8],4:[1,2,3,4],3:[1,3,4],2:[1,4]};
 const RUNMAP=n=>n<2?[4]:n<5?WEEKMAP[n]:[1,...Array.from({length:n-2},(_,i)=>i%2?3:2),4];
 const RUNNAME={2:'Rest',3:'New story',4:'Last week'};
 const AFTER=l=>[[0,'post','Post live updates and behind-the-scenes'],[1,'post','Publish the recap post and email'],[1,'web',l==1?'Remove the banner, Launcher action and Info Card':'Remove the Launcher action and Next Steps section']];
 const HIGHLIGHT=[[2,'social','Post a spotlight sprinkle'],[2,'email','Send a churchwide sprinkle email',1],[2,'text','Send a churchwide sprinkle text',1]];
+const RANKWEEKS=(ts,over,add,sunOf)=>{const out={};['social','msg'].forEach(kind=>{const items=ts.filter(t=>t.kind===kind);if(!items.length)return;const suns=items.map(t=>sunOf(t.date)),last=suns.reduce((a,b)=>a>b?a:b);let s=suns.reduce((a,b)=>a<b?a:b),carry=[];for(;s<=last||carry.length;s=add(s,7)){const sun=s,here=[...items.filter(t=>sunOf(t.date)===sun),...carry.filter(t=>add(sun,2)<=t.end)];carry.filter(t=>add(sun,2)>t.end).forEach(t=>{out[t.key]={date:t.date,rank:'hold',hold:1,kind}});carry=[];const ids=[...new Set(here.map(t=>t.id))],pri=id=>{const m=here.filter(t=>t.id===id);return [m.every(t=>t.opt)?1:0,m[0].level,m[0].end]};ids.sort((a,b)=>{const x=pri(a),y=pri(b);return x[0]-y[0]||x[1]-y[1]||x[2].localeCompare(y[2])});const want=String(over[kind+'~'+sun]||'').split(',').filter(x=>ids.includes(x)),lead=want.length?want[0]:ids.find(id=>pri(id)[1]<=3)||null,sprinkle=want.length>1?want[1]:ids.filter(id=>id!==lead)[0]||null;here.forEach(t=>{const moved=sunOf(t.date)!==sun,date=moved?add(sun,2):t.date;if(t.id===lead)out[t.key]={date,rank:'lead',moved,from:t.date,kind};else if(t.id===sprinkle)out[t.key]={date,rank:'sprinkle',lead,moved,from:t.date,kind};else if(t.opt||t.fixed)out[t.key]={date:t.date,rank:'hold',hold:1,kind};else carry.push(t)})}});return out};
 const PREP=l=>l<=3?['Find the story','Make the graphics','Build the web page']:['Find a story or photo','Write the post'];
 // </plan>
 const D_ = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
@@ -233,11 +234,13 @@ function weeksOf_(c) {
   const n = length_(c), map = WEEKMAP[n];
   return map.map((tw, i) => Object.assign({ i: i + 1, n, tw, k: tw, sun: add_(last, -(n - 1 - i) * 7) }, pb[tw]));
 }
-const editsOf_ = c => { try { const e = JSON.parse(c.edits || '{}'); return { add: e.add || [], del: e.del || [] }; } catch (err) { return { add: [], del: [] }; } };
+const editsOf_ = c => { try { const e = JSON.parse(c.edits || '{}'); return { add: e.add || [], del: e.del || [], ren: e.ren || {} }; } catch (err) { return { add: [], del: [], ren: {} }; } };
 function sundayWeek_(c, sun) {
   const w = weeksOf_(c).find(x => x.sun === sun), e = editsOf_(c), x = e.add.find(a => a.say && a.date === sun);
   if (x) return Object.assign({}, w || {}, { say: 'req', angle: x.label });
-  return w && e.del.indexOf(c.id + '~w' + w.k + '~say') >= 0 ? Object.assign({}, w, { say: null }) : w;
+  if (!w) return w;
+  const say = c.id + '~w' + w.k + '~say';
+  return e.del.indexOf(say) >= 0 ? Object.assign({}, w, { say: null }) : e.ren[say] ? Object.assign({}, w, { angle: e.ren[say] }) : w;
 }
 function tasksOf_(c) {
   const out = [], start = weeksOf_(c)[0].sun;
@@ -253,8 +256,8 @@ function tasksOf_(c) {
   });
   AFTER(c.level).forEach((t, j) => out.push({ key: c.id + '~after~' + j, date: add_(c.date, t[0]), ch: t[1], label: t[2], opt: false, c }));
   const e = editsOf_(c);
-  e.add.forEach(x => out.push({ key: c.id + '~x~' + x.id, date: x.date, ch: x.say ? 'say' : 'other', label: x.label, opt: false, c, say: !!x.say }));
-  return out.filter(t => e.del.indexOf(t.key) < 0);
+  e.add.forEach(x => out.push({ key: c.id + '~x~' + x.id, date: x.date, ch: x.say ? 'say' : x.ch || 'other', label: x.label, opt: false, c, say: !!x.say, added: true }));
+  return out.filter(t => e.del.indexOf(t.key) < 0).map(t => (e.ren[t.key] ? Object.assign({}, t, { label: e.ren[t.key] }) : t));
 }
 function lineup_(sun, data) {
   const active = data.campaigns.filter(c => c.status === 'active');
@@ -291,14 +294,31 @@ function mcData_() {
 }
 
 /* ── Monday email ── */
+function ranks_(data, today) {
+  const ts = [], over = {};
+  const ranked = (ch, level) => ch === 'social' || ((ch === 'email' || ch === 'text') && level <= 2);
+  const kind = ch => (ch === 'social' ? 'social' : 'msg');
+  data.campaigns.filter(c => c.status === 'active' && !c.ongoing && c.date).forEach(c => tasksOf_(c).forEach(t => {
+    if (!t.added && t.date >= (c.created || '') && ranked(t.ch, c.level)) ts.push({ key: t.key, id: c.id, level: c.level, end: c.date, date: t.date, opt: !!t.opt, fixed: false, kind: kind(t.ch) });
+  }));
+  for (let s = sunOf_(today), i = 0; i < 4; i++, s = add_(s, 7)) {
+    const l = lineup_(s, data), it = [l.stage].concat(l.booth).find(x => x && x.hl);
+    if (it) HIGHLIGHT.forEach((t, j) => { if (ranked(t[1], 2)) ts.push({ key: it.c.id + '~hl~' + s + '~' + j, id: it.c.id, level: it.c.level, end: '9999-12-31', date: add_(s, t[0]), opt: !!t[3], fixed: true, kind: kind(t[1]) }); });
+  }
+  data.stories.forEach(x => { if (String(x.key).indexOf('rank~') === 0) over[String(x.key).slice(5)] = x.story; });
+  return RANKWEEKS(ts, over, add_, sunOf_);
+}
 function digest_(today) {
-  const data = data_(), done = {};
+  const data = data_(), done = {}, ranks = ranks_(data, today);
   data.ticks.forEach(t => { done[t.key] = true; });
   const end = nextSun_(today), byCampaign = {}, overdue = [], launches = [];
   data.campaigns.filter(c => c.status === 'active' && !c.ongoing && c.date && c.level).forEach(c => {
     const start = weeksOf_(c)[0].sun;
     if (start <= end && add_(start, 6) >= today) launches.push(c.name + ' (' + fmt_(start) + ')');
-    tasksOf_(c).filter(t => !t.opt && !t.say && !done[t.key]).forEach(t => {
+    tasksOf_(c).map(t => {
+      const r = ranks[t.key];
+      return r ? Object.assign({}, t, { date: r.date, opt: t.opt || !!r.hold, label: (r.rank === 'lead' ? 'Lead: ' : r.rank === 'sprinkle' ? 'Sprinkle: ' : '') + t.label }) : t;
+    }).filter(t => !t.opt && !t.say && !done[t.key]).forEach(t => {
       if (t.date < today && t.date >= (c.created || '')) overdue.push(t);
       else if (t.date >= today && t.date <= end) (byCampaign[c.name] = byCampaign[c.name] || []).push(t);
     });

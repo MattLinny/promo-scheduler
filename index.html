@@ -256,6 +256,7 @@ a.tl-name{text-decoration:none;color:var(--ink)}
 .tl-chip:hover{filter:brightness(.96)}
 .tl-chip b{font-weight:700}
 .tl-chip.opt{background:none;box-shadow:inset 0 0 0 1px var(--line);color:var(--mute)}
+.tl-chip.lead{background:var(--ur);color:#fff}
 .tl-chip.done{opacity:.5;text-decoration:line-through}
 .legend i.lg-ev{background:var(--indigo);border-radius:99px}
 .tl-cell .todo{gap:6px;padding:4px 0;font-size:13px;line-height:1.2}
@@ -294,6 +295,11 @@ a.tl-name{text-decoration:none;color:var(--ink)}
 .said-past{opacity:.55}
 .edit-bar{position:sticky;top:8px;z-index:5;display:flex;align-items:center;gap:8px;background:var(--white);border-radius:99px;padding:6px 6px 6px 18px;margin:12px 0;box-shadow:0 2px 14px rgba(24,6,42,.1)}
 .edit-bar .spacer{flex:1}
+.pw-pb{font-size:13px;color:var(--mute);margin-top:1px}
+.seg.early span{overflow:hidden;text-overflow:ellipsis}
+.held{padding:4px 0 4px 32px;color:var(--mute)}
+.held .todo-t{display:block}
+.rank-btn{margin-left:auto;min-height:0}
 .kind{display:flex;flex-wrap:wrap;gap:8px}
 .tw.removed{justify-content:space-between;align-items:center;padding:4px 0}
 .pw-angle{font-size:16px;font-weight:600;margin-top:6px;line-height:1.2}
@@ -633,12 +639,13 @@ const ICON={
   right:'<path d="m9 5 7 7-7 7"/>',
   rocket:'<path d="M12 2.800c3.600 2.200 5 6 5 9.700l-2 3.500H9l-2-3.500c0-3.700 1.400-7.500 5-9.700z"/><circle cx="12" cy="9.800" r="1.700"/><path d="M8.600 14.800 6 17.500V21l3.300-2.500M15.400 14.800 18 17.500V21l-3.300-2.500M12 18.500V22"/>',
   inbox:'<path d="M4 13.500 6.500 5h11L20 13.500V19H4z"/><path d="M4 13.500h5l1 2.500h4l1-2.500h5"/>',
+  pen:'<path d="M4 20h4L19 9l-4-4L4 16v4z"/>',
   link:'<path d="M10 14a4 4 0 0 0 5.700 0l3-3a4 4 0 0 0-5.700-5.700l-1 1"/><path d="M14 10a4 4 0 0 0-5.700 0l-3 3a4 4 0 0 0 5.700 5.700l1-1"/>',
   mega:'<path d="M3 10.5v3a1 1 0 0 0 1 1h3l9 5V4.500l-9 5H4a1 1 0 0 0-1 1z"/><path d="M19 9.500a3.500 3.500 0 0 1 0 5M8 14.500l1 5.500h2.500l-1-4.200"/>',
   cal:'<rect x="3.500" y="5" width="17" height="15.500" rx="3"/><path d="M3.500 10h17M8 3v4M16 3v4"/>',
   go:'<path d="M7 17 17 7M8.5 7H17v8.5"/>',
 };
-const CH={other:'Task',say:'Announcement',slide:'Pre-service slide',desk:'Welcome Desk',web:'Website',email:'Email',text:'Text',social:'Social',fb:'Facebook event',bulletin:'Weekly Bulletin',post:'After',prep:'Get ready'};
+const CH={other:'Task',print:'In person or print',say:'Announcement',slide:'Pre-service slide',desk:'Welcome Desk',web:'Website',email:'Email',text:'Text',social:'Social',fb:'Facebook event',bulletin:'Weekly Bulletin',post:'After',prep:'Get ready'};
 
 // ---------- playbooks ----------
 // One week: phase, the announcement angle, say (req/opt/none), on the slide, at the desk, bulletin spot, tasks [weekday, channel, label, optional].
@@ -647,22 +654,22 @@ const TUE=(email,text,social,opt={})=>[[2,'email',email,opt.email],[2,'text',tex
 const PB={};
 PB[1]={1:W('Awareness','Launch','req',1,1,'Featured',[[0,'web','Publish the Launcher action'],[0,'web','Publish the web page and Info Card'],...TUE('Send the launch email','Send the launch text','Post a Story and feed sprinkle'),[2,'fb','Create the Facebook event']]),
   2:W('Awareness','Rest',null,1,1,'Upcoming'),
-  3:W('Awareness','The Handoff','req',1,1,'Highlight',TUE('Send a sprinkle email','Send a sprinkle text','Post a poll or something light',{email:1,text:1})),
-  4:W('Awareness','The Callback','req',1,1,'Highlight',TUE('Send a sprinkle email','Send a sprinkle text','Post a sprinkle',{email:1,text:1})),
-  5:W('Interest','Move to interest','req',1,1,'Highlight'),
-  6:W('Interest','Values and voice','req',1,1,'Highlight',TUE('Email: repurpose Sunday','Text: repurpose Sunday','Social: repurpose Sunday')),
-  7:W('Interest','Fresh creative','req',1,1,'Highlight',TUE('Email: repurpose Sunday','Text: repurpose Sunday','Social: repurpose Sunday')),
-  8:W('Urgency','Sprint','req',1,1,'Featured',[[0,'web','Upgrade the Launcher action to Featured'],[0,'web','Publish the floating banner'],[0,'social','Run the sprint: daily social, email or text, 7 days at most']])};
+  3:W('Awareness','Reminder','req',1,1,'Highlight',TUE('Send a sprinkle email','Send a sprinkle text','Post a poll or something light',{email:1,text:1})),
+  4:W('Awareness','Recap','req',1,1,'Highlight',TUE('Send a sprinkle email','Send a sprinkle text','Post a sprinkle',{email:1,text:1})),
+  5:W('Interest','Build interest','req',1,1,'Highlight'),
+  6:W('Interest','Why it matters','req',1,1,'Highlight',TUE("Email: reuse Sunday's story","Text: reuse Sunday's story","Social: reuse Sunday's story")),
+  7:W('Interest','New creative','req',1,1,'Highlight',TUE("Email: reuse Sunday's story","Text: reuse Sunday's story","Social: reuse Sunday's story")),
+  8:W('Urgency','Final sprint','req',1,1,'Featured',[[0,'web','Upgrade the Launcher action to Featured'],[0,'web','Publish the floating banner'],[0,'social','Run the sprint: daily social, email or text, 7 days at most']])};
 const MID=l=>{const who=l==2?'churchwide':'ministry';return {
-  1:W('Interest','Launch','req',1,1,'Highlight',[[0,'web','Publish the Launcher action'],[0,'web','Publish the page or Next Steps section'],...TUE(`Send the ${who} sprinkle email`,`Send the ${who} sprinkle text`,'Social: repurpose Sunday'),[2,'fb','Create the Facebook event',1]]),
+  1:W('Interest','Launch','req',1,1,'Highlight',[[0,'web','Publish the Launcher action'],[0,'web','Publish the page or Next Steps section'],...TUE(`Send the ${who} sprinkle email`,`Send the ${who} sprinkle text`,"Social: reuse Sunday's story"),[2,'fb','Create the Facebook event',1]]),
   2:W(l==3?'Awareness':'Interest','Rest',null,1,1,'Highlight'),
-  3:W('Interest','Values and voice','opt',1,1,'Highlight',TUE(`Send the ${who} sprinkle email`,`Send the ${who} sprinkle text`,'Social: repurpose Sunday',{email:l==2,text:l==2})),
-  4:W('Urgency','Final push','req',1,1,'Highlight',TUE(`Send the ${who} sprinkle email`,`Send the ${who} sprinkle text`,'Social: repurpose Sunday'))}};
+  3:W('Interest','Why it matters','opt',1,1,'Highlight',TUE(`Send the ${who} sprinkle email`,`Send the ${who} sprinkle text`,"Social: reuse Sunday's story",{email:l==2,text:l==2})),
+  4:W('Urgency','Final push','req',1,1,'Highlight',TUE(`Send the ${who} sprinkle email`,`Send the ${who} sprinkle text`,"Social: reuse Sunday's story"))}};
 PB[2]=MID(2);PB[3]=MID(3);
 PB[4]=PB[5]={1:W('Interest','Launch',null,0,1,'Featured',[[0,'web','Publish the post in the ministry collection'],[0,'web','Add the event to the Calendar page'],[0,'web','Add a Next Steps section',1],...TUE('Send the ministry email','Send the ministry text','Post a sprinkle',{social:1}),[2,'fb','Create the Facebook event',1]]),
-  2:W('Interest','Hold',null,0,1,'Featured'),
+  2:W('Interest','Rest',null,0,1,'Featured'),
   3:W('Interest','New creative',null,0,1,'Featured',TUE('Send the ministry email, new creative','Send the ministry text','Post a sprinkle',{social:1})),
-  4:W('Urgency','This weekend','smuggle',0,1,'Featured: this weekend',TUE('Send the ministry email: final chance','Send the ministry text','Post a sprinkle',{social:1}))};
+  4:W('Urgency','Last call','smuggle',0,1,'Featured: this weekend',TUE('Send the ministry email: final chance','Send the ministry text','Post a sprinkle',{social:1}))};
 // Why each week looks the way it does, from the playbooks.
 const WHYWEEK={
   1:{1:'Begin promotion churchwide with one story and one next step.',2:'Stay visible without oversaturating. No churchwide reminders.',3:'Re-surface it with something interactive. Connect in-person and online.',4:'Recap last week and carry the momentum.',5:'Shift to interest. Social, email and text rest for a week.',6:'Anchor it in a value and repurpose it across channels.',7:'Keep momentum with creative variety.',8:'Final push: high-visibility web, plus a sprint.'},
@@ -675,7 +682,9 @@ const RUNMAP=n=>n<2?[4]:n<5?WEEKMAP[n]:[1,...Array.from({length:n-2},(_,i)=>i%2?
 const RUNNAME={2:'Rest',3:'New story',4:'Last week'};
 const AFTER=l=>[[0,'post','Post live updates and behind-the-scenes'],[1,'post','Publish the recap post and email'],[1,'web',l==1?'Remove the banner, Launcher action and Info Card':'Remove the Launcher action and Next Steps section']];
 const HIGHLIGHT=[[2,'social','Post a spotlight sprinkle'],[2,'email','Send a churchwide sprinkle email',1],[2,'text','Send a churchwide sprinkle text',1]];
+const RANKWEEKS=(ts,over,add,sunOf)=>{const out={};['social','msg'].forEach(kind=>{const items=ts.filter(t=>t.kind===kind);if(!items.length)return;const suns=items.map(t=>sunOf(t.date)),last=suns.reduce((a,b)=>a>b?a:b);let s=suns.reduce((a,b)=>a<b?a:b),carry=[];for(;s<=last||carry.length;s=add(s,7)){const sun=s,here=[...items.filter(t=>sunOf(t.date)===sun),...carry.filter(t=>add(sun,2)<=t.end)];carry.filter(t=>add(sun,2)>t.end).forEach(t=>{out[t.key]={date:t.date,rank:'hold',hold:1,kind}});carry=[];const ids=[...new Set(here.map(t=>t.id))],pri=id=>{const m=here.filter(t=>t.id===id);return [m.every(t=>t.opt)?1:0,m[0].level,m[0].end]};ids.sort((a,b)=>{const x=pri(a),y=pri(b);return x[0]-y[0]||x[1]-y[1]||x[2].localeCompare(y[2])});const want=String(over[kind+'~'+sun]||'').split(',').filter(x=>ids.includes(x)),lead=want.length?want[0]:ids.find(id=>pri(id)[1]<=3)||null,sprinkle=want.length>1?want[1]:ids.filter(id=>id!==lead)[0]||null;here.forEach(t=>{const moved=sunOf(t.date)!==sun,date=moved?add(sun,2):t.date;if(t.id===lead)out[t.key]={date,rank:'lead',moved,from:t.date,kind};else if(t.id===sprinkle)out[t.key]={date,rank:'sprinkle',lead,moved,from:t.date,kind};else if(t.opt||t.fixed)out[t.key]={date:t.date,rank:'hold',hold:1,kind};else carry.push(t)})}});return out};
 
+const PLAYBOOK={Reminder:'The Handoff',Recap:'The Callback','Build interest':'Move to interest','Why it matters':'Values and voice','New creative':'Fresh creative','Final sprint':'Sprint','Final push':'Urgency'};
 const LEVEL={
   1:{name:'Impacts 80% of the church',eg:'Christmas, Easter, Kick-Off Sunday, Church Outside, Love Your City, a service time or location change',
     web:'Banner, Launcher, page, Info Card, Weekly Bulletin',msg:'Churchwide',social:'Sprint and sprinkle promos',sun:'Announcement, pre-service slide, Welcome Desk',len:'8 weeks'},
@@ -712,8 +721,8 @@ const WORDS=[
   ['Sprinkle','A post worth reading on its own, with the promo in the last line.'],
   ['Sprint','Up to 7 days of daily promo in the last week. Level 1 only, 2 to 4 times a year.'],
   ['Highlight week','A one-week spotlight on an always-on next step.'],
-  ['The Handoff','An announcement that connects Sunday in the room with what is online.'],
-  ['The Callback','An announcement that recaps last week and carries it forward.'],
+  ['Reminder (The Handoff)','An announcement that connects Sunday in the room with what is online.'],
+  ['Recap (The Callback)','An announcement that recaps last week and carries it forward.'],
   ['Smuggle','A Level 4 or 5 event mentioned from stage inside a real Level 2 ask, like serving.'],
 ];
 // What someone can ask for, and what the policy answers at each level.
@@ -816,7 +825,7 @@ const startOf=c=>weeksOf(c)[0].sun;
 const sayKey=(c,w)=>`${c.id}~w${w.k}~say`;
 
 // A campaign's own changes to its plan: tasks added, and plan tasks removed.
-const editsOf=c=>{try{const e=JSON.parse(c.edits||'{}');return {add:e.add||[],del:e.del||[]}}catch(e){return {add:[],del:[]}}};
+const editsOf=c=>{try{const e=JSON.parse(c.edits||'{}');return {add:e.add||[],del:e.del||[],ren:e.ren||{}}}catch(e){return {add:[],del:[],ren:{}}}};
 const addedKey=(c,x)=>`${c.id}~x~${x.id}`;
 function planTasks(c){
   const out=[];
@@ -829,17 +838,33 @@ function planTasks(c){
   AFTER(c.level).forEach((t,j)=>out.push({key:`${c.id}~after~${j}`,date:add(c.date,t[0]),ch:t[1],label:t[2],opt:false,c,w:'after'}));
   return out;
 }
+// Each week one campaign leads on social and churchwide email and text, one rides along, and the rest wait.
+function ranks(){
+  if(cache.ranks)return cache.ranks;
+  const ts=[],push=(t,c,fixed)=>ts.push({key:t.key,id:c.id,level:c.level,end:fixed?'9999-12-31':c.date,date:t.date,opt:!!t.opt,fixed:!!fixed,kind:t.ch==='social'?'social':'msg'});
+  const ranked=(t,c)=>t.ch==='social'||(['email','text'].includes(t.ch)&&c.level<=2);
+  dated().forEach(c=>rawTasks(c).forEach(t=>{if(!t.added&&t.date>=(c.created||'')&&ranked(t,c))push(t,c)}));
+  for(let s=sunOf(TODAY),i=0;i<26;i++,s=add(s,7))highlightRaw(s).forEach(t=>{if(ranked(t,t.c))push(t,t.c,true)});
+  const over={};Object.values(DB.stories).forEach(x=>{if(x.key.startsWith('rank~'))over[x.key.slice(5)]=x.story});
+  return cache.ranks=RANKWEEKS(ts,over,add,sunOf);
+}
+const withRank=t=>{const r=ranks()[t.key];return r?{...t,date:r.date,rank:r.rank,kind:r.kind,lead:r.lead,hold:!!r.hold,moved:!!r.moved,from:r.from,opt:t.opt||!!r.hold}:t};
 function tasksOf(c){
   const k='t'+c.id;if(cache[k])return cache[k];
+  return cache[k]=rawTasks(c).map(withRank);
+}
+function rawTasks(c){
+  const k='r'+c.id;if(cache[k])return cache[k];
   const e=editsOf(c),st=startOf(c);
-  const added=e.add.map(x=>({key:addedKey(c,x),date:x.date,ch:x.say?'say':'other',label:x.label,opt:false,c,w:x.date>c.date?'after':x.date<st?'early':weekAt(c,sunOf(x.date))?.i||'early',say:!!x.say,added:true}));
-  return cache[k]=[...planTasks(c).filter(t=>!e.del.includes(t.key)),...added];
+  const added=e.add.map(x=>({key:addedKey(c,x),date:x.date,ch:x.say?'say':x.ch||'other',label:x.label,opt:false,c,w:x.date>c.date?'after':x.date<st?'early':weekAt(c,sunOf(x.date))?.i||'early',say:!!x.say,added:true}));
+  return cache[k]=[...planTasks(c).filter(t=>!e.del.includes(t.key)).map(t=>e.ren[t.key]?{...t,label:e.ren[t.key]}:t),...added];
 }
 // The week as Sunday sees it: an added announcement switches it on, a removed one switches it off.
 function sundayWeek(c,sun){
   const w=weekAt(c,sun),e=editsOf(c),x=e.add.find(a=>a.say&&a.date===sun);
   if(x)return {...(w||{i:0,n:0,sun,tasks:[]}),say:'req',angle:x.label,x:addedKey(c,x)};
-  return w&&e.del.includes(sayKey(c,w))?{...w,say:null}:w;
+  if(!w)return w;
+  return e.del.includes(sayKey(c,w))?{...w,say:null}:e.ren[sayKey(c,w)]?{...w,angle:e.ren[sayKey(c,w)]}:w;
 }
 const isDone=k=>!!DB.ticks[k];
 const openTasks=c=>tasksOf(c).filter(t=>!t.opt&&!isDone(t.key)&&!(t.date<(c.created||'')));
@@ -897,7 +922,8 @@ function sharedTasks(sun){
   return cache[k]=out;
 }
 
-function highlightTasks(sun){
+const highlightTasks=sun=>highlightRaw(sun).map(withRank);
+function highlightRaw(sun){
   const l=lineup(sun),it=[l.stage,...l.booth].find(x=>x&&x.hl);if(!it)return [];
   return HIGHLIGHT.map((t,j)=>({key:`${it.c.id}~hl~${sun}~${j}`,date:add(sun,t[0]),ch:t[1],label:t[2],opt:!!t[3],c:it.c,w:0}));
 }
@@ -998,7 +1024,8 @@ function todo(key,label,sub,opt){
   return `<button class="todo${on?' on':''}${view.popped===key?' pop':''}" data-tick="${esc(key)}" aria-pressed="${on}" title="${esc(on&&t.by?`Done by ${t.by}`:'Mark as done')}"><span class="box">${on?I(ICON.check,14):''}</span><span class="todo-t">${esc(label)}${opt?' <span class="opt">(optional)</span>':''}${sub?`<small>${esc(sub)}</small>`:''}</span></button>`;
 }
 const linkOf=k=>DB.stories['link~'+k]?.story||'';
-const removeBtn=t=>`<button class="linkbtn" data-act="taskDel" data-id="${esc(t.c.id)}" data-k="${esc(t.key)}" aria-label="Remove ${esc(t.label)}" title="Remove">${I(ICON.x,15)}</button>`;
+const removeBtn=t=>`<button class="linkbtn" data-act="taskEdit" data-id="${esc(t.c.id)}" data-k="${esc(t.key)}" aria-label="Rename ${esc(t.label)}" title="Rename">${I(ICON.pen,15)}</button><button class="linkbtn" data-act="taskDel" data-id="${esc(t.c.id)}" data-k="${esc(t.key)}" aria-label="Remove ${esc(t.label)}" title="Remove">${I(ICON.x,15)}</button>`;
+const rankNote=t=>t.moved?`Moved to ${fmt(t.date)}`:t.hold?'On hold':!contested(t)?'':t.rank==='lead'?'Lead':t.rank==='sprinkle'?'Sprinkle':'';
 function taskLine(t,sub,edit){
   const url=linkOf(t.key);
   const a=url?`<a class="tasklink" href="${esc(url)}" target="_blank" rel="noopener">Open</a>`:'';
@@ -1031,12 +1058,12 @@ function chrome(active,body){
 }
 
 // ---------- to do ----------
-const CHGROUP={prep:['prep'],sunday:['say'],slide:['slide'],desk:['desk'],bulletin:['bulletin'],msg:['email','text'],social:['social','fb'],web:['web'],after:['post']};
+const CHGROUP={print:['print'],prep:['prep'],sunday:['say'],slide:['slide'],desk:['desk'],bulletin:['bulletin'],msg:['email','text'],social:['social','fb'],web:['web'],after:['post']};
 const OWNERS=[['prep','Story and graphics'],['sunday','Sunday announcements'],['slide','Pre-service slides'],['desk','Welcome Desk'],['bulletin','Weekly Bulletin'],['msg','Email and text'],['social','Social'],['web','Website'],['after','After the event']];
 const groupOf=ch=>Object.keys(CHGROUP).find(k=>CHGROUP[k].includes(ch));
 const ownerOf=ch=>DB.owners[groupOf(ch)]||'';
 const chanHas=(chan,ch)=>!chan||(chan==='mine'?!!me&&ownerOf(ch).toLowerCase()===me.toLowerCase():(CHGROUP[chan]||[]).includes(ch));
-const SHOW=[['','Everything'],['mine','My tasks'],['prep','Get ready: story and graphics'],['sunday','Sunday announcements'],['slide','Pre-service slides'],['desk','Welcome Desk'],['bulletin','Weekly Bulletin'],['msg','Email and text'],['social','Social'],['web','Website'],['after','After the event']];
+const SHOW=[['','Everything'],['mine','My tasks'],['print','In person and print'],['prep','Get ready: story and graphics'],['sunday','Sunday announcements'],['slide','Pre-service slides'],['desk','Welcome Desk'],['bulletin','Weekly Bulletin'],['msg','Email and text'],['social','Social'],['web','Website'],['after','After the event']];
 const pickSel=(k,label,opts,val)=>`<label class="sel"><span>${label}</span><select data-sel="${k}">${opts.map(([v,l])=>`<option value="${v}"${v===val?' selected':''}>${esc(l)}</option>`).join('')}</select></label>`;
 const spanOf=c=>c.ongoing||!c.date?'Always on':`Campaign runs ${long(startOf(c))} – ${long(c.date)}`;
 const lvlTag=c=>`<span class="lvl">Level ${c.level}</span>`;
@@ -1065,9 +1092,39 @@ function campBlock(c,ts,noDate){
   return `<section class="block"><a class="bh" href="#/c/${esc(c.id)}"><span class="bh-ic">${launching?rocket(20):I(ICON.mega,20)}</span><span class="bh-t"><b>${esc(c.name)}</b></span>${where?`<span class="bh-wh">${esc(where)}</span>`:''}</a>
     <div class="bb">${daysBody(ts.map(t=>({date:t.date,html:taskLine(t,ownerOf(t.ch))})),noDate)}</div></section>`;
 }
-function plainBlock(icon,title,rows,noDate,href){
-  const inner=`<span class="bh-ic">${I(icon,20)}</span><span class="bh-t"><b>${esc(title)}</b></span>`;
+function plainBlock(icon,title,rows,noDate,href,extra=''){
+  const inner=`<span class="bh-ic">${I(icon,20)}</span><span class="bh-t"><b>${esc(title)}</b></span>${extra}`;
   return `<section class="block plain">${href?`<a class="bh" href="${href}">${inner}</a>`:`<div class="bh">${inner}</div>`}<div class="bb">${daysBody(rows,noDate)}</div></section>`;
+}
+const rankOf=(c,t)=>ranks()[t.key];
+// Who's competing for a week, whether they're in it now or were moved out of it.
+const weekRivals=(kind,s)=>cache['rv'+kind+s]||(cache['rv'+kind+s]=dated().filter(c=>rawTasks(c).some(t=>{const r=rankOf(c,t);return r&&r.kind===kind&&(sunOf(r.date)===s||(r.from&&sunOf(r.from)===s)||(r.hold&&sunOf(t.date)===s))})));
+const contested=t=>t.rank&&weekRivals(t.kind,sunOf(t.moved?t.from:t.date)).length>1;
+function rankBlocks(kind,from,to,due,chan,noDate){
+  const mine=t=>t.rank&&t.kind===kind&&chanHas(chan,t.ch);
+  const live=due.filter(mine),held=[];
+  dated().forEach(c=>{const out=rawTasks(c).filter(t=>{const r=rankOf(c,t);return r&&r.kind===kind&&chanHas(chan,t.ch)&&!t.opt&&((r.moved&&r.from>=from&&r.from<=to)||(r.hold&&t.date>=from&&t.date<=to))})[0];
+    if(out){const r=rankOf(c,out);held.push({c,date:r.from||out.date,sub:r.moved?`Moved to ${fmt(r.date)}`:'No room before the event'})}});
+  const suns=[...new Set([...live.map(t=>sunOf(t.date)),...held.map(h=>sunOf(h.date))])].sort();
+  return suns.map(s=>{
+    const here=live.filter(t=>sunOf(t.date)===s).sort((a,b)=>(a.rank==='lead'?0:1)-(b.rank==='lead'?0:1));
+    const leadName=id=>DB.campaigns.find(c=>c.id===id)?.name||'';
+    const rows=[...here.map(t=>({date:t.date,html:!contested(t)?todo(t.key,t.c.name,t.label):todo(t.key,`${t.rank==='lead'?'Lead':'Sprinkle'}: ${t.c.name}`,t.rank==='sprinkle'&&t.lead?`Last line of the ${leadName(t.lead)} ${kind==='social'?'post':t.ch}`:t.label)})),
+      ...held.filter(h=>sunOf(h.date)===s).map(h=>({date:h.date,html:`<div class="held"><span class="todo-t">Hold: ${esc(h.c.name)}<small>${esc(h.sub)}</small></span></div>`}))];
+    return plainBlock(kind==='social'?ICON.mega:ICON.say,kind==='social'?'Social':'Churchwide email and text',rows,noDate,'',weekRivals(kind,s).length>1?`<button class="btn bare rank-btn" data-act="rankChange" data-kind="${kind}" data-sun="${s}">Change</button>`:'');
+  });
+}
+function rankSheet(kind,s){
+  const list=weekRivals(kind,s);if(!list.length)return;
+  const r=ranks(),cur=rank=>list.find(c=>rawTasks(c).some(t=>{const x=r[t.key];return x&&x.rank===rank&&x.kind===kind&&sunOf(x.date)===s}))?.id||'';
+  const pick=(name,label,val)=>`<label class="f">${label}<select name="${name}">${list.map(c=>`<option value="${esc(c.id)}"${c.id===val?' selected':''}>${esc(c.name)}</option>`).join('')}</select></label>`;
+  const key=`rank~${kind}~${s}`;
+  openDlg(`<form class="sheet" id="rankForm"><div class="sheet-head"><div><h2>${kind==='social'?'Social':'Churchwide email and text'}</h2><p class="sheet-sub">Week of ${esc(long(s))}</p></div>${closeBtn()}</div>
+    ${pick('lead','Lead',cur('lead'))}${list.length>1?pick('sprinkle','Sprinkle',cur('sprinkle')):''}
+    <div class="sheet-foot">${DB.stories[key]?'<button type="button" class="btn bare left" id="rankAuto">Back to automatic</button>':''}<button class="btn solid">Save</button></div></form>`);
+  const f=$('#rankForm'),save=v=>withName(()=>{saveStory(key,v);cache={};closeDlg();render()});
+  f.onsubmit=e=>{e.preventDefault();const a=f.lead.value,b=f.sprinkle?.value||'';save(b&&b!==a?`${a},${b}`:a)};
+  $('#rankAuto')?.addEventListener('click',()=>save(''));
 }
 function weekBlocks(from,to,chan,noDate){
   const keep=t=>chanHas(chan,t.ch);
@@ -1078,7 +1135,8 @@ function weekBlocks(from,to,chan,noDate){
     for(let d=sunOf(from);d<=to;d=add(d,7))if(d>=from){const l=lineup(d);[[l.stage,'Stage'],...l.booth.map(x=>[x,'Booth'])].forEach(([it,where])=>{if(it)rows.push({date:d,html:todo(itemSayKey(it,d),`${where}: ${it.c.name}`,DB.stories[`${it.c.id}~${d}`]?it.w.angle:`${it.w.angle}, needs a story`)})})}
     if(rows.length)out.push(plainBlock(ICON.say,'Sunday announcements',rows,noDate,'#/sunday'));
   }
-  const byC={};due.forEach(t=>(byC[t.c.id]=byC[t.c.id]||{c:t.c,ts:[]}).ts.push(t));
+  ['social','msg'].forEach(k=>out.push(...rankBlocks(k,from,to,due,chan,noDate)));
+  const byC={};due.filter(t=>!t.rank).forEach(t=>(byC[t.c.id]=byC[t.c.id]||{c:t.c,ts:[]}).ts.push(t));
   Object.values(byC).sort((a,b)=>a.c.level-b.c.level||(a.c.date||'').localeCompare(b.c.date||'')).forEach(({c,ts})=>out.push(campBlock(c,ts,noDate)));
   if(shared.length)out.push(plainBlock(ICON.cal,'Every week',shared.map(t=>({date:t.date,html:todo(t.key,t.name,[ownerOf(t.ch),t.list.join(', ')].filter(Boolean).join(': '))})),noDate));
   return out.join('');
@@ -1170,13 +1228,15 @@ function pageCampaigns(){
 
 // ---------- timeline ----------
 const TL_COL=()=>innerWidth<760?96:118;
-const TL_SHOW=[['','Everything'],['social','Social'],['msg','Email and text'],['sunday','Sunday announcements'],['room','In the building'],['slide','Pre-service slides'],['desk','Welcome Desk'],['bulletin','Weekly Bulletin'],['web','Website']];
+const TL_SHOW=[['','Everything'],['social','Social'],['msg','Email and text'],['sunday','Sunday announcements'],['room','In person and print'],['slide','Pre-service slides'],['desk','Welcome Desk'],['bulletin','Weekly Bulletin'],['web','Website']];
 const chipName=l=>{const t=l.replace(/^Post an? /,'').replace(/^Send (the|an?) /,'').replace(/^Social: /,'').replace(/^(Create|Publish|Add|Upgrade) (the |an? )?/,'').replace(/^(Run the sprint):.*/,'$1');return cap(t)};
 function tlItems(c,s,chan){
-  if(['social','msg','web'].includes(chan))return tasksOf(c).filter(t=>!t.say&&chanHas(chan,t.ch)&&sunOf(t.date)===s).sort((a,b)=>a.date.localeCompare(b.date)).map(t=>({day:fmt(t.date,{weekday:'short'}),label:chipName(t.label),title:`${shortDay(t.date)}: ${t.label}`,opt:t.opt,done:isDone(t.key)}));
+  const chip=t=>({day:fmt(t.date,{weekday:'short'}),label:chipName(t.label),title:`${shortDay(t.date)}: ${t.label}${t.moved?`, moved from ${fmt(t.from)}`:''}`,opt:t.opt,done:isDone(t.key),rank:contested(t)?t.rank:''});
+  if(['social','msg','web'].includes(chan))return tasksOf(c).filter(t=>!t.say&&chanHas(chan,t.ch)&&sunOf(t.date)===s).sort((a,b)=>a.date.localeCompare(b.date)).map(chip);
   if(chan==='sunday'){const l=lineup(s),it=[l.stage,...l.booth].find(x=>x&&x.c.id===c.id&&!x.hl);return it?[{label:l.stage===it?'Stage':'Booth',title:it.w.angle,done:isDone(itemSayKey(it,s))}]:[]}
-  const w=c.level&&c.date>=s?weekAt(c,s):null;if(!w)return [];
   const out=[],room=chan==='room';
+  if(room)tasksOf(c).filter(t=>t.ch==='print'&&sunOf(t.date)===s).forEach(t=>out.push(chip(t)));
+  const w=c.level&&c.date>=s?weekAt(c,s):null;if(!w)return out;
   if((room||chan==='slide')&&w.slide)out.push({label:'Slide',title:CH.slide});
   if((room||chan==='desk')&&w.desk)out.push({label:'Welcome Desk',title:CH.desk});
   if((room||chan==='bulletin')&&w.bull)out.push({label:room?'Bulletin':w.bull,title:`${CH.bulletin}: ${w.bull}`});
@@ -1184,9 +1244,9 @@ function tlItems(c,s,chan){
 }
 const tlRotation=(s,chan)=>{
   if(chan==='sunday'){const l=lineup(s);return [l.stage,...l.booth].some(x=>x&&x.hl)?[{label:'Highlight',title:'Highlight week'}]:[]}
-  return ['social','msg'].includes(chan)?highlightTasks(s).filter(t=>chanHas(chan,t.ch)).map(t=>({day:fmt(t.date,{weekday:'short'}),label:chipName(t.label),title:`${shortDay(t.date)}: ${t.label}`,opt:t.opt,done:isDone(t.key)})):[];
+  return ['social','msg'].includes(chan)?highlightTasks(s).filter(t=>chanHas(chan,t.ch)).map(t=>({day:fmt(t.date,{weekday:'short'}),label:chipName(t.label),title:`${shortDay(t.date)}: ${t.label}`,opt:t.opt,done:isDone(t.key),rank:contested(t)?t.rank:''})):[];
 };
-const tlChip=(x,href)=>`<a class="tl-chip${x.opt?' opt':''}${x.done?' done':''}" href="${href}" title="${esc(x.title||x.label)}">${x.day?`<b>${esc(x.day)}</b> `:''}${esc(x.label)}</a>`;
+const tlChip=(x,href)=>{const tag=x.rank==='lead'?'Lead':x.rank==='sprinkle'?'Sprinkle':x.rank==='hold'?'Hold':x.day;return `<a class="tl-chip${x.rank==='lead'&&!x.opt?' lead':''}${x.opt?' opt':''}${x.done?' done':''}" href="${href}" title="${esc(x.title||x.label)}">${tag?`<b>${esc(tag)}</b> `:''}${esc(x.label)}</a>`};
 function pageTimeline(){
   const list=dated().filter(c=>stateOf(c)!=='done').sort((a,b)=>startOf(a).localeCompare(startOf(b))||a.level-b.level);
   const running=list.filter(c=>['running','wrap'].includes(stateOf(c))).length;
@@ -1214,7 +1274,8 @@ function pageTimeline(){
     ws.forEach((w,i)=>{if(w.sun<first)return;const end=i===ws.length-1?add(c.date,1):add(w.sun,7),wd=Math.max(COL*.25,x(end)-x(w.sun))-2;
       const cls=[liveClass(w,c),i===ws.length-1?'last':''].join(' ');
       segs.push(`<a class="seg ${cls}" href="#/c/${esc(c.id)}" style="left:${x(w.sun)}px;width:${wd}px" title="${esc(fmt(w.sun))}: ${esc(angleOf(w,c))}, ${esc(w.phase)}">${i===0?I(ICON.rocket,15):''}${angleOf(w,c).length*6.2+(i===0?36:16)<wd?`<span>${esc(angleOf(w,c))}</span>`:''}</a>`)});
-    tasksOf(c).filter(t=>t.say&&t.w==='early'&&t.date>=first&&t.date<add(st,-7)).forEach(t=>{const wd=x(add(t.date,7))-x(t.date)-2;segs.push(`<a class="seg first ${t.date>TODAY?'ph-prep':'ph-Awareness'}" href="#/c/${esc(c.id)}" style="left:${x(t.date)}px;width:${wd}px" title="${esc(fmt(t.date))}: ${esc(t.label)}">${I(ICON.say,15)}<span>${esc(t.label.length*6.2+36<wd?t.label:'Announce')}</span></a>`)});
+    const earlyWeeks={};tasksOf(c).filter(t=>t.w==='early'&&sunOf(t.date)>=first&&sunOf(t.date)<add(st,-7)).forEach(t=>(earlyWeeks[sunOf(t.date)]=earlyWeeks[sunOf(t.date)]||[]).push(t));
+    Object.entries(earlyWeeks).forEach(([s,ts])=>{const wd=x(add(s,7))-x(s)-2,t=ts[0];segs.push(`<a class="seg first early ${s>TODAY?'ph-prep':'ph-Awareness'}" href="#/c/${esc(c.id)}" style="left:${x(s)}px;width:${wd}px" title="${ts.map(y=>`${fmt(y.date)}: ${y.label}`).map(esc).join(', ')}">${I(t.say?ICON.say:ICON.cal,15)}<span>${esc(ts.length>1?`${ts.length} early`:t.label)}</span></a>`)});
     // A row whose bar is far off the page still says when it begins.
     if(add(st,-7)>add(nowSun,28)&&segs.length<=ws.length+1&&!segs.some(g=>g.includes('tl-later')))segs.push(`<a class="tl-later" href="#/c/${esc(c.id)}" style="left:${x(add(nowSun,7))}px">Starts ${esc(fmt(st))}</a>`);
     const flag=`<span class="tl-flag" style="left:${x(add(c.date,1))}px">Event ${esc(fmt(c.date))}</span>`;
@@ -1318,19 +1379,32 @@ function earlyLine(c,t){
   const story=DB.stories[`${c.id}~${t.date}`]?.story;
   return line+(it?`<button class="storyline" data-act="story" data-id="${esc(c.id)}" data-sun="${t.date}">${story?esc(story):'<u>Add the story</u>'}</button>`:'');
 }
-function saveEdits(c,e){saveCampaign({...c,edits:e.add.length||e.del.length?JSON.stringify(e):''});cache={}}
-function taskAddSheet(c,kind,label,date,sun){
+function saveEdits(c,e){saveCampaign({...c,edits:e.add.length||e.del.length||Object.keys(e.ren).length?JSON.stringify(e):''});cache={}}
+const TASK_TYPES=[['other','General'],['print','In person or print'],['social','Social'],['email','Email'],['text','Text'],['web','Website']];
+function taskAddSheet(c,kind,label,date,sun,ch='other'){
   const fills=[];for(let s=nextSun(TODAY);s<=sunOf(c.date);s=add(s,7))if(!tasksOf(c).some(t=>t.say&&t.date===s))fills.push(s);
   openDlg(`<form class="sheet" id="taskForm"><div class="sheet-head"><div><h2>Add to ${esc(c.name)}</h2></div>${closeBtn()}</div>
     <div class="kind">${[['task','Task'],['say','Sunday announcement']].map(([k,t])=>`<button type="button" class="btn${k===kind?' solid':''}" data-act="taskKind" data-id="${esc(c.id)}" data-kind="${k}" aria-pressed="${k===kind}">${t}</button>`).join('')}</div>
     <label class="f">Name<input name="label" required maxlength="120" autocomplete="off" value="${esc(label)}"></label>
-    ${kind==='say'?`<label class="f">Which Sunday<select name="sun" required>${fills.map(s=>`<option value="${s}"${s===sun?' selected':''}>${esc(fmt(s,{month:'long',day:'numeric',year:s.slice(0,4)===TODAY.slice(0,4)?undefined:'numeric'}))} (${lineup(s).count} of 3)</option>`).join('')}</select></label>`:dateField('Date','date',date)}
+    ${kind==='say'?`<label class="f">Which Sunday<select name="sun" required>${fills.map(s=>`<option value="${s}"${s===sun?' selected':''}>${esc(fmt(s,{month:'long',day:'numeric',year:s.slice(0,4)===TODAY.slice(0,4)?undefined:'numeric'}))} (${lineup(s).count} of 3)</option>`).join('')}</select></label>`:`<label class="f">Type<select name="ch">${TASK_TYPES.map(([v,t])=>`<option value="${v}"${v===ch?' selected':''}>${t}</option>`).join('')}</select></label>${dateField('Date','date',date)}`}
     <div class="sheet-foot"><button class="btn solid">Add</button></div></form>`);
   const f=$('#taskForm');bindDate(f);
   f.onsubmit=e=>{e.preventDefault();const name=f.label.value.trim(),when=kind==='say'?f.sun.value:f.date.value;if(!name||!when)return;
-    const cur=editsOf(c);cur.add.push({id:Date.now().toString(36),label:name,date:when,...(kind==='say'?{say:1}:{})});
+    const cur=editsOf(c);cur.add.push({id:Date.now().toString(36),label:name,date:when,...(kind==='say'?{say:1}:f.ch.value==='other'?{}:{ch:f.ch.value})});
     saveEdits(c,cur);closeDlg();render();
     if(kind==='say'){const l=lineup(when);if(![l.stage,...l.booth].some(x=>x&&x.c.id===c.id))toast(`${long(when)} is full. Swap it on the Sunday tab.`)}}
+}
+function taskEditSheet(c,k){
+  const e=editsOf(c),x=e.add.find(a=>addedKey(c,a)===k),t=rawTasks(c).find(a=>a.key===k),orig=planTasks(c).find(a=>a.key===k);if(!t)return;
+  openDlg(`<form class="sheet" id="taskEdit"><div class="sheet-head"><div><h2>Rename task</h2></div>${closeBtn()}</div>
+    <label class="f">Name<input name="label" required maxlength="120" autocomplete="off" value="${esc(t.label)}"></label>
+    ${x&&!x.say?dateField('Date','date',x.date):''}
+    <div class="sheet-foot">${orig&&e.ren[k]?'<button type="button" class="btn bare left" id="taskOrig">Back to original</button>':''}<button class="btn solid">Save</button></div></form>`);
+  const f=$('#taskEdit');bindDate(f);
+  const done=()=>{saveEdits(c,e);closeDlg();render()};
+  f.onsubmit=ev=>{ev.preventDefault();const v=f.label.value.trim();if(!v)return;
+    if(x){x.label=v;if(f.date?.value)x.date=f.date.value}else if(v===orig.label)delete e.ren[k];else e.ren[k]=v;done()};
+  $('#taskOrig')?.addEventListener('click',()=>{delete e.ren[k];done()});
 }
 function rowShell(id,left,right,isNow,collapsed,isNext){
   if(collapsed)return `<div class="pw-done" id="${id}">${I(ICON.check,16)}<span>${esc(collapsed)}</span></div>`;
@@ -1359,8 +1433,8 @@ function weekRow(c,w,now){
   }
   const also=[w.slide?'Pre-service slide':'',w.desk?'Welcome Desk':'',w.bull?'Weekly Bulletin':''].filter(Boolean).join(', ');
   const col=(h,inner)=>inner?`<div class="pw-col"><h4>${h}</h4>${inner}</div>`:'';
-  const row=t=>taskLine(t,'',true);
-  const left=`<div class="pw-date">${esc(fmt(w.sun))}</div><span class="pw-tag ph-${esc(w.phase)}">${esc(w.phase)}</span><div class="pw-angle">${esc(angleOf(w,c))}</div><div class="pw-why">${esc(WHYWEEK[c.level]?.[w.tw]||'')}</div>`;
+  const row=t=>taskLine(t,rankNote(t),true);
+  const left=`<div class="pw-date">${esc(fmt(w.sun))}</div><span class="pw-tag ph-${esc(w.phase)}">${esc(w.phase)}</span><div class="pw-angle">${esc(angleOf(w,c))}</div>${c.level<=3&&PLAYBOOK[angleOf(w,c)]?`<div class="pw-pb">Playbook: ${esc(PLAYBOOK[angleOf(w,c)])}</div>`:''}<div class="pw-why">${esc(WHYWEEK[c.level]?.[w.tw]||'')}</div>`;
   const sunHead=w.sun===TODAY?'Today':w.sun<TODAY&&isNow?'Last Sunday':'Sunday';
   const right=col(sunHead,sayHTML+dayTasks(0).map(row).join(''))+col('Tuesday',dayTasks(2).map(row).join(''))+col('Other days',ts.filter(t=>!t.say&&![0,2].includes(D(t.date).getDay())).map(t=>taskLine(t,shortDay(t.date),true)).join(''))+`<p class="pw-also">Also on: ${esc(also)}</p>`;
   return rowShell('pw-'+w.i,left,right,isNow,'',w.sun===nextSun(TODAY));
@@ -1482,7 +1556,7 @@ function pageRules(){
     <div class="sect" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px"><span>${me?`You're ${esc(me)}.`:''}</span>${me?'<button class="btn bare" data-act="rename" style="padding:0">Change name</button>':''}</div>
     <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-top:10px"><span>Request form for ministry leaders:</span><a class="btn bare" href="#/ask" style="padding:0">Open</a><button class="btn bare" data-act="copyAsk" style="padding:0">Copy link</button></div>`;
   if(tab==='policy')body=`<div class="rules">${RULES.map(([t,d])=>`<div><b>${esc(t)}.</b><span>${esc(d)}</span></div>`).join('')}</div>
-    <h2 style="margin:clamp(26px,3vw,36px) 0 12px">The limits</h2><div class="rules"><div><b>1 on stage, 2 in the Booth.</b><span>Three or fewer each Sunday.</span></div><div><b>Sprints, 2 to 4 a year.</b><span>Level 1 only, 7 days at most. ${sprintsUsed(TODAY.slice(0,4))} used in ${TODAY.slice(0,4)}.</span></div><div><b>Sunday, Tuesday, Thursday.</b><span>Booth and slides, then email and social, then the Weekly Bulletin.</span></div></div>`;
+    <h2 style="margin:clamp(26px,3vw,36px) 0 12px">The limits</h2><div class="rules"><div><b>1 on stage, 2 in the Booth.</b><span>Three or fewer each Sunday.</span></div><div><b>1 lead, 1 sprinkle a week.</b><span>Social and churchwide email and text. The rest wait for a quieter week.</span></div><div><b>Sprints, 2 to 4 a year.</b><span>Level 1 only, 7 days at most. ${sprintsUsed(TODAY.slice(0,4))} used in ${TODAY.slice(0,4)}.</span></div><div><b>Sunday, Tuesday, Thursday.</b><span>Booth and slides, then email and social, then the Weekly Bulletin.</span></div></div>`;
   if(tab==='words')body=`<dl class="gloss">${WORDS.map(([t,d])=>`<div><dt>${esc(t)}</dt><dd>${esc(d)}</dd></div>`).join('')}</dl>`;
   return chrome('rules',`<h1>Rules.</h1>
   <div class="choices" style="margin:clamp(12px,1.6vw,18px) 0 clamp(16px,2vw,24px)">${tabs.map(([k,l])=>`<button class="choice" data-act="rulesTab" data-k="${k}" aria-pressed="${k===tab}">${l}</button>`).join('')}</div>${body}`);
@@ -1716,7 +1790,7 @@ async function quizSend(){
 const TOUR=[
   ()=>`<h2>Know <em>what's next</em>.</h2><div class="tour-body"><p>Every event becomes a campaign with a dated plan from the playbooks. This app tells you which ones are running, where each one is, and what to do this week.</p></div>`,
   ()=>`<h2>The <em>To do</em> page is your week.</h2><div class="tour-body"><p>It shows what is overdue, what is about to start, and every task by day. A faded circle is a task you haven't done. Tap it when it's done, and everyone sees who did it. Try one.</p><div class="group"><span class="group-h">Christmas Services</span><button class="todo" data-act="tourTick"><span class="box"></span><span class="todo-t">Send the launch email</span></button><button class="todo" data-act="tourTick"><span class="box"></span><span class="todo-t">Send the launch text</span></button></div></div>`,
-  ()=>`<h2>The <em>Timeline</em> shows it all.</h2><div class="tour-body"><p>One row per campaign, one column per week. A bar is the promo, and the dark pill is the event. Bars stay grey until their week arrives, then show the playbook phase. Open a row for its tasks, or use Show to see one channel, like social.</p><div class="mini-tl"><div><i class="ph-prep">Get ready</i><i class="ph-Awareness">Launch</i><i class="ph-rest">Rest</i><i class="ph-Awareness">Handoff</i><i class="ph-Interest">Interest</i><i class="ph-Urgency">Sprint</i></div></div><div class="legend">${LEGEND}</div></div>`,
+  ()=>`<h2>The <em>Timeline</em> shows it all.</h2><div class="tour-body"><p>One row per campaign, one column per week. A bar is the promo, and the dark pill is the event. Bars stay grey until their week arrives, then show the playbook phase. Open a row for its tasks, or use Show to see one channel, like social.</p><div class="mini-tl"><div><i class="ph-prep">Get ready</i><i class="ph-Awareness">Launch</i><i class="ph-rest">Rest</i><i class="ph-Awareness">Reminder</i><i class="ph-Interest">Interest</i><i class="ph-Urgency">Sprint</i></div></div><div class="legend">${LEGEND}</div></div>`,
   ()=>`<h2>The other <em>tabs</em>.</h2><div class="tour-body"><div class="gets"><div><dt>Campaigns</dt><dd>Every campaign in a sortable list: where it is, what's next, and whether it's on track.</dd></div><div><dt>Sunday</dt><dd>The campaigns due an announcement fill 1 stage spot and 2 Booth spots. Anything else goes to the bulletin.</dd></div><div><dt>Rules</dt><dd>What each level gets, and an answer to copy when someone asks for more.</dd></div><div><dt>The + button</dt><dd>A few questions find the level and build the plan.</dd></div></div></div>`,
 ];
 function openTour(i=0){
@@ -1766,7 +1840,9 @@ const ACT={
     wkToggle:b=>{const o=view.wkOpen,k=b.dataset.s;o.has(k)?o.delete(k):o.add(k);render()},
   taskMode:b=>{view.editTasks=view.editTasks===b.dataset.id?'':b.dataset.id;render()},
   taskAdd:b=>{const c=DB.campaigns.find(x=>x.id===b.dataset.id);taskAddSheet(c,'task','',TODAY,'')},
-  taskKind:b=>{const c=DB.campaigns.find(x=>x.id===b.dataset.id),f=$('#taskForm');taskAddSheet(c,b.dataset.kind,f.label.value,f.date?.value||TODAY,f.sun?.value||'')},
+  taskKind:b=>{const c=DB.campaigns.find(x=>x.id===b.dataset.id),f=$('#taskForm');taskAddSheet(c,b.dataset.kind,f.label.value,f.date?.value||TODAY,f.sun?.value||'',f.ch?.value||'other')},
+  taskEdit:b=>taskEditSheet(DB.campaigns.find(x=>x.id===b.dataset.id),b.dataset.k),
+  rankChange:b=>rankSheet(b.dataset.kind,b.dataset.sun),
   taskDel:b=>{const c=DB.campaigns.find(x=>x.id===b.dataset.id),e=editsOf(c),k=b.dataset.k,x=e.add.find(a=>addedKey(c,a)===k);
     if(x)e.add=e.add.filter(a=>a!==x);else e.del.push(k);saveEdits(c,e);render()},
   taskBack:b=>{const c=DB.campaigns.find(x=>x.id===b.dataset.id),e=editsOf(c);e.del=e.del.filter(k=>k!==b.dataset.k);saveEdits(c,e);render()},
