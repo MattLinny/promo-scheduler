@@ -219,6 +219,7 @@ a.group-h:hover{text-decoration:underline}
 button.tl-name{cursor:pointer}
 button.tl-name:hover b{text-decoration:underline}
 .tl-name b{display:block;font-weight:700;line-height:1.15;letter-spacing:-.01em}
+.tl-lv{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:99px;background:var(--pale);color:var(--ink2);font-size:11.5px;font-weight:700;line-height:1.3;letter-spacing:0;vertical-align:1px;white-space:nowrap}
 .tl-name small{display:block;font-size:13px;color:var(--mute);line-height:1.25;margin-top:1px}
 .tl-weeks{display:flex;height:52px}
 .tl-wk{width:var(--col);flex:none;padding:8px 0 0 8px;font-size:14px;line-height:1.2}
@@ -239,6 +240,8 @@ button.tl-name:hover b{text-decoration:underline}
 .tl-cells{display:flex;flex:none}
 .tl-cell{width:var(--col);flex:none;padding:8px 7px 10px;font-size:13px}
 .tl-cell.this{background:rgba(113,67,254,.07);width:calc(2*var(--col))}
+.tl-day{font-size:12.5px;font-weight:700;line-height:1.2;margin:10px 0 3px}
+.tl-day:first-child{margin-top:0}
 .tl-cell .todo{gap:6px;padding:4px 0;font-size:13px;line-height:1.2}
 .tl-cell .box{width:15px;height:15px}
 .tl-cell .box svg{width:10px;height:10px}
@@ -1155,12 +1158,12 @@ function pageTimeline(){
     let detail='';
     if(isOpen){
       const cells=wks.map(s=>{
-        const ts=tasksOf(c).filter(t=>!t.opt&&sunOf(t.date)===s);
-        return `<div class="tl-cell${s===nowSun?' this':''}">${ts.map(t=>todo(t.key,t.say?`Announce: ${t.label}`:t.label)).join('')}</div>`}).join('');
+        const ts=tasksOf(c).filter(t=>!t.opt&&sunOf(t.date)===s).sort((a,b)=>a.date.localeCompare(b.date));
+        return `<div class="tl-cell${s===nowSun?' this':''}">${ts.map((t,i)=>`${i&&ts[i-1].date===t.date?'':`<div class="tl-day">${esc(fmt(t.date,{weekday:'long',month:'short',day:'numeric'}))}</div>`}${todo(t.key,t.say?`Announce: ${t.label}`:t.label)}`).join('')}</div>`}).join('');
       detail=`<div class="tl-detail"><div class="tl-name" style="background:var(--paper)"><a href="#/c/${esc(c.id)}" style="font-size:14px">Open campaign</a></div><div class="tl-cells">${cells}</div></div>`;
     }
     const late=lateCount(c);
-    return `<div class="tl-row"><button class="tl-name" data-act="tlOpen" data-id="${esc(c.id)}" aria-expanded="${isOpen}"><b><span class="chev${isOpen?' on':''}">${I(ICON.right,13)}</span>${esc(c.name)}</b><small>${late?`<span style="color:var(--red)">${late} overdue</span>`:nextTask(c)?`Next ${esc(fmt(nextTask(c).date))}`:'All done'}, Level ${c.level}</small></button><div class="tl-track tl-grid" style="width:${W}px;min-height:${H}px">${segs.join('')}${flag}</div></div>${detail}`;
+    return `<div class="tl-row"><button class="tl-name" data-act="tlOpen" data-id="${esc(c.id)}" aria-expanded="${isOpen}"><b><span class="chev${isOpen?' on':''}">${I(ICON.right,13)}</span>${esc(c.name)}<span class="tl-lv" title="Level ${c.level}">L${c.level}</span></b>${late?`<small style="color:var(--red)">${late} overdue</small>`:''}</button><div class="tl-track tl-grid" style="width:${W}px;min-height:${H}px">${segs.join('')}${flag}</div></div>${detail}`;
   }).join('');
   return chrome('timeline',`
   <div class="head"><h1>Timeline.</h1></div>
