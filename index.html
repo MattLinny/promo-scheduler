@@ -1361,10 +1361,10 @@ function pageGate(){
   <p class="err" id="gerr" hidden></p><div><button class="btn solid">Open</button></div></form></div>`;
 }
 function bindGate(){
-  $('#gate').onsubmit=async e=>{e.preventDefault();const c=e.target.code.value.trim();
-    try{const j=await fetchAll(c);if(!j.ok){const x=$('#gerr');x.hidden=false;x.textContent="That code didn't work.";return}
+  $('#gate').onsubmit=async e=>{e.preventDefault();const c=e.target.code.value.trim(),btn=$('#gate button');btn.disabled=true;btn.textContent='Opening';const reset=()=>{btn.disabled=false;btn.textContent='Open'};
+    try{const j=await fetchAll(c);if(!j.ok){const x=$('#gerr');x.hidden=false;x.textContent="That code didn't work.";reset();return}
       ingest(j);code=c;try{localStorage.setItem('pp-code',c)}catch(x){}}
-    catch(x){const y=$('#gerr');y.hidden=false;y.textContent="Couldn't reach the planner. Check your connection.";return}
+    catch(x){const y=$('#gerr');y.hidden=false;y.textContent="Couldn't reach the planner. Check your connection.";reset();return}
     render()};
 }
 
