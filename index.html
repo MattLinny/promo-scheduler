@@ -1,352 +1,1386 @@
-<title>Oceanside Promo Planner</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<!doctype html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Promo Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,300..800;1,300..800&display=swap">
 <style>
-/* Layout: sticky header with view tabs; one working column; campaign weeks laid out Sun / Tue / Thu like the playbooks */
+/* Direction, from the reference folder: off-white board, black pills, big light sentences with the
+   important words in bold. Colour only ever means one thing: where a campaign is in the playbook
+   (lilac awareness, orchid interest, yellow urgency, hatched rest). Red means overdue. */
 :root{
-  --bg:#f3f6f6; --panel:#ffffff; --ink:#122427; --muted:#5b6d70; --line:#d8e2e2; --accent:#0f6e74; --accent-ink:#ffffff;
-  --l1:#d9573b; --l2:#0f8a7e; --l3:#c98a12; --l4:#7056b8; --l5:#6b7b80; --warn:#b4471d; --ok:#2e8a4f; --soft:#e7efef;
-  --display:"Familjen Grotesk",system-ui,sans-serif; --body:"Instrument Sans",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+  --paper:#F2F2ED;--white:#fff;--ink:#111;--ink2:#343434;--red:#D9281E;
+  --yellow:#EEDC00;--orchid:#EFC4EE;--lilac:#D8CFF1;--greige:#E3E3DB;--aqua:#BDE7EF;--butter:#F8E19A;
+  --band:#DDD9D0;--mute:#66665F;--line:rgba(17,17,17,.15);--faint:rgba(17,17,17,.06);--tilemute:rgba(17,17,17,.66);
+  --sans:"Hanken Grotesk",system-ui,sans-serif;
+  --gutter:clamp(16px,3vw,40px);
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1719;--panel:#142124;--ink:#e3eeee;--muted:#93a7a9;--line:#26393c;--accent:#4fb8bc;--accent-ink:#0d1719;--l1:#f07a5e;--l2:#3cc2b2;--l3:#e8ae3c;--l4:#a08ae6;--l5:#9aabb0;--warn:#f0875e;--ok:#5cc47f;--soft:#1b2c2f;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0d1719;--panel:#142124;--ink:#e3eeee;--muted:#93a7a9;--line:#26393c;--accent:#4fb8bc;--accent-ink:#0d1719;--l1:#f07a5e;--l2:#3cc2b2;--l3:#e8ae3c;--l4:#a08ae6;--l5:#9aabb0;--warn:#f0875e;--ok:#5cc47f;--soft:#1b2c2f;color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
-.wrap{max-width:1100px;margin:0 auto}
-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:16px 10px;border-bottom:1px solid var(--line)}
-.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
-h1{font:700 1.45rem/1.1 var(--display);margin:0;letter-spacing:-.01em}
-h1 small{display:block;font:500 .72rem var(--mono);color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:4px}
-h2{font:700 1.15rem var(--display);margin:0;text-wrap:balance}
-h3{font:600 .75rem var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0}
-nav{display:flex;gap:4px;flex-wrap:wrap;margin-top:12px}
-button,.btn{font:600 .85rem var(--body);border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:7px 12px;cursor:pointer}
-button:hover{border-color:var(--accent)}
-button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-nav button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-main{display:grid;gap:18px;margin-top:18px}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
-.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-.spacer{flex:1}
-.muted{color:var(--muted)}
-.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
-.lvl{display:inline-flex;align-items:center;gap:6px;font:600 .72rem var(--mono);padding:2px 8px;border-radius:99px;color:#fff;white-space:nowrap}
-.lvl[data-l="1"]{background:var(--l1)}.lvl[data-l="2"]{background:var(--l2)}.lvl[data-l="3"]{background:var(--l3)}.lvl[data-l="4"]{background:var(--l4)}.lvl[data-l="5"]{background:var(--l5)}
-.chip{font:500 .7rem var(--mono);padding:2px 7px;border-radius:5px;background:var(--soft);color:var(--muted);white-space:nowrap}
-.days{display:grid;gap:14px}
-.day{display:grid;grid-template-columns:110px 1fr;gap:14px;border-top:1px solid var(--line);padding-top:12px}
-.day:first-child{border-top:0;padding-top:0}
-.dayname{font:700 1rem var(--display)}
-.dayname span{display:block;font:400 .78rem var(--mono);color:var(--muted)}
-.tasks{display:grid;gap:6px;min-width:0}
-.task{display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:start;padding:7px 9px;border-radius:8px;border-left:4px solid var(--c,var(--line));background:var(--soft)}
-.task input{width:18px;height:18px;margin:2px 0 0;accent-color:var(--ok)}
-.task.done .what{text-decoration:line-through;color:var(--muted)}
-.task .meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:3px;align-items:center}
-.task .ev{font-weight:600}
-.opt{font-style:italic;color:var(--muted);font-size:.8rem}
-.warnbox{border:1px solid var(--warn);color:var(--warn);border-radius:8px;padding:8px 12px;font-size:.88rem}
-.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
-.cal .hd{font:600 .7rem var(--mono);color:var(--muted);text-align:center;padding:4px 0}
-.cell{min-height:86px;border:1px solid var(--line);border-radius:8px;padding:5px;background:var(--panel);cursor:pointer;display:flex;flex-direction:column;gap:3px;min-width:0;text-align:left;font:inherit;color:inherit}
-.cell.out{opacity:.45}.cell.today{border-color:var(--accent);border-width:2px}
-.cell .n{font:600 .75rem var(--mono)}
-.cell .evname{font-size:.7rem;font-weight:600;color:#fff;border-radius:4px;padding:1px 4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.cell .cnt{font:.68rem var(--mono);color:var(--muted)}
-.camp{display:grid;gap:10px;padding:14px 0;border-top:1px solid var(--line)}
-.camp:first-child{border-top:0}
-.strip{display:grid;gap:3px}
-.strip div{height:26px;border-radius:5px;font:600 .66rem var(--mono);display:flex;align-items:center;justify-content:center;color:#fff;overflow:hidden;white-space:nowrap}
-.ph-a{background:var(--l5)}.ph-i{background:var(--accent)}.ph-u{background:var(--l1)}.ph-now{outline:3px solid var(--ink);outline-offset:-3px}
-.bar{height:6px;background:var(--soft);border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ok)}
-form{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
-label{display:grid;gap:4px;font:600 .78rem var(--body);color:var(--muted)}
-input,select,textarea{font:400 .95rem var(--body);padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%}
-.full{grid-column:1/-1}
-.hint{font-size:.85rem;color:var(--muted);max-width:68ch}
-.empty{text-align:center;padding:36px 12px;color:var(--muted)}
-.ref{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
-.ref ul{margin:6px 0 0;padding-left:18px}
-.legend{display:flex;flex-wrap:wrap;gap:8px}
-.gscroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel);margin-top:12px}
-.g{position:relative;min-width:100%}
-.grow{position:relative;display:flex;border-top:1px solid var(--line);min-height:40px}
-.grow.sub{min-height:28px;background:var(--soft);border-top-style:dashed}
-.glab{position:sticky;left:0;z-index:3;flex:0 0 170px;width:170px;background:var(--panel);border-right:1px solid var(--line);padding:6px 8px;font-size:.82rem;display:flex;align-items:center;gap:6px;min-width:0}
-.grow.sub .glab{background:var(--soft);font:500 .7rem var(--mono);color:var(--muted);padding-left:26px}
-.glab button{all:unset;cursor:pointer;display:flex;gap:6px;align-items:center;min-width:0;font-weight:600}
-.glab button:focus-visible{outline:2px solid var(--accent)}
-.glab .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.gtrack{position:relative;flex:1}
-.gwk{position:absolute;top:0;bottom:0;border-left:1px solid var(--line);pointer-events:none}
-.gwk.m{border-left:1px solid var(--muted);opacity:.6}
-.gtoday{position:absolute;top:0;bottom:0;border-left:2px solid var(--l1);z-index:2;pointer-events:none}
-.ghead{display:flex;position:sticky;top:0;z-index:4;background:var(--panel)}
-.ghead .glab{font:600 .7rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.ghead .gtrack{height:42px}
-.gwl{position:absolute;top:4px;font:500 .66rem var(--mono);color:var(--muted);padding-left:4px;white-space:nowrap}
-.gwl b{display:block;color:var(--ink);font-weight:600}
-.gseg{position:absolute;top:9px;height:22px;display:flex;align-items:center;justify-content:center;font:600 .62rem var(--mono);color:#fff;overflow:hidden;white-space:nowrap}
-.gseg:first-of-type{border-radius:5px 0 0 5px}
-.gev{position:absolute;top:8px;width:16px;height:16px;margin-left:-8px;transform:rotate(45deg) translate(3px,-3px);border:2px solid var(--panel);z-index:2}
-.gdot{position:absolute;top:8px;width:12px;height:12px;margin-left:-6px;border-radius:50%;border:2px solid var(--c);background:var(--panel);z-index:1}
-.gdot.done{background:var(--c)}
-.gdot.opt{border-style:dashed}
-.gdot.late{box-shadow:0 0 0 2px var(--warn)}
-@media (max-width:620px){.day{grid-template-columns:1fr;gap:6px}.cell{min-height:60px}.cell .evname{display:none}}
-@media (prefers-reduced-motion:no-preference){.task{transition:background .15s}}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.45 var(--sans);font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+button{background:none;border:0;padding:0;cursor:pointer;text-align:left}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+h1,h2,h3,p,dl,dd,ul{margin:0;padding:0}
+ul{list-style:none}
+[hidden]{display:none!important}
+
+/* ---------- frame ---------- */
+.top{display:flex;align-items:center;gap:14px;padding:18px var(--gutter)}
+.logo{font-size:22px;font-weight:700;letter-spacing:-.03em;text-decoration:none;margin-right:auto}
+.nav{display:flex;gap:2px}
+.nav a{display:flex;align-items:center;gap:7px;padding:10px 18px;border-radius:99px;text-decoration:none;font-weight:500}
+.nav a:hover{background:var(--faint)}
+.nav a[aria-current=page]{background:var(--ink);color:var(--white)}
+.count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:99px;background:var(--red);color:var(--white);font-size:12.5px;font-weight:700}
+.who{color:var(--mute);font-size:14px}
+.fab{width:46px;height:46px;border-radius:50%;background:var(--ink);color:var(--white);display:grid;place-items:center;flex:none}
+.fab:hover{background:var(--ink2)}
+main{padding:clamp(10px,2.4vw,28px) var(--gutter) 72px;max-width:1480px;margin:0 auto}
+h1{font:300 clamp(42px,6.2vw,88px)/1.02 var(--sans);letter-spacing:-.035em;text-wrap:balance}
+h1 em{font-style:normal;font-weight:700}
+h2{font:700 22px/1.15 var(--sans);letter-spacing:-.02em}
+.head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:20px 40px;margin-bottom:clamp(20px,3vw,32px)}
+.sect{margin-top:clamp(36px,5vw,60px)}
+.sect-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:14px}
+.mute{color:var(--mute)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 20px;border-radius:99px;font-weight:600;background:var(--white);white-space:nowrap;text-decoration:none}
+.btn:hover{background:var(--band)}
+.btn.solid{background:var(--ink);color:var(--white)}
+.btn.solid:hover{background:var(--ink2)}
+.btn.bare{background:none;padding:0 6px;text-decoration:underline;text-underline-offset:3px;font-weight:500}
+.btn.bare:hover{background:none;color:var(--mute)}
+.flag{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 15px;border-radius:99px;background:var(--white);color:var(--red);font-weight:600;font-size:15px;text-decoration:none}
+
+/* colour = playbook phase */
+.ph-Awareness{background:var(--lilac)}
+.ph-Interest{background:var(--orchid)}
+.ph-Urgency{background:var(--yellow)}
+.ph-prep{background:var(--greige)}
+.ph-rest{background:repeating-linear-gradient(135deg,var(--greige) 0 2px,var(--white) 2px 9px)}
+.ph-after{background:var(--white);box-shadow:inset 0 0 0 1px var(--line)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14.5px}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:22px;height:12px;border-radius:4px;display:block}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;flex:none}
+.l1{background:var(--ink);color:var(--white)}
+.l2{background:#4A4A46;color:var(--white)}
+.l3{background:#9A9A92;color:var(--ink)}
+.l4{background:#D5D5CD;color:var(--ink)}
+.l5{background:var(--greige);color:var(--ink)}
+
+/* to-do item: the one control in the app that means "do this" */
+.todo{display:flex;align-items:flex-start;gap:10px;width:100%;padding:6px 0;line-height:1.3;border-radius:8px}
+.box{width:22px;height:22px;border-radius:50%;box-shadow:inset 0 0 0 1.5px rgba(17,17,17,.22);display:grid;place-items:center;flex:none;transition:box-shadow .12s,background .12s}
+.todo:hover .box{box-shadow:inset 0 0 0 2px var(--ink)}
+.todo.on .box{background:var(--ink);color:var(--white);box-shadow:none}
+.todo-t{min-width:0;padding-top:1px}
+.todo-t small{display:block;font-size:14px;color:var(--mute);line-height:1.3}
+.todo.on .todo-t{color:var(--mute);text-decoration:line-through}
+.todo.on .todo-t small{text-decoration:none}
+.todo .opt{color:var(--mute)}
+
+/* ---------- to do page ---------- */
+.status{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:14px;font-size:18px}
+.flag.solid{background:var(--red);color:var(--white)}
+.home{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:clamp(24px,3.4vw,48px);align-items:start;margin-top:clamp(22px,3vw,36px)}
+.starts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:12px;margin-top:clamp(22px,3vw,34px)}
+.startcard{background:var(--ink);color:var(--white);border-radius:28px;padding:20px 22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:14px 28px}
+.start-info{display:flex;flex-direction:column;justify-content:space-between;gap:14px}
+.startcard h3{margin:0;font:600 clamp(26px,2.6vw,34px)/1.05 var(--sans);letter-spacing:-.03em}
+.startcard .when{font-size:15px;opacity:.8}
+.startcard .box{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.4)}
+.startcard .todo:hover .box{box-shadow:inset 0 0 0 2px var(--white)}
+.startcard .todo.on .box{background:var(--white);color:var(--ink)}
+.startcard .todo-t small,.startcard .todo.on .todo-t{color:rgba(255,255,255,.65)}
+.startcard a.more{color:var(--white);font-weight:600;text-underline-offset:3px}
+.todo-weeks{display:grid;gap:clamp(18px,2.4vw,26px)}
+.wk-h{display:flex;align-items:baseline;gap:6px;width:100%;margin-bottom:10px}
+.wk-h .mute{margin-left:auto;font-size:15.5px}
+.day{padding-top:12px;border-top:1px solid var(--line)}
+.day+.day{margin-top:18px}
+.day-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;font-size:18px;font-weight:700;letter-spacing:-.012em;margin-bottom:8px}
+.day-h .tg{font-size:13px;font-weight:600;background:var(--ink);color:var(--white);padding:2px 9px;border-radius:99px;letter-spacing:0}
+.day-h .ev{font-size:15px;font-weight:500;color:var(--mute);letter-spacing:0}
+.groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));gap:10px}
+.group{background:var(--white);border-radius:20px;padding:12px 16px 8px}
+.group-h{display:block;font-weight:700;line-height:1.2;margin-bottom:4px;text-decoration:none}
+a.group-h:hover{text-decoration:underline}
+.empty{padding:14px 0;color:var(--mute);font-size:18px}
+.overdue{background:var(--white);border-radius:24px;padding:14px 18px;margin-bottom:22px;box-shadow:inset 0 0 0 1.5px var(--red)}
+.overdue h2{color:var(--red);margin-bottom:8px}
+.overdue .group{background:none;padding:6px 0 0}
+.side-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
+.camp{display:block;background:var(--white);border-radius:22px;padding:14px 16px;text-decoration:none;margin-bottom:8px}
+.camp:hover{background:var(--band)}
+.camp-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.camp-top b{font-size:18px;font-weight:700;letter-spacing:-.015em;line-height:1.15}
+.camp-top span{font-size:14.5px;color:var(--mute);white-space:nowrap}
+.pbar{display:flex;gap:2px;margin:9px 0 8px;height:12px;align-items:stretch}
+.pbar i{flex:1;border-radius:3px;min-width:0}
+.pbar i.past{opacity:.35}
+.pbar i.now{box-shadow:0 0 0 2px var(--ink);z-index:1}
+.camp-where{font-size:14.5px;color:var(--mute);line-height:1.3}
+.camp-next{font-size:15.5px;font-weight:500;line-height:1.3;margin-top:2px}
+.camp-next.late{color:var(--red)}
+.compact{display:flex;justify-content:space-between;gap:12px;padding:9px 2px;border-top:1px solid var(--line);text-decoration:none}
+.compact:hover{text-decoration:underline}
+.compact span{color:var(--mute);white-space:nowrap}
+.asks{display:grid;gap:8px;margin-top:clamp(20px,3vw,30px)}
+.ask{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;background:var(--white);border-radius:22px;padding:12px 14px 12px 20px;box-shadow:inset 0 0 0 1.5px var(--ink)}
+.ask>div{flex:1;min-width:220px}
+.ask b{font-size:18px;font-weight:700}
+
+/* ---------- timeline ---------- */
+.tl-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.tl{overflow-x:auto;background:var(--white);border-radius:26px;padding-bottom:14px}
+.tl-in{position:relative}
+.tl-grid{background-image:repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px var(--col))}
+.tl-now{position:absolute;top:0;bottom:0;width:var(--col);background:rgba(17,17,17,.05);pointer-events:none}
+.tl-head{display:flex;position:sticky;top:0}
+.tl-name{position:sticky;left:0;z-index:3;flex:none;width:var(--name);background:var(--white);padding:6px 8px 6px 16px;box-shadow:1px 0 0 var(--line);display:block}
+button.tl-name{cursor:pointer}
+button.tl-name:hover b{text-decoration:underline}
+.tl-name b{display:block;font-weight:700;line-height:1.15;letter-spacing:-.01em}
+.tl-name small{display:block;font-size:13px;color:var(--mute);line-height:1.25;margin-top:1px}
+.tl-weeks{display:flex;height:52px}
+.tl-wk{width:var(--col);flex:none;padding:8px 0 0 8px;font-size:14px;line-height:1.2}
+.tl-wk b{display:block;font-weight:600;font-size:13px;height:16px}
+.tl-wk.this{font-weight:700}
+.tl-row{display:flex;align-items:stretch;border-top:1px solid var(--faint)}
+.tl-track{position:relative;flex:none;min-height:54px}
+.seg{position:absolute;top:8px;bottom:8px;display:flex;align-items:center;padding:0 8px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-decoration:none;border-radius:4px;color:var(--ink)}
+.seg.first{border-radius:12px 4px 4px 12px}
+.seg.last{border-radius:4px 12px 12px 4px}
+.seg:hover{filter:brightness(.95)}
+.tl-flag{position:absolute;top:50%;translate:0 -50%;background:var(--ink);color:var(--white);border-radius:99px;padding:3px 10px;font-size:13px;font-weight:600;white-space:nowrap;margin-left:5px}
+.tl-detail{display:flex;border-top:1px dashed var(--line);background:var(--paper)}
+.tl-cells{display:flex;flex:none}
+.tl-cell{width:var(--col);flex:none;padding:8px 7px 10px;font-size:13px}
+.tl-cell.this{background:rgba(17,17,17,.05)}
+.tl-cell .todo{gap:6px;padding:4px 0;font-size:13px;line-height:1.2}
+.tl-cell .box{width:15px;height:15px}
+.tl-cell .box svg{width:10px;height:10px}
+.tl-cell .todo-t small{display:none}
+.chev{display:inline-block;transition:rotate .12s;color:var(--mute);margin-right:2px}
+.chev.on{rotate:90deg}
+.always{display:flex;flex-wrap:wrap;gap:6px 24px;font-size:18px}
+.always a{text-decoration:none}
+.always a:hover{text-decoration:underline}
+.always .on{font-weight:700}
+
+/* ---------- one campaign ---------- */
+.cz{border-radius:30px;padding:16px 18px 22px clamp(18px,3vw,28px);display:flex;flex-direction:column;gap:clamp(22px,4vw,48px)}
+.cz-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cz-top .spacer{flex:1}
+.back{width:44px;height:44px;border-radius:50%;background:var(--ink);color:var(--white);display:grid;place-items:center;margin-left:calc(-1 * clamp(0px,1.2vw,10px))}
+.cz h1{font:600 clamp(40px,6vw,84px)/.98 var(--sans);letter-spacing:-.045em}
+.cz-date{margin-top:10px;font-size:clamp(19px,1.9vw,24px);font-weight:300;letter-spacing:-.015em}
+.cz-now{margin-top:12px;font-size:17px;font-weight:500;line-height:1.3}
+.cz-next{display:inline-flex;align-items:center;gap:12px;background:var(--white);border-radius:18px;padding:7px 18px 7px 14px;margin-top:12px;max-width:100%}
+.cz-next>span{font-size:14.5px;color:var(--mute)}
+.strip{display:flex;gap:3px;margin:12px 0 24px;overflow-x:auto;scrollbar-width:none}
+.strip::-webkit-scrollbar{display:none}
+.strip a{flex:1 0 74px;border-radius:10px;padding:8px 9px;text-decoration:none;font-size:12.5px;line-height:1.2;font-weight:600;min-height:56px}
+.strip a small{display:block;font-weight:400;font-size:12.5px}
+.strip a.now{box-shadow:inset 0 0 0 2px var(--ink)}
+.pw{display:grid;grid-template-columns:220px minmax(0,1fr);gap:clamp(14px,2.4vw,30px);padding:18px 0;border-top:1px solid var(--line);scroll-margin-top:12px}
+.pw.now{background:var(--white);border-radius:24px;border:0;padding:18px 20px;margin:6px -4px}
+.pw-date{font-size:21px;font-weight:600;letter-spacing:-.02em;line-height:1.1}
+.pw-tag{display:inline-block;font-size:13px;font-weight:600;padding:2px 9px;border-radius:99px;margin:6px 6px 0 0;color:var(--ink)}
+.pw-tag.tw{background:var(--ink);color:var(--white)}
+.pw-angle{font-size:17px;font-weight:600;margin-top:8px;line-height:1.2}
+.pw-why{font-size:14.5px;color:var(--mute);line-height:1.32;margin-top:3px}
+.pw-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(10px,2vw,24px);align-content:start}
+.pw-col h4{margin:0 0 4px;font-size:14.5px;font-weight:400;color:var(--mute)}
+.pw-col .note{font-size:14.5px;color:var(--mute)}
+.pw-done{display:flex;gap:12px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line);color:var(--mute)}
+.linkish{font-size:14.5px;text-decoration:underline;text-underline-offset:3px;padding:0 0 4px 32px;display:block;color:var(--ink)}
+.storyline{font-size:14.5px;padding:0 0 6px 32px;color:var(--ink);display:block;width:100%}
+label.f{display:grid;gap:6px;font-weight:600}
+input[type=text],input[type=date],input[type=email],input[type=password],input:not([type]),select,textarea{width:100%;min-height:50px;padding:12px 16px;border:0;border-radius:16px;background:var(--white);font-weight:400;font-size:16px}
+textarea{line-height:1.4;resize:vertical;min-height:110px}
+
+/* ---------- sunday ---------- */
+.rail{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+.rail a{padding:8px 14px;border-radius:99px;background:var(--white);text-decoration:none;font-weight:500;font-size:15px;white-space:nowrap}
+.rail a:hover{background:var(--band)}
+.rail a[aria-current=true]{background:var(--ink);color:var(--white)}
+.rail small{font-size:13px;opacity:.65;margin-left:5px}
+.slots{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr);gap:12px}
+.slot{display:flex;flex-direction:column;justify-content:space-between;gap:22px;min-height:300px;padding:18px 20px;border-radius:28px;width:100%}
+.slot-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tag{display:inline-flex;align-items:center;min-height:30px;padding:0 13px;border-radius:99px;background:var(--white);font-weight:600;font-size:14.5px}
+.slot-open{align-items:center;justify-content:center;gap:10px;color:var(--mute);text-align:center;font-weight:500;box-shadow:inset 0 0 0 1.5px var(--line)}
+.slot-open:hover{background:var(--faint)}
+.slot-open.locked{cursor:default}
+.slot-open.locked:hover{background:none}
+.slot-open .plus{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--white);color:var(--ink)}
+.slot-name{display:block;font:600 clamp(27px,2.6vw,36px)/1.04 var(--sans);letter-spacing:-.032em;text-wrap:balance;width:100%}
+.stage .slot-name{font-size:clamp(36px,4.4vw,60px);line-height:1;letter-spacing:-.04em}
+.slot-foot{display:grid;gap:4px;padding-top:12px;border-top:1px solid var(--line);font-size:15px}
+.slot-foot b{font-weight:700}
+.slot-foot .sub{color:rgba(17,17,17,.66);font-size:14.5px}
+.slot-foot .story{text-decoration:underline;text-underline-offset:3px;font-weight:600}
+.slot-foot p{margin:0;line-height:1.32;cursor:pointer}
+.quiet{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px 32px;margin-top:20px}
+.quiet dt{color:var(--mute);font-size:14.5px}
+.quiet dd{font-size:17px;line-height:1.35}
+.quiet dd a{text-decoration:none}
+.quiet dd a:hover{text-decoration:underline}
+
+/* ---------- rules ---------- */
+.matrix-wrap{overflow-x:auto;background:var(--white);border-radius:24px;padding:6px 8px}
+.matrix{border-collapse:collapse;width:100%;min-width:720px;font-size:15px;line-height:1.3}
+.matrix th,.matrix td{padding:11px 12px;text-align:left;vertical-align:top;border-top:1px solid var(--faint)}
+.matrix thead th{border:0;font-weight:700;font-size:16px}
+.matrix thead small{display:block;font-weight:400;color:var(--mute);font-size:13.5px}
+.matrix tbody th{font-weight:400;color:var(--mute);width:110px}
+.matrix .sel{background:rgba(238,220,0,.28)}
+.steps-ask{display:grid;gap:18px;max-width:900px}
+.step-n{display:flex;gap:10px;font-weight:700;font-size:18px;letter-spacing:-.012em;margin-bottom:8px}
+.choices{display:flex;flex-wrap:wrap;gap:6px}
+.choice{min-height:42px;padding:0 16px;border-radius:99px;background:var(--white);font-weight:500}
+.choice:hover{background:var(--band)}
+.choice[aria-pressed=true]{background:var(--ink);color:var(--white)}
+.lbl{font-weight:600;display:block}
+.verdict{border-radius:28px;padding:clamp(20px,2.6vw,30px);display:grid;gap:12px;background:var(--white);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.verdict .big{font:700 clamp(30px,3.4vw,42px)/1.05 var(--sans);letter-spacing:-.03em}
+.verdict .instead{font-size:18px;line-height:1.38;max-width:60ch}
+.verdict .because{color:var(--mute)}
+.ladder{display:grid;gap:7px}
+.rung{display:flex;align-items:center;gap:14px;width:100%;border-radius:18px;padding:0 18px;font-weight:600;letter-spacing:-.015em;min-height:52px;font-size:17px}
+.rung small{margin-left:auto;font-weight:400;font-size:14.5px;letter-spacing:0;text-align:right}
+.rung[aria-pressed=true]{outline:2px solid var(--ink);outline-offset:2px}
+.rung:hover{filter:brightness(.95)}
+.gets{display:grid;gap:15px}
+.gets dt{color:var(--mute);font-size:14.5px}
+.gets dd{font-size:18px;font-weight:500;line-height:1.3}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px 40px}
+.rules b{display:block;font:600 19px/1.15 var(--sans);letter-spacing:-.018em}
+.rules span{display:block;margin-top:3px;color:var(--mute);max-width:44ch}
+
+/* ---------- sheets ---------- */
+dialog{border:0;padding:0;background:var(--paper);color:var(--ink);border-radius:32px;width:min(620px,calc(100vw - 32px));max-height:calc(100dvh - 48px);overflow:auto}
+dialog::backdrop{background:rgba(17,17,17,.4)}
+dialog[open]{animation:rise .2s cubic-bezier(.2,.9,.3,1.1)}
+@keyframes rise{from{transform:translateY(14px);opacity:0}}
+.sheet{display:grid;gap:18px;padding:clamp(20px,3vw,30px)}
+.sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.sheet h2{font:600 clamp(28px,3.4vw,38px)/1.08 var(--sans);letter-spacing:-.035em}
+.sheet-sub{margin-top:5px;font-size:17px;color:var(--mute)}
+.x{width:44px;height:44px;border-radius:50%;background:var(--white);display:grid;place-items:center;flex:none}
+.x:hover{background:var(--band)}
+.sheet-foot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end}
+.sheet-foot .left{margin-right:auto}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.echo{font-weight:500;margin-top:-6px}
+.echo:empty{display:none}
+.earlier{display:grid;gap:9px;font-size:15px}
+.earlier li span{display:block;color:var(--mute);font-size:14px}
+.opts{display:grid;gap:7px}
+.opt-row{display:flex;align-items:center;gap:12px;background:var(--white);padding:13px 18px;border-radius:18px;width:100%;font-weight:600}
+.opt-row:hover{background:var(--band)}
+.opt-row span{margin-left:auto;font-weight:400;color:var(--mute);font-size:14.5px;text-align:right}
+.reply{min-height:320px;font-size:15px}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));translate:-50% 0;background:var(--ink);color:var(--white);padding:12px 20px;border-radius:99px;font-weight:500;z-index:50;white-space:nowrap}
+
+/* ---------- questionnaire ---------- */
+.quiz{display:grid;gap:18px;padding:clamp(18px,3vw,28px)}
+.solo .quiz{padding:0}
+.q-top{display:flex;align-items:center;gap:10px}
+.q-top .segs{flex:1;color:var(--ink);height:5px}
+.q-top .segs i{height:4px}
+.q-top .segs i.past{height:4px}
+.q-text{font:300 clamp(29px,4vw,40px)/1.08 var(--sans);letter-spacing:-.03em;text-wrap:balance}
+.q-text em{font-style:normal;font-weight:700}
+.q-opts{display:grid;gap:8px}
+.q-opt{display:block;width:100%;background:var(--white);border-radius:22px;padding:16px 20px}
+.q-opt:hover{background:var(--ink);color:var(--white)}
+.q-opt:hover span{color:var(--white)}
+.q-opt b{display:block;font-size:18px;font-weight:600;letter-spacing:-.015em;line-height:1.2}
+.q-opt span{display:block;margin-top:2px;font-size:14.5px;color:var(--mute)}
+.q-result{border-radius:28px;padding:20px 22px}
+.q-result small{display:block;font-size:15px}
+.q-result b{display:block;font:600 clamp(36px,5vw,52px)/1 var(--sans);letter-spacing:-.04em;margin-top:3px}
+.q-result p{margin-top:10px;font-size:16px;line-height:1.35}
+.plan-list{display:grid;gap:0;background:var(--white);border-radius:22px;padding:6px 18px}
+.plan-list li{display:grid;grid-template-columns:62px minmax(0,1fr);gap:10px;padding:10px 0}
+.plan-list li+li{box-shadow:0 -1px 0 var(--faint)}
+.plan-list time{font-weight:600}
+.plan-list b{font-weight:600}
+.plan-list span{display:block;font-size:14.5px;color:var(--mute);line-height:1.3}
+.nots{display:grid;gap:3px;font-size:15px;color:var(--mute)}
+
+/* ---------- walkthrough ---------- */
+dialog.tourd{width:min(680px,calc(100vw - 32px))}
+.tour{display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:16px;padding:clamp(16px,2.6vw,24px);min-height:min(600px,calc(100dvh - 64px))}
+.tour-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.tour-dots{display:flex;gap:5px;flex:1;max-width:240px}
+.tour-dots i{flex:1;height:4px;border-radius:9px;background:var(--line)}
+.tour-dots i.on{background:var(--ink)}
+.tour h2{font:300 clamp(34px,5vw,50px)/1.04 var(--sans);letter-spacing:-.035em;text-wrap:balance}
+.tour h2 em{font-style:normal;font-weight:700}
+.tour-body{display:grid;align-content:start;gap:16px}
+.tour-body>p{font-size:18px;line-height:1.38;max-width:50ch}
+.tour-foot{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.mini-hero{border-radius:26px;background:var(--yellow);padding:22px;min-height:190px;display:flex;flex-direction:column;justify-content:flex-end}
+.mini-hero b{font:600 clamp(30px,5vw,44px)/1 var(--sans);letter-spacing:-.04em}
+.mini-ladder{display:grid;gap:5px}
+.mini-ladder div{display:flex;justify-content:space-between;align-items:center;gap:10px;border-radius:15px;padding:0 15px;font-weight:600}
+.mini-ladder small{font-weight:400;font-size:14px;text-align:right}
+.mini-ladder .m1{min-height:64px;font-size:21px}
+.mini-ladder .m2,.mini-ladder .m3{min-height:50px;font-size:17px}
+.mini-ladder .m4{min-height:42px}
+.mini-ladder .m5{min-height:36px;font-size:14.5px}
+.mini-slots{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:8px}
+.mini-slots div{border-radius:20px;padding:13px;min-height:130px;display:flex;flex-direction:column;justify-content:space-between;font-weight:600;line-height:1.1}
+.mini-slots small{font-weight:500;font-size:13.5px}
+.mini-slots b{font-size:clamp(16px,2.6vw,23px);font-weight:600;letter-spacing:-.02em}
+.mini-slots .open{box-shadow:inset 0 0 0 1.5px var(--line);color:var(--mute)}
+.mini-tl{background:var(--white);border-radius:20px;padding:14px;display:grid;gap:8px}
+.mini-tl div{display:flex;gap:2px;height:30px}
+.mini-tl i{flex:1;border-radius:4px;font-style:normal;font-size:12px;font-weight:600;padding:7px 5px;overflow:hidden;white-space:nowrap}
+.mini-week{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.mini-week div{background:var(--white);border-radius:20px;padding:13px}
+.mini-week b{display:block;font-weight:700;margin-bottom:3px}
+.mini-week span{display:block;font-size:14.5px;color:var(--mute);line-height:1.28}
+.tour .group{max-width:340px}
+.seq{display:grid;gap:0;background:var(--white);border-radius:22px;padding:6px 18px;counter-reset:s}
+.seq li{counter-increment:s;display:grid;grid-template-columns:30px minmax(0,1fr);padding:9px 0;align-items:baseline}
+.seq li::before{content:counter(s);font-weight:700}
+.seq li+li{box-shadow:0 -1px 0 var(--faint)}
+.seq span{color:var(--mute);display:block;font-size:14.5px;line-height:1.3}
+.helpbtn{width:46px;height:46px;border-radius:50%;box-shadow:inset 0 0 0 1px var(--line);display:grid;place-items:center;font-weight:600;font-size:18px;flex:none}
+.helpbtn:hover{background:var(--faint)}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px 40px}
+.gloss dt{font-weight:700}
+.gloss dd{color:var(--mute);line-height:1.35}
+
+/* ---------- gate + request ---------- */
+.solo{min-height:100dvh;display:grid;align-content:center;gap:28px;width:min(560px,100%);margin:0 auto;padding:32px 20px}
+.solo form{display:grid;gap:14px}
+.err{font-weight:600;background:var(--white);color:var(--red);padding:10px 16px;border-radius:14px}
+.hp{position:absolute;left:-9999px}
+
+@media (max-width:1040px){
+  .slots{grid-template-columns:1fr 1fr}
+  .slot.stage{grid-column:1/-1;min-height:260px}
+  .slot{min-height:230px}
+  .home{grid-template-columns:minmax(0,1fr)}
+  .home aside{order:-1;min-width:0}
+  .home .upnext{display:none}
+  .runlist{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-inline:calc(-1 * var(--gutter));padding-inline:var(--gutter)}
+  .runlist::-webkit-scrollbar{display:none}
+  .runlist .camp{flex:0 0 min(300px,82%);margin:0}
+  .pw{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:760px){
+  body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+  .top{padding-block:14px}
+  .who{display:none}
+  .nav{position:fixed;z-index:20;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));background:var(--ink);padding:6px;border-radius:99px;margin:0;justify-content:space-between;gap:0}
+  .nav a{position:relative;flex:1 1 auto;justify-content:center;color:var(--white);padding:12px 8px;font-size:15px;gap:0;min-width:0}
+  .nav a:hover{background:none}
+  .nav a[aria-current=page]{background:var(--white);color:var(--ink)}
+  .nav .count{position:absolute;top:8px;right:4px;min-width:9px;width:9px;height:9px;padding:0;font-size:0;box-shadow:0 0 0 2px var(--ink)}
+  .head{align-items:stretch}
+  .slots{grid-template-columns:1fr}
+  .slot,.slot.stage{min-height:0;gap:30px}
+  .slot-open.slot{flex-direction:row;min-height:78px;padding:14px;border-radius:24px}
+  .pw-cols{grid-template-columns:minmax(0,1fr)}
+  .pw.now{margin-inline:-6px;padding:16px}
+  .cz{border-radius:26px}
+  .rung small{display:none}
+  .two{grid-template-columns:1fr}
+  dialog{width:100vw;max-width:100vw;margin:auto 0 0;border-radius:30px 30px 0 0;max-height:92dvh}
+  dialog[open]{animation-name:riseup}
+  .sheet{padding-bottom:calc(22px + env(safe-area-inset-bottom))}
+  dialog.tourd{width:100vw}
+  .tour{padding-bottom:calc(18px + env(safe-area-inset-bottom));min-height:min(560px,88dvh)}
+  @keyframes riseup{from{transform:translateY(40px)}}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
-
-<div class="wrap">
-<header>
-  <div class="top">
-    <h1>Oceanside Promo Planner<small>Mission Control · Promotions Playbook</small></h1>
-    <div class="row"><span id="sync" class="chip">Connecting…</span><button id="exportBtn" hidden>Export CSV</button><button class="primary" id="addBtn">+ Add event</button></div>
-  </div>
-  <nav aria-label="Views">
-    <button data-view="week" aria-pressed="true">This week</button>
-    <button data-view="gantt" aria-pressed="false">Timeline</button>
-    <button data-view="cal" aria-pressed="false">Calendar</button>
-    <button data-view="camps" aria-pressed="false">Campaigns</button>
-    <button data-view="ref" aria-pressed="false">Playbook rules</button>
-  </nav>
-</header>
-
-<main>
-  <section class="panel" id="formPanel" hidden>
-    <form id="evForm">
-      <label class="full">Event or campaign name<input id="f-name" required placeholder="e.g. Christmas Eve Services"></label>
-      <label>Event date<input id="f-date" type="date" required></label>
-      <label>Ministry level<select id="f-level">
-        <option value="1">Level 1 · Impacts 80% of church</option>
-        <option value="2">Level 2 · Core next step</option>
-        <option value="3">Level 3 · Next Gen</option>
-        <option value="4">Level 4 · Individual ministry</option>
-        <option value="5" selected>Level 5 · Individual event</option></select></label>
-      <label>Campaign length<select id="f-weeks"><option value="4">4 weeks (default)</option><option value="3">3 weeks</option><option value="2">2 weeks</option></select></label>
-      <label>Ministry / owner<input id="f-owner" placeholder="e.g. Rooted, Ocean Youth"></label>
-      <label class="full">Notes (story idea, web link, anything the team needs)<textarea id="f-notes" rows="2"></textarea></label>
-      <p class="hint full" id="f-hint"></p>
-      <div class="row full"><button class="primary" type="submit" id="f-save">Save and build plan</button><button type="button" id="f-cancel">Cancel</button></div>
-    </form>
-  </section>
-
-  <section id="v-week"></section>
-  <section id="v-gantt" hidden></section>
-  <section id="v-cal" hidden></section>
-  <section id="v-camps" hidden></section>
-  <section id="v-ref" hidden></section>
-</main>
-</div>
+</head>
+<body>
+<div id="app"></div>
+<dialog id="dlg" aria-label="Details"></dialog>
+<div id="toast" class="toast" role="status" hidden></div>
 
 <script>
+// ---------- config ----------
+const CONFIG={
+  apiUrl:'', // Apps Script web app URL (see apps-script/Code.gs)
+  nextStep:'Head to oceansidechurch.ca and click the Next Steps button.',
+};
+const SLOTS={stage:1,booth:2};
+const qs=new URLSearchParams(location.search);
+const DEV=!CONFIG.apiUrl&&(!!window.DEMO||/^(localhost|127\.0\.0\.1)$/.test(location.hostname));
+
 // ---------- dates ----------
 const D=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
 const S=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-const add=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
-const sunOf=d=>add(d,-d.getDay());
-const fmt=(d,o)=>d.toLocaleDateString('en-CA',o||{month:'short',day:'numeric'});
-const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-const TODAY=S(new Date());
+const add=(s,n)=>{const x=D(s);x.setDate(x.getDate()+n);return S(x)};
+const sunOf=s=>add(s,-D(s).getDay());
+const fmt=(s,o)=>D(s).toLocaleDateString('en-CA',o||{month:'short',day:'numeric'});
+const long=s=>fmt(s,{month:'long',day:'numeric'});
+const full=s=>fmt(s,{weekday:'long',month:'long',day:'numeric'});
+const TODAY=(DEV&&qs.get('today'))||S(new Date());
+const nextSun=s=>D(s).getDay()===0?s:add(sunOf(s),7);
+const DAYN={0:'Sunday',1:'Monday',2:'Tuesday',3:'Wednesday',4:'Thursday',5:'Friday',6:'Saturday'};
+const WORD=['nothing','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
+const word=n=>WORD[n]??String(n);
+const cap=s=>s[0].toUpperCase()+s.slice(1);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
 
-// ---------- channels ----------
-const CH={stage:['Booth / stage','var(--l1)'],slide:['Pre-service slide','var(--l3)'],desk:['Welcome desk','var(--l5)'],web:['Website','var(--accent)'],email:['Email','var(--l2)'],text:['Text','var(--l2)'],social:['Social','var(--l4)'],fb:['Facebook event','var(--l4)'],bulletin:['Weekly Bulletin','var(--l3)'],post:['Post-event','var(--ok)']};
+// ---------- icons ----------
+const I=(p,s=20)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const ICON={
+  say:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+  slide:'<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8"/>',
+  desk:'<path d="M4 18h16M6 18a6 6 0 0 1 12 0M12 12V9M10 6h4"/>',
+  web:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+  email:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 8 9 6 9-6"/>',
+  text:'<path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-5 4z"/>',
+  social:'<path d="M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z"/>',
+  fb:'<path d="M14 21v-8h3l.5-3.5H14V7.5c0-1 .5-2 2-2h1.5V3S16 3 15 3c-3 0-4.5 2-4.5 4.5v2H8V13h2.5v8"/>',
+  bulletin:'<path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 15h7"/>',
+  post:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.2"/>',
+  check:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  x:'<path d="M6 6l12 12M18 6 6 18"/>',
+  left:'<path d="M15 5l-7 7 7 7"/>',
+  right:'<path d="m9 5 7 7-7 7"/>',
+  go:'<path d="M7 17 17 7M8.5 7H17v8.5"/>',
+};
+const CH={say:'Announcement',slide:'Pre-service slide',desk:'Welcome Desk',web:'Website',email:'Email',text:'Text',social:'Social',fb:'Facebook event',bulletin:'Weekly Bulletin',post:'After',prep:'Get ready'};
 
-// ---------- playbooks: [templateWeek, weekday(0=Sun), channel, task, optional?] ----------
+// ---------- playbooks ----------
+// One week: phase, the announcement angle, say (req/opt/none), on the slide, at the desk, bulletin spot, tasks [weekday, channel, label, optional].
+const W=(phase,angle,say,slide,desk,bull,tasks=[])=>({phase,angle,say,slide,desk,bull,tasks});
+const TUE=(email,text,social,opt={})=>[[2,'email',email,opt.email],[2,'text',text,opt.text],[2,'social',social,opt.social]];
 const PB={};
-PB[1]={weeks:8,phase:w=>w<=4?'a':w<=7?'i':'u',tasks:[
- [1,0,'stage','Launch announcement: 1 story + 1 next step'],[1,0,'slide','Run pre-service slide'],[1,0,'desk','Resource Welcome Desk with event info'],[1,0,'web','Publish Launcher action'],[1,0,'web','Publish dedicated web page and/or Info Card'],
- [1,2,'email','Churchwide launch email'],[1,2,'text','Churchwide launch text'],[1,2,'social','Sprinkle promo: Story'],[1,2,'social','Sprinkle promo: Feed'],[1,2,'fb','Create Facebook event (Oceanside add-on)'],[1,4,'bulletin','Highlight in Featured section'],
- [2,0,'slide','Run pre-service slide'],[2,0,'desk','Maintain Welcome Desk resources'],[2,4,'bulletin','Shift to Upcoming section. Skip stage, email & social this week'],
- [3,0,'stage','Interactive announcement (The Handoff: connect in-person to online)'],[3,0,'slide','Run pre-service slide'],[3,0,'desk','Maintain Welcome Desk resources'],[3,2,'social','Sprinkle promo (poll / lighthearted engagement)'],[3,2,'email','Churchwide sprinkle email',1],[3,2,'text','Churchwide sprinkle text',1],[3,4,'bulletin','Highlight in Weekly Bulletin'],
- [4,0,'stage','The Callback: recap last week and carry momentum'],[4,0,'slide','Run pre-service slide'],[4,0,'desk','Maintain Welcome Desk resources'],[4,2,'social','Sprinkle promo'],[4,2,'email','Churchwide sprinkle email',1],[4,2,'text','Churchwide sprinkle text',1],[4,4,'bulletin','Highlight in Weekly Bulletin'],
- [5,0,'stage','Stage announcement (social, email & text rest this week)'],[5,0,'slide','Run pre-service slide'],[5,0,'desk','Maintain Welcome Desk resources'],[5,4,'bulletin','Highlight in Weekly Bulletin'],
- [6,0,'stage','Values & voice announcement (pair creative with a value or Start Again Story)'],[6,0,'slide','Run pre-service slide'],[6,0,'desk','Maintain Welcome Desk resources'],[6,2,'social','Sprinkle promo (repurpose Sunday announcement)'],[6,2,'email','Churchwide sprinkle email (repurpose Sunday)'],[6,2,'text','Churchwide sprinkle text (repurpose Sunday)'],[6,4,'bulletin','Highlight in Bulletin (repurpose Sunday)'],
- [7,0,'stage','Fresh creative announcement (keep variety)'],[7,0,'slide','Run pre-service slide'],[7,0,'desk','Maintain Welcome Desk resources'],[7,2,'social','Sprinkle promo (repurpose Sunday announcement)'],[7,2,'email','Churchwide sprinkle email (repurpose Sunday)'],[7,2,'text','Churchwide sprinkle text (repurpose Sunday)'],[7,4,'bulletin','Highlight in Bulletin (repurpose Sunday)'],
- [8,0,'stage','Urgency announcement: SPRINT window opens'],[8,0,'slide','Run pre-service slide'],[8,0,'desk','Resource Welcome Desk'],[8,0,'web','Upgrade Launcher action to Featured'],[8,0,'web','Publish floating banner on website'],
- ...[1,2,3,4,5,6].map(d=>[8,d,'social','Sprint: daily social / email / text promo',1])
-]};
-const mid=lvl=>{const who=lvl==2?'Churchwide':'Ministry-specific';return {weeks:4,phase:w=>w==4?'u':w==2&&lvl==3?'a':'i',tasks:[
- [1,0,'stage','Launch announcement: 1 story + 1 next step'],[1,0,'slide','Run pre-service slide'],[1,0,'desk','Resource Welcome Desk'],[1,0,'web','Publish Launcher action'],[1,0,'web','Publish page / section on Next Steps page'],
- [1,2,'social','Sprinkle promo (repurpose Sunday announcement)'],[1,2,'email',who+' sprinkle email (repurpose Sunday)'],[1,2,'text',who+' sprinkle text (repurpose Sunday)'],[1,2,'fb','Create Facebook event (Oceanside add-on)',1],[1,4,'bulletin','Highlight in Weekly Bulletin'],
- [2,0,'slide','Run pre-service slide'],[2,0,'desk','Maintain Welcome Desk resources'],[2,4,'bulletin','Highlight in Weekly Bulletin'],
- [3,0,'stage','Values & voice announcement',1],[3,0,'slide','Run pre-service slide'],[3,0,'desk','Maintain Welcome Desk resources'],[3,2,'social','Sprinkle promo (repurpose Sunday)'],[3,2,'email',who+' sprinkle email',lvl==2?1:0],[3,2,'text',who+' sprinkle text',lvl==2?1:0],[3,4,'bulletin','Highlight in Weekly Bulletin'],
- [4,0,'stage','Urgency announcement (urgent language, not more promos)'],[4,0,'slide','Run pre-service slide'],[4,0,'desk','Maintain Welcome Desk resources'],[4,2,'social','Sprinkle promo (repurpose Sunday)'],[4,2,'email',who+' sprinkle email'],[4,2,'text',who+' sprinkle text'],[4,4,'bulletin','Highlight in Weekly Bulletin']
-]}};
-PB[2]=mid(2);PB[3]=mid(3);
-PB[4]=PB[5]={weeks:4,phase:w=>w==4?'u':'i',tasks:[
- [1,0,'bulletin','Featured in Weekly Bulletin (pre-service bulletin slide)'],[1,0,'desk','Resource Welcome Desk'],[1,0,'web','Publish post in ministry Posts Collection'],[1,0,'web','Publish event on Calendar page'],[1,0,'web','Section on Next Steps page',1],
- [1,2,'social','Sprinkle promo on main church social',1],[1,2,'email','Ministry-specific email'],[1,2,'text','Ministry-specific text'],[1,2,'fb','Create Facebook event (Oceanside add-on)',1],[1,4,'bulletin','Highlight in Weekly Bulletin'],
- [2,0,'bulletin','Featured in Weekly Bulletin slide'],[2,0,'desk','Maintain Welcome Desk resources'],[2,4,'bulletin','Highlight in Weekly Bulletin'],
- [3,0,'bulletin','Featured in Weekly Bulletin slide (new creative)'],[3,0,'desk','Resource Welcome Desk'],[3,2,'social','Sprinkle promo on main church social',1],[3,2,'email','Ministry-specific email (new creative)'],[3,2,'text','Ministry-specific text'],[3,4,'bulletin','Highlight in Weekly Bulletin'],
- [4,0,'stage','Smuggle promo from stage under a Level 2 category',1],[4,0,'bulletin','Featured in Weekly Bulletin slide ("This weekend")'],[4,0,'desk','Resource Welcome Desk'],[4,2,'social','Sprinkle promo on main church social',1],[4,2,'email','Ministry-specific email ("Final chance")'],[4,2,'text','Ministry-specific text'],[4,4,'bulletin','Highlight in Weekly Bulletin']
-]};
-const POST=lvl=>[['ev','post','Post live updates & behind-the-scenes photos/video'],['p1','post','Publish recap post and email'],['p1','web',lvl==1?'Remove banner + Launcher action, Info Card':'Remove Launcher action / Next Steps section']];
-const WEEKMAP={4:[1,2,3,4],3:[1,3,4],2:[1,4]};
+PB[1]={1:W('Awareness','Launch','req',1,1,'Featured',[[0,'web','Publish the Launcher action'],[0,'web','Publish the web page and Info Card'],...TUE('Send the launch email','Send the launch text','Post a Story and feed sprinkle'),[2,'fb','Create the Facebook event']]),
+  2:W('Awareness','Rest',null,1,1,'Upcoming'),
+  3:W('Awareness','The Handoff','req',1,1,'Highlight',TUE('Send a sprinkle email','Send a sprinkle text','Post a poll or something light',{email:1,text:1})),
+  4:W('Awareness','The Callback','req',1,1,'Highlight',TUE('Send a sprinkle email','Send a sprinkle text','Post a sprinkle',{email:1,text:1})),
+  5:W('Interest','Move to interest','req',1,1,'Highlight'),
+  6:W('Interest','Values and voice','req',1,1,'Highlight',TUE('Email: repurpose Sunday','Text: repurpose Sunday','Social: repurpose Sunday')),
+  7:W('Interest','Fresh creative','req',1,1,'Highlight',TUE('Email: repurpose Sunday','Text: repurpose Sunday','Social: repurpose Sunday')),
+  8:W('Urgency','Sprint','req',1,1,'Featured',[[0,'web','Upgrade the Launcher action to Featured'],[0,'web','Publish the floating banner'],[0,'social','Run the sprint: daily social, email or text, 7 days at most']])};
+const MID=l=>{const who=l==2?'churchwide':'ministry';return {
+  1:W('Interest','Launch','req',1,1,'Highlight',[[0,'web','Publish the Launcher action'],[0,'web','Publish the page or Next Steps section'],...TUE(`Send the ${who} sprinkle email`,`Send the ${who} sprinkle text`,'Social: repurpose Sunday'),[2,'fb','Create the Facebook event',1]]),
+  2:W(l==3?'Awareness':'Interest','Rest',null,1,1,'Highlight'),
+  3:W('Interest','Values and voice','opt',1,1,'Highlight',TUE(`Send the ${who} sprinkle email`,`Send the ${who} sprinkle text`,'Social: repurpose Sunday',{email:l==2,text:l==2})),
+  4:W('Urgency','Urgency','req',1,1,'Highlight',TUE(`Send the ${who} sprinkle email`,`Send the ${who} sprinkle text`,'Social: repurpose Sunday'))}};
+PB[2]=MID(2);PB[3]=MID(3);
+PB[4]=PB[5]={1:W('Interest','Launch',null,0,1,'Featured',[[0,'web','Publish the post in the ministry collection'],[0,'web','Add the event to the Calendar page'],[0,'web','Add a Next Steps section',1],...TUE('Send the ministry email','Send the ministry text','Post a sprinkle',{social:1}),[2,'fb','Create the Facebook event',1]]),
+  2:W('Interest','Hold',null,0,1,'Featured'),
+  3:W('Interest','New creative',null,0,1,'Featured',TUE('Send the ministry email, new creative','Send the ministry text','Post a sprinkle',{social:1})),
+  4:W('Urgency','This weekend','smuggle',0,1,'Featured: this weekend',TUE('Send the ministry email: final chance','Send the ministry text','Post a sprinkle',{social:1}))};
+// Why each week looks the way it does, from the playbooks.
+const WHYWEEK={
+  1:{1:'Begin promotion churchwide with one story and one next step.',2:'Stay visible without oversaturating. No churchwide reminders.',3:'Re-surface it with something interactive. Connect in-person and online.',4:'Recap last week and carry the momentum.',5:'Shift to interest. Social, email and text rest for a week.',6:'Anchor it in a value and repurpose it across channels.',7:'Keep momentum with creative variety.',8:'Final push: high-visibility web, plus a sprint.'},
+  2:{1:'Begin promotion churchwide with one story and one next step.',2:'Stay visible without oversaturating.',3:'Anchor it in a value and repurpose it across channels.',4:'Final push. Urgency is in the words, not more promos.'},
+  4:{1:'Publish the web listings, announce it in the bulletin, send to the ministry list.',2:'Stay visible. Avoid repeating reminders.',3:'Repeat week 1 with new creative.',4:'Use urgency language: this weekend, final chance.'}};
+WHYWEEK[3]=WHYWEEK[2];WHYWEEK[5]=WHYWEEK[4];
+const PREP=l=>l<=3?['Find the story','Make the graphics','Build the web page']:['Find a story or photo','Write the post'];
+const WEEKMAP={8:[1,2,3,4,5,6,7,8],4:[1,2,3,4],3:[1,3,4],2:[1,4]};
+const AFTER=l=>[[0,'post','Post live updates and behind-the-scenes'],[1,'post','Publish the recap post and email'],[1,'web',l==1?'Remove the banner, Launcher action and Info Card':'Remove the Launcher action and Next Steps section']];
+const HIGHLIGHT=[[2,'social','Post a spotlight sprinkle'],[2,'email','Send a churchwide sprinkle email',1],[2,'text','Send a churchwide sprinkle text',1]];
 
-function plan(ev){
-  const pb=PB[ev.level], n=ev.level==1?8:(+ev.weeks||4), map=ev.level==1?[1,2,3,4,5,6,7,8]:WEEKMAP[n];
-  const evD=D(ev.date), lastSun=sunOf(evD), out=[];
-  map.forEach((tw,i)=>{const sun=add(lastSun,-(n-1-i)*7);
-    pb.tasks.filter(t=>t[0]===tw).forEach((t,j)=>{const day=add(sun,t[1]); if(S(day)>ev.date) return;
-      out.push({key:'w'+tw+'-'+t[1]+'-'+t[2]+'-'+j,date:S(day),ch:t[2],what:t[3],opt:!!t[4],week:i+1,phase:pb.phase(tw)})});});
-  POST(ev.level).forEach((p,j)=>out.push({key:'post'+j,date:p[0]=='ev'?ev.date:S(add(evD,1)),ch:p[1],what:p[2],opt:false,week:'post',phase:'p'}));
-  return out;
-}
+const LEVEL={
+  1:{name:'Impacts 80% of the church',eg:'Christmas, Easter, Kick-Off Sunday, Church Outside, Love Your City, a service time or location change',
+    web:'Banner, Launcher, page, Info Card, Weekly Bulletin',msg:'Churchwide',social:'Sprint and sprinkle promos',sun:'Announcement, pre-service slide, Welcome Desk',len:'8 weeks'},
+  2:{name:'Core next steps',eg:'Connect card, serving, giving, baptism, small groups, Newcomers Group',
+    web:'Launcher, page, Info Card, Weekly Bulletin',msg:'Churchwide',social:'Sprinkle promos',sun:'Announcement, pre-service slide, Welcome Desk',len:'2 to 4 weeks'},
+  3:{name:'Next generation',eg:'ONE80 Kids, Ocean Youth, young adults',
+    web:'Launcher, page, Info Card, posts, Weekly Bulletin',msg:'Ministry list',social:'Sprinkle promos',sun:'Announcement, pre-service slide, Welcome Desk',len:'2 to 4 weeks'},
+  4:{name:'Individual ministries',eg:"Rooted, Men's Group, Congo Orphanage, Crossroad Pregnancy Center, Soul Nights Group, Foster Care",
+    web:'Info Card, Next Steps page, posts, Weekly Bulletin',msg:'Ministry list',social:'Sprinkle promos',sun:'Bulletin slide, Welcome Desk',len:'2 to 4 weeks'},
+  5:{name:'Individual events',eg:'Rooted Beach Day, a Soul Night, Congo Fundraiser, one-off events',
+    web:'Calendar page, a post, Weekly Bulletin',msg:'Ministry list',social:'Sprinkle promos',sun:'Bulletin slide, Welcome Desk',len:'2 to 4 weeks'},
+};
+const NOTS={1:[],2:['No sprint'],3:['No churchwide email or text','No sprint'],4:['No Sunday announcement','No churchwide email or text','No sprint'],5:['No Sunday announcement','No churchwide email or text','No sprint']};
+const MINISTRY={Christmas:1,Easter:1,'Kick-Off Sunday':1,'Church Outside':1,'Love Your City':1,'Service time change':1,Serving:2,Volunteering:2,Giving:2,Baptism:2,'Discipleship Groups':2,'Newcomers Group':2,'First Impressions':2,'ONE80 Kids':3,'Ocean Youth':3,'Young Adults':3,Rooted:4,"Men's Group":4,'Congo Orphanage':4,'Crossroad Pregnancy Center':4,'Soul Nights Group':4,'Foster Care':4,'Prayer Ministry':4,'Outreach':4,'Missions':4};
+
+const RULES=[
+  ['Awareness is not interest','Knowing about it is not the goal. A next step is.'],
+  ['Sunday is not your Savior','A stage announcement will not fix low attendance.'],
+  ['The more you announce, the less they listen','When everything is emphasized, nothing feels important.'],
+  ['Inspiration over information','Facts and details do not move people. Stories do.'],
+  ['One destination for every promo','oceansidechurch.ca, the Next Steps button. Every time.'],
+  ['Values dictate voice','How we say it matters as much as what we say.'],
+];
+const WORDS=[
+  ['Stage','The one live announcement from the Sunday MC.'],
+  ['The Booth','The short pre-recorded video segment on Sunday.'],
+  ['Pre-service slide','The slide on screen before the service.'],
+  ['Welcome Desk','Printed info and answers in the lobby.'],
+  ['Weekly Bulletin','The weekly list of everything happening. Anything without a Sunday spot still shows up here.'],
+  ['Ministry list','The people subscribed to that ministry\'s collection at oceansidechurch.ca/posts/collections. Each campaign sends its own email.'],
+  ['Next Steps button','The one place every promo points to, at oceansidechurch.ca.'],
+  ['Launcher','The quick-action menu on the website.'],
+  ['Info Card','A card on the Next Steps page.'],
+  ['Sprinkle','A post worth reading on its own, with the promo in the last line.'],
+  ['Sprint','Up to 7 days of daily promo in the last week. Level 1 only, 2 to 4 times a year.'],
+  ['Highlight week','A one-week spotlight on an always-on next step.'],
+  ['The Handoff','An announcement that connects Sunday in the room with what is online.'],
+  ['The Callback','An announcement that recaps last week and carries it forward.'],
+  ['Smuggle','A Level 4 or 5 event mentioned from stage inside a real Level 2 ask, like serving.'],
+];
+// What someone can ask for, and what the policy answers at each level.
+const ASKS={
+  stage:{label:'Stage or Booth',rule:'Sunday is not your Savior',
+    at:l=>l==1?['yes','The stage slot exists for this.','It gets an announcement most weeks of the 8-week plan, with rest weeks built in.']:
+      l==2?['some','In rotation, not every week.','Launch and final week are the main announcements.']:
+      l==3?['some','In the Booth at launch and in the final week.','Urgency lives in the language, not in more announcements.']:
+      ['no','This level does not get a Sunday announcement.','It gets the Weekly Bulletin and its slide, the Welcome Desk, a post and the ministry list. In the final week, it can ride along under a Level 2 ask like serving.']},
+  every:{label:'Every week',rule:'The more you announce, the less they listen',
+    at:l=>['no','Nothing gets announced every week.',l==1?'Even Level 1 rests in weeks 2 and 5. That is what keeps people listening.':'The plan is built on rest weeks, with a fresh angle when it returns.']},
+  email:{label:'Email the whole church',rule:'The more you announce, the less they listen',
+    at:l=>l<=2?['yes','This level gets churchwide email and text.','On the schedule in the plan.']:
+      ['no','This level goes to the ministry list.','It can still reach everyone through the Weekly Bulletin. Subscribe boxes at live events grow the list.']},
+  social:{label:'Main church social',rule:'Inspiration over information',
+    at:l=>l==1?['yes','Sprint and sprinkle promos.','One sprint of up to 7 days, 2 to 4 times a year.']:
+      ['some','As a sprinkle.','The post stands on its own, and the promo is the last line.']},
+  longer:{label:'A longer campaign',rule:'Awareness is not interest',
+    at:l=>l==1?['no','Level 1 already gets the longest runway: 8 weeks.','Time goes to a better story, not more weeks.']:
+      ['no','This level runs 2 to 4 weeks.','Four is the longest. People sign up closer to the date than we think.']},
+  banner:{label:'Website banner',rule:'One destination for every promo',
+    at:l=>l==1?['yes','In the final week.','The banner goes up with the sprint and comes down right after the event.']:
+      ['no','Banners are for Level 1.',l<=3?'It gets the Launcher, its page and an Info Card.':l==4?'It gets an Info Card and its own posts.':'It gets a post and the Calendar page.']},
+  link:{label:'Its own link or sign-up table',rule:'One destination for every promo',
+    at:()=>['no','Everything goes through the Next Steps button.','The sign-up can live behind it. We will put the link there.']},
+};
 
 // ---------- state ----------
-let events=[],checks={},db=null,view='week',weekStart=S(sunOf(new Date())),monthCur=new Date(),editing=null;
-try{const v=localStorage.getItem('opp-view');if(v)view=v}catch(e){}
-const $=id=>document.getElementById(id);
-const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function allTasks(){return events.flatMap(ev=>plan(ev).map(t=>({...t,ev,id:ev.id+'~'+t.key,done:!!checks[ev.id+'~'+t.key]})))}
+const DB={campaigns:[],ticks:{},stories:{},sundays:{}};
+let me='',code='',view={},cache={};
+try{me=localStorage.getItem('pp-me')||'';code=localStorage.getItem('pp-code')||''}catch(e){}
 
-// ---------- views ----------
-function setView(v){view=v;try{localStorage.setItem('opp-view',v)}catch(e){}
-  document.querySelectorAll('nav button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===v));
-  ['week','gantt','cal','camps','ref'].forEach(k=>$('v-'+k).hidden=k!==v);render()}
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>setView(b.dataset.view));
-
-function taskHTML(t,showEv=true){const c=CH[t.ch];
-  return `<label class="task${t.done?' done':''}" style="--c:${c[1]}"><input type="checkbox" data-id="${t.id}" ${t.done?'checked':''} ${db?'':'disabled'}>
-  <span><span class="what">${showEv?`<span class="ev">${esc(t.ev.name)}</span> · `:''}${esc(t.what)}</span>${t.opt?' <span class="opt">optional</span>':''}
-  <span class="meta"><span class="chip">${c[0]}</span>${showEv?`<span class="lvl" data-l="${t.ev.level}">L${t.ev.level}</span>`:''}${t.week!=='post'?`<span class="chip">Week ${t.week}</span>`:''}${t.ev.owner&&showEv?`<span class="chip">${esc(t.ev.owner)}</span>`:''}</span></span></label>`}
-
-function renderWeek(){
-  const ws=D(weekStart),we=add(ws,6),tasks=allTasks().filter(t=>t.date>=weekStart&&t.date<=S(we));
-  const sunStage=tasks.filter(t=>t.date===weekStart&&t.ch==='stage');
-  const l1=sunStage.filter(t=>t.ev.level==1&&!t.opt).length;
-  let warn='';
-  if(sunStage.length>3) warn+=`<div class="warnbox">${sunStage.length} announcements are scheduled for Sunday. The weekly ceiling is 3 in The Booth and 1 from stage. Demote the lowest level to a sprinkle or the Weekly Bulletin.</div>`;
-  if(l1>1) warn+=`<div class="warnbox">${l1} Level 1 campaigns want the single stage slot this Sunday. Combine them into one announcement or put one in The Booth.</div>`;
-  const byDay=[0,1,2,3,4,5,6].map(i=>{const d=add(ws,i),ds=S(d),ts=tasks.filter(t=>t.date===ds);
-    const evs=events.filter(e=>e.date===ds);
-    if(!ts.length&&!evs.length) return '';
-    return `<div class="day"><div class="dayname">${DAYS[i]}<span>${fmt(d)}${ds===TODAY?' · today':''}</span></div><div class="tasks">${evs.map(e=>`<div><span class="lvl" data-l="${e.level}">EVENT DAY</span> <strong>${esc(e.name)}</strong></div>`).join('')}${ts.map(t=>taskHTML(t)).join('')}</div></div>`}).join('');
-  const done=tasks.filter(t=>t.done).length;
-  $('v-week').innerHTML=`<div class="panel"><div class="row"><button id="wPrev" aria-label="Previous week">←</button><h2>Week of ${fmt(ws,{month:'long',day:'numeric'})} – ${fmt(we)}</h2><button id="wNext" aria-label="Next week">→</button><button id="wToday">Today</button><span class="spacer"></span><span class="mono muted">${done}/${tasks.length} done</span></div>
-  <div style="display:grid;gap:8px;margin-top:12px">${warn}</div>
-  <div class="days" style="margin-top:14px">${byDay||(events.length?'<p class="empty">Nothing to promote this week.</p>':emptyHTML())}</div></div>`;
-  $('wPrev').onclick=()=>{weekStart=S(add(ws,-7));render()};$('wNext').onclick=()=>{weekStart=S(add(ws,7));render()};$('wToday').onclick=()=>{weekStart=S(sunOf(new Date()));render()};
+function ingest(d){
+  DB.campaigns=(d.campaigns||[]).map(c=>({...c,level:+c.level||0,weeks:+c.weeks||0,ongoing:!!c.ongoing&&c.ongoing!=='0'&&c.ongoing!=='false'}));
+  DB.ticks=Object.fromEntries((d.ticks||[]).map(t=>[t.key,t]));
+  DB.stories=Object.fromEntries((d.stories||[]).map(t=>[t.key,t]));
+  DB.sundays=Object.fromEntries((d.sundays||[]).map(t=>[t.date,t]));
+  cache={};
 }
-function emptyHTML(){return `<div class="empty"><p><strong>No events yet.</strong></p><p>Add an event with its date and ministry level. The planner lays out every promo task from the matching playbook, week by week.</p><button class="primary" onclick="openForm()">+ Add your first event</button></div>`}
+function dump(){return {campaigns:DB.campaigns,ticks:Object.values(DB.ticks),stories:Object.values(DB.stories),sundays:Object.values(DB.sundays)}}
+function store(){cache={};try{localStorage.setItem(DEV?'pp-demo':'pp-data',JSON.stringify(dump()))}catch(e){}}
 
-function renderCal(){
-  const m=new Date(monthCur.getFullYear(),monthCur.getMonth(),1),start=sunOf(m),all=allTasks();
-  let cells='';for(let i=0;i<42;i++){const d=add(start,i),ds=S(d);if(i>=35&&d.getMonth()!==m.getMonth())break;
-    const evs=events.filter(e=>e.date===ds),ts=all.filter(t=>t.date===ds),open=ts.filter(t=>!t.done).length;
-    cells+=`<button class="cell${d.getMonth()!==m.getMonth()?' out':''}${ds===TODAY?' today':''}" data-d="${ds}"><span class="n">${d.getDate()}</span>${evs.map(e=>`<span class="evname" style="background:var(--l${e.level})">${esc(e.name)}</span>`).join('')}${ts.length?`<span class="cnt">${open?open+' to do':'✓ all done'}</span>`:''}</button>`}
-  $('v-cal').innerHTML=`<div class="panel"><div class="row" style="margin-bottom:12px"><button id="mPrev" aria-label="Previous month">←</button><h2>${fmt(m,{month:'long',year:'numeric'})}</h2><button id="mNext" aria-label="Next month">→</button><span class="spacer"></span><span class="hint">Tap a day to open its week.</span></div>
-  <div class="cal">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(x=>`<div class="hd">${x}</div>`).join('')}${cells}</div></div>`;
-  $('mPrev').onclick=()=>{monthCur=new Date(m.getFullYear(),m.getMonth()-1,1);render()};$('mNext').onclick=()=>{monthCur=new Date(m.getFullYear(),m.getMonth()+1,1);render()};
-  document.querySelectorAll('.cell').forEach(c=>c.onclick=()=>{weekStart=S(sunOf(D(c.dataset.d)));setView('week')});
+const pending=[];let flushing=false;
+async function post(action,body){
+  store();
+  if(DEV)return;
+  pending.push({action,...body});
+  if(flushing)return;
+  flushing=true;
+  while(pending.length){
+    const job=pending[0];
+    try{
+      const r=await fetch(CONFIG.apiUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...job,key:job.key||code})});
+      const j=await r.json();
+      if(!j.ok)throw new Error(j.error);
+      pending.shift();
+    }catch(e){pending.length=0;toast("That didn't save. Check your connection and try again.");await refresh(true);break}
+  }
+  flushing=false;
 }
-
-function renderCamps(){
-  const list=[...events].sort((a,b)=>a.date.localeCompare(b.date)).filter(e=>S(add(D(e.date),7))>=TODAY||showPast);
-  const yr=new Date().getFullYear(),sprints=events.filter(e=>e.level==1&&e.date.startsWith(yr)).length;
-  $('v-camps').innerHTML=`<div class="panel"><div class="row"><h2>Campaigns</h2><span class="spacer"></span><span class="chip">${sprints} of 4 sprints used in ${yr}</span><label class="row" style="font-weight:500"><input type="checkbox" id="pastT" style="width:auto" ${showPast?'checked':''}> Show past</label></div>
-  ${sprints>4?'<div class="warnbox" style="margin-top:10px">More than 4 Level 1 sprints this year. Sprint promotions run 2–4 times a year max.</div>':''}
-  <div style="margin-top:8px">${list.length?list.map(campHTML).join(''):emptyHTML()}</div>
-  <div class="legend" style="margin-top:12px"><span class="chip" style="background:var(--l5);color:#fff">Awareness</span><span class="chip" style="background:var(--accent);color:var(--accent-ink)">Interest</span><span class="chip" style="background:var(--l1);color:#fff">Urgency</span></div></div>`;
-  $('pastT').onchange=e=>{showPast=e.target.checked;render()};
-  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>openForm(events.find(e=>e.id===b.dataset.edit)));
-  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>delEvent(b.dataset.del,b));
-  document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{const ev=events.find(e=>e.id===b.dataset.open);const p=$('d-'+ev.id);p.hidden=!p.hidden});
+async function fetchAll(c){
+  const r=await fetch(CONFIG.apiUrl+'?key='+encodeURIComponent(c));
+  return r.json();
 }
-let showPast=false;
-function campHTML(ev){
-  const ts=plan(ev).map(t=>({...t,ev,id:ev.id+'~'+t.key,done:!!checks[ev.id+'~'+t.key]})),done=ts.filter(t=>t.done).length;
-  const n=ev.level==1?8:(+ev.weeks||4),map=ev.level==1?[1,2,3,4,5,6,7,8]:WEEKMAP[n],last=sunOf(D(ev.date)),pb=PB[ev.level];
-  const strip=map.map((tw,i)=>{const s=add(last,-(n-1-i)*7),now=TODAY>=S(s)&&TODAY<=S(add(s,6)),ph=pb.phase(tw);
-    return `<div class="ph-${ph}${now?' ph-now':''}" title="Week ${i+1}: ${fmt(s)}">W${i+1} · ${fmt(s)}</div>`}).join('');
-  const start=add(last,-(n-1)*7),late=TODAY>S(start)&&ts.some(t=>t.date<TODAY&&!t.done&&!t.opt);
-  const weeks=[...new Set(ts.map(t=>t.week))];
-  return `<div class="camp"><div class="row"><span class="lvl" data-l="${ev.level}">LEVEL ${ev.level}</span><h2>${esc(ev.name)}</h2><span class="mono muted">${fmt(D(ev.date),{weekday:'short',month:'short',day:'numeric',year:'numeric'})}</span>${ev.owner?`<span class="chip">${esc(ev.owner)}</span>`:''}<span class="spacer"></span>
-  <button data-open="${ev.id}">Checklist</button><button data-edit="${ev.id}">Edit</button><button data-del="${ev.id}">Delete</button></div>
-  <div class="row muted" style="font-size:.85rem">Promo starts <strong class="mono">${fmt(start,{weekday:'short',month:'short',day:'numeric'})}</strong>${late?' · <span style="color:var(--warn)">has overdue tasks</span>':''}${ev.notes?' · '+esc(ev.notes):''}</div>
-  <div class="strip" style="grid-template-columns:repeat(${n},minmax(0,1fr))">${strip}</div>
-  <div class="row"><div class="bar" style="flex:1"><i style="width:${ts.length?done/ts.length*100:0}%"></i></div><span class="mono muted">${done}/${ts.length}</span></div>
-  <div id="d-${ev.id}" hidden class="days">${weeks.map(w=>`<div class="day"><div class="dayname">${w==='post'?'Post-event':'Week '+w}</div><div class="tasks">${ts.filter(t=>t.week===w).map(t=>taskHTML({...t,what:DAYS[D(t.date).getDay()].slice(0,3)+' '+fmt(D(t.date))+' · '+t.what},false)).join('')}</div></div>`).join('')}</div></div>`;
+let lastJson='';
+async function refresh(force){
+  if(DEV||!code)return;
+  if(!force&&(pending.length||$('#dlg').open||/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName)))return;
+  try{
+    const j=await fetchAll(code);
+    if(!j.ok){if(j.error==='code'){code='';try{localStorage.removeItem('pp-code')}catch(e){}render()}return}
+    const s=JSON.stringify(j);
+    if(s===lastJson&&!force)return;
+    lastJson=s;ingest(j);store();render();
+  }catch(e){}
 }
 
-function renderRef(){
-  $('v-ref').innerHTML=`<div class="panel ref">
-  <div><h3>The formula</h3><p><strong>One story + one next step.</strong> Every announcement ends with: “Head to oceansidechurch.ca and click the Next Steps button.” One destination for every promo.</p></div>
-  <div><h3>Weekly ceiling</h3><p>3 announcements in The Booth, 1 from stage. The planner flags any Sunday that goes over.</p></div>
-  <div><h3>Weekly rhythm</h3><ul><li><strong>Sunday:</strong> Booth/stage, pre-service slide, Welcome Desk, website updates</li><li><strong>Tuesday:</strong> email, text, social sprinkle</li><li><strong>Thursday:</strong> Weekly Bulletin</li></ul></div>
-  <div><h3><span class="lvl" data-l="1">L1</span> Impacts 80%</h3><p>8 weeks. Awareness wks 1–4, Interest 5–7, Urgency wk 8 with a Sprint (daily promos allowed, max 7 days, 2–4 sprints a year). Week 2 rests stage, email and social; week 5 rests social, email and text.</p></div>
-  <div><h3><span class="lvl" data-l="2">L2</span> Core next steps · <span class="lvl" data-l="3">L3</span> Next Gen</h3><p>2–4 weeks (4 default, drop week 2 for 3, weeks 1 + 4 for 2). Urgency lives in the language, not more promos. L2 email/text is churchwide; L3 is ministry-specific.</p></div>
-  <div><h3><span class="lvl" data-l="4">L4</span> Ministries · <span class="lvl" data-l="5">L5</span> Events</h3><p>Weekly Bulletin, ministry Posts Collection, Calendar page, ministry email/text, optional social sprinkle. No stage, except an optional smuggle under a Level 2 category in the final week.</p></div>
-  <div><h3>Post-event</h3><p>Live behind-the-scenes on event day. Next day: recap post and email, then remove expired promos straight away.</p></div>
-  <div><h3>Not in the playbook</h3><p>Facebook events are an Oceanside add-on, scheduled with the week-1 launch. Change or drop them if your process differs.</p></div></div>`;
-}
-const PX=13,openRows=new Set();
-function renderGantt(){
-  const list=[...events].sort((a,b)=>a.date.localeCompare(b.date)).filter(e=>S(add(D(e.date),7))>=TODAY||showPast);
-  const head=`<div class="row"><h2>Campaign timeline</h2><span class="spacer"></span><label class="row" style="font-weight:500"><input type="checkbox" id="gPast" style="width:auto" ${showPast?'checked':''}> Show past</label><button id="gAll">${openRows.size?'Collapse all':'Expand all'}</button></div>`;
-  if(!list.length){$('v-gantt').innerHTML=`<div class="panel">${head}${emptyHTML()}</div>`;bindG();return}
-  const starts=list.map(e=>add(sunOf(D(e.date)),-((e.level==1?8:(+e.weeks||4))-1)*7));
-  let r0=new Date(Math.min(...starts,sunOf(new Date()))),r1=new Date(Math.max(...list.map(e=>+add(D(e.date),2))));
-  r0=add(sunOf(r0),-7);r1=add(sunOf(r1),14);
-  const days=Math.round((r1-r0)/864e5),W=days*PX,x=d=>Math.round((D(d)-r0)/864e5)*PX;
-  let wk='',wl='';for(let d=new Date(r0);d<r1;d=add(d,7)){const ds=S(d),m=d.getDate()<=7;wk+=`<div class="gwk${m?' m':''}" style="left:${x(ds)}px"></div>`;wl+=`<div class="gwl" style="left:${x(ds)}px">${m?`<b>${fmt(d,{month:'short'})}</b>`:'<b>&nbsp;</b>'}${d.getDate()}</div>`}
-  const today=`<div class="gtoday" style="left:${x(TODAY)+PX/2}px" title="Today"></div>`;
-  const tr=inner=>`<div class="gtrack" style="width:${W}px">${wk}${today}${inner}</div>`;
-  const PH={a:['var(--l5)','Awareness'],i:['var(--accent)','Interest'],u:['var(--l1)','Urgency']};
-  const rows=list.map(ev=>{const n=ev.level==1?8:(+ev.weeks||4),map=ev.level==1?[1,2,3,4,5,6,7,8]:WEEKMAP[n],last=sunOf(D(ev.date)),pb=PB[ev.level];
-    const segs=map.map((tw,i)=>{const s=add(last,-(n-1-i)*7),e=i==n-1?add(D(ev.date),1):add(s,7),ph=PH[pb.phase(tw)];return `<div class="gseg" style="left:${x(S(s))}px;width:${Math.max(PX,(e-s)/864e5*PX)-1}px;background:${ph[0]}" title="Week ${i+1} · ${ph[1]} · ${fmt(s)}">W${i+1}</div>`}).join('');
-    const evm=`<div class="gev" style="left:${x(ev.date)+PX/2}px;background:var(--l${ev.level})" title="${esc(ev.name)} · ${fmt(D(ev.date))}"></div>`;
-    const ts=plan(ev).map(t=>({...t,done:!!checks[ev.id+'~'+t.key]})),open=openRows.has(ev.id),dn=ts.filter(t=>t.done).length;
-    let out=`<div class="grow"><div class="glab"><button data-g="${ev.id}" aria-expanded="${open}"><span aria-hidden="true">${open?'▾':'▸'}</span><span class="lvl" data-l="${ev.level}">L${ev.level}</span><span class="nm" title="${esc(ev.name)}">${esc(ev.name)}</span></button><span class="mono muted" style="margin-left:auto;font-size:.7rem">${dn}/${ts.length}</span></div>${tr(segs+evm)}</div>`;
-    if(open){const chs=[...new Set(ts.map(t=>t.ch))];out+=chs.map(c=>`<div class="grow sub"><div class="glab">${CH[c][0]}</div>${tr(ts.filter(t=>t.ch===c).map(t=>`<div class="gdot${t.done?' done':''}${t.opt?' opt':''}${!t.done&&!t.opt&&t.date<TODAY?' late':''}" style="--c:${CH[c][1]};left:${x(t.date)+PX/2}px" title="${fmt(D(t.date),{weekday:'short',month:'short',day:'numeric'})} · ${esc(t.what)}${t.opt?' (optional)':''}${t.done?' ✓':''}"></div>`).join(''))}</div>`).join('')}
-    return out}).join('');
-  $('v-gantt').innerHTML=`<div class="panel">${head}<div class="gscroll" id="gs"><div class="g" style="width:${W+170}px"><div class="ghead"><div class="glab">Campaign</div>${tr(wl)}</div>${rows}</div></div>
-  <div class="legend" style="margin-top:12px"><span class="chip" style="background:var(--l5);color:#fff">Awareness</span><span class="chip" style="background:var(--accent);color:var(--accent-ink)">Interest</span><span class="chip" style="background:var(--l1);color:#fff">Urgency</span><span class="chip">◆ event day</span><span class="chip">● done · ○ to do · dashed = optional · orange ring = overdue</span><span class="chip" style="color:var(--l1)">│ today</span></div></div>`;
-  const gs=$('gs');gs.scrollLeft=Math.max(0,x(TODAY)-PX*21);bindG();
-}
-function bindG(){$('gPast').onchange=e=>{showPast=e.target.checked;render()};
-  $('gAll').onclick=()=>{if(openRows.size)openRows.clear();else events.forEach(e=>openRows.add(e.id));render()};
-  document.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{const id=b.dataset.g;openRows.has(id)?openRows.delete(id):openRows.add(id);const sl=$('gs')?.scrollLeft;render();if($('gs')&&sl!=null)$('gs').scrollLeft=sl})}
-function render(){({week:renderWeek,gantt:renderGantt,cal:renderCal,camps:renderCamps,ref:renderRef})[view]();
-  document.querySelectorAll('.task input').forEach(i=>i.onchange=()=>toggle(i.dataset.id,i.checked,i))}
+// ---------- plan ----------
+const lengthOf=c=>c.level==1?8:(WEEKMAP[c.weeks]?c.weeks:4);
+const active=()=>DB.campaigns.filter(c=>c.status==='active');
+const dated=()=>active().filter(c=>!c.ongoing&&c.date);
+const ongoing=()=>active().filter(c=>c.ongoing).sort((a,b)=>a.name.localeCompare(b.name));
+const rotation=()=>ongoing().filter(c=>c.level==2);
 
-// ---------- form ----------
-function hint(){const l=$('f-level').value;$('f-weeks').disabled=l==1;
-  const d=$('f-date').value;let h=l==1?'Level 1 runs a fixed 8-week campaign with a 1-week sprint at the end.':'';
-  if(d){const n=l==1?8:+$('f-weeks').value,st=add(sunOf(D(d)),-(n-1)*7);h+=` Promo starts ${fmt(st,{weekday:'long',month:'long',day:'numeric'})}.`;if(S(st)<TODAY)h+=' That date has passed, so catch up on the earlier tasks.'}
-  $('f-hint').textContent=h}
-['f-level','f-weeks','f-date'].forEach(i=>$(i).addEventListener('input',hint));
-function openForm(ev){editing=ev||null;$('formPanel').hidden=false;
-  $('f-name').value=ev?.name||'';$('f-date').value=ev?.date||'';$('f-level').value=ev?.level||5;$('f-weeks').value=ev?.weeks||4;$('f-owner').value=ev?.owner||'';$('f-notes').value=ev?.notes||'';
-  $('f-save').textContent=ev?'Save changes':'Save and build plan';hint();$('f-name').focus();window.scrollTo({top:0})}
-$('addBtn').onclick=()=>openForm();$('f-cancel').onclick=()=>{$('formPanel').hidden=true};
-$('evForm').addEventListener('submit',async e=>{e.preventDefault();if(!db){$('f-hint').textContent='Not connected to the shared calendar, so this event cannot be saved.';return}
-  const data={name:$('f-name').value.trim(),date:$('f-date').value,level:+$('f-level').value,weeks:+$('f-weeks').value,owner:$('f-owner').value.trim(),notes:$('f-notes').value.trim()};
-  try{if(editing)await db.doc('events/'+editing.id).set(data);else await db.collection('events').add(data);
-    $('formPanel').hidden=true;weekStart=S(sunOf(new Date()));}catch(err){$('f-hint').textContent='Could not save: '+(err.message||err.code)}});
-async function delEvent(id,btn){if(btn.dataset.confirm!=='1'){btn.dataset.confirm='1';btn.textContent='Confirm delete';btn.style.color='var(--warn)';return}
-  try{await db.doc('events/'+id).delete()}catch(e){btn.textContent='Delete failed'}}
-async function toggle(id,on,el){if(!db)return;checks[id]=on;render();
-  try{if(on)await db.doc('checks/'+id.replace(/[^\w~-]/g,'_')).set({id,done:true,at:new Date().toISOString()});else await db.doc('checks/'+id.replace(/[^\w~-]/g,'_')).delete()}catch(e){checks[id]=!on;render()}}
+function weeksOf(c){
+  const k='w'+c.id;if(cache[k])return cache[k];
+  const n=lengthOf(c),map=WEEKMAP[n],last=sunOf(c.date),pb=PB[c.level]||PB[5];
+  return cache[k]=map.map((tw,i)=>({i:i+1,n,tw,sun:add(last,-(n-1-i)*7),...pb[tw]}));
+}
+const weekAt=(c,sun)=>weeksOf(c).find(w=>w.sun===sun);
+const startOf=c=>weeksOf(c)[0].sun;
+const sayKey=(c,w)=>`${c.id}~w${w.tw}~say`;
 
-// ---------- CSV export ----------
-async function exportCSV(){const dl=await claude.use('downloads');if(!dl)return;
-  const rows=[['Date','Day','Event','Level','Owner','Week','Channel','Task','Optional','Done']].concat(allTasks().sort((a,b)=>a.date.localeCompare(b.date)).map(t=>[t.date,DAYS[D(t.date).getDay()],t.ev.name,t.ev.level,t.ev.owner||'',t.week,CH[t.ch][0],t.what,t.opt?'yes':'',t.done?'yes':'']));
-  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
-  try{await dl.save({filename:'promo-plan.csv',data:csv})}catch(e){}}
-$('exportBtn').onclick=exportCSV;
+function tasksOf(c){
+  const k='t'+c.id;if(cache[k])return cache[k];
+  const out=[];
+  PREP(c.level).forEach((label,j)=>out.push({key:`${c.id}~prep~${j}`,date:add(startOf(c),-3),ch:'prep',label,opt:false,c,w:'prep'}));
+  weeksOf(c).forEach(w=>{
+    if(w.say==='req'||w.say==='opt'){if(w.sun<=c.date)out.push({key:sayKey(c,w),date:w.sun,ch:'say',label:w.angle,opt:w.say==='opt',c,w:w.i,say:true})}
+    w.tasks.forEach((t,j)=>{const date=add(w.sun,t[0]);if(date>c.date)return;
+      out.push({key:`${c.id}~w${w.tw}~${t[1]}${j}`,date,ch:t[1],label:t[2],opt:!!t[3],c,w:w.i})});
+  });
+  AFTER(c.level).forEach((t,j)=>out.push({key:`${c.id}~after~${j}`,date:add(c.date,t[0]),ch:t[1],label:t[2],opt:false,c,w:'after'}));
+  return cache[k]=out;
+}
+const isDone=k=>!!DB.ticks[k];
+const openTasks=c=>tasksOf(c).filter(t=>!t.opt&&!isDone(t.key)&&!(t.date<(c.created||'')));
+
+// Level 2 next steps with no end date take turns in a one-week highlight, every 4 to 6 weeks.
+function highlightFor(sun){
+  const list=rotation();if(!list.length)return null;
+  const every=Math.max(4,Math.min(6,list.length));
+  const idx=Math.round(D(sun)/6048e5)%every;
+  const c=list[idx];
+  return c?{c,hl:true,w:{angle:'Highlight week',i:0,n:0,sun,say:'req',tasks:HIGHLIGHT}}:null;
+}
+const itemSayKey=(it,sun)=>it.hl?`${it.c.id}~hl~${sun}`:sayKey(it.c,it.w);
+
+function lineup(sun){
+  const k='l'+sun;if(cache[k])return cache[k];
+  const items=dated().filter(c=>c.date>=sun&&c.level).map(c=>({c,w:weekAt(c,sun)})).filter(x=>x.w);
+  const byPri=(a,b)=>a.c.level-b.c.level||a.c.date.localeCompare(b.c.date);
+  const req=items.filter(x=>x.w.say==='req').sort(byPri);
+  const hl=highlightFor(sun);
+  const optional=[...items.filter(x=>x.w.say==='opt').sort(byPri),...items.filter(x=>x.w.say==='smuggle').sort(byPri)];
+  const all=[...req,...optional,...(hl?[hl]:[])];
+  const find=id=>all.find(x=>x.c.id===id)||null;
+  let stage,booth;
+  const over=DB.sundays[sun];
+  if(over){
+    stage=over.stage?find(over.stage):null;
+    booth=String(over.booth||'').split(',').filter(Boolean).map(find).filter(Boolean).slice(0,SLOTS.booth);
+  }else{
+    stage=req.find(x=>x.c.level<=2)||null;
+    booth=req.filter(x=>x!==stage).slice(0,SLOTS.booth);
+    // A highlight only fills a quiet Sunday. Otherwise it waits in the open slot's list.
+    if(hl&&(stage?1:0)+booth.length<2){if(!stage)stage=hl;else booth.push(hl)}
+  }
+  const on=new Set([stage,...booth].filter(Boolean).map(x=>x.c.id));
+  const bumped=req.filter(x=>!on.has(x.c.id));
+  const spare=all.filter(x=>!on.has(x.c.id));
+  const resting=items.filter(x=>!x.w.say&&x.c.level<=3).map(x=>x.c);
+  const bulletin=items.filter(x=>x.c.level>=4).map(x=>x.c);
+  return cache[k]={stage,booth,bumped,spare,resting,bulletin,count:on.size};
+}
+
+// Tasks that belong to the week, not to a campaign: one slide loop, one desk, one bulletin.
+function sharedTasks(sun){
+  const k='s'+sun;if(cache[k])return cache[k];
+  const list=dated().filter(c=>c.level).map(c=>({c,w:weekAt(c,sun)})).filter(x=>x.w&&x.c.date>=sun);
+  const names=f=>list.filter(x=>f(x.w)).sort((a,b)=>a.c.level-b.c.level).map(x=>x.c.name);
+  const ns=rotation().length?['Next Steps']:[];
+  const out=[];
+  const slide=[...names(w=>w.slide),...ns],desk=[...names(w=>w.desk),...ns];
+  const bull=[...list.filter(x=>x.w.bull).sort((a,b)=>(a.w.bull.startsWith('Featured')?0:1)-(b.w.bull.startsWith('Featured')?0:1)||a.c.level-b.c.level).map(x=>x.c.name),...ns];
+  if(slide.length)out.push({key:'slide~'+sun,date:sun,ch:'slide',name:'Run the pre-service slides',list:slide});
+  if(desk.length)out.push({key:'desk~'+sun,date:sun,ch:'desk',name:'Stock the Welcome Desk',list:desk});
+  if(bull.length)out.push({key:'bulletin~'+sun,date:add(sun,4),ch:'bulletin',name:'Publish the Weekly Bulletin',list:bull});
+  return cache[k]=out;
+}
+
+function highlightTasks(sun){
+  const l=lineup(sun),it=[l.stage,...l.booth].find(x=>x&&x.hl);if(!it)return [];
+  return HIGHLIGHT.map((t,j)=>({key:`${it.c.id}~hl~${sun}~${j}`,date:add(sun,t[0]),ch:t[1],label:t[2],opt:!!t[3],c:it.c,w:0}));
+}
+
+function dueBetween(from,to){
+  const out=[];
+  dated().forEach(c=>tasksOf(c).forEach(t=>{if(!t.say&&!t.opt&&t.date>=from&&t.date<=to)out.push(t)}));
+  for(let s=sunOf(from);s<=to;s=add(s,7))highlightTasks(s).forEach(t=>{if(!t.opt&&t.date>=from&&t.date<=to)out.push(t)});
+  return out;
+}
+function sharedBetween(from,to){
+  const out=[];
+  for(let s=sunOf(from);s<=to;s=add(s,7))sharedTasks(s).forEach(t=>{if(t.date>=from&&t.date<=to)out.push(t)});
+  return out;
+}
+const overdue=()=>dated().flatMap(c=>tasksOf(c).filter(t=>!t.opt&&!t.say&&!isDone(t.key)&&t.date<TODAY&&t.date>=(c.created||''))).sort((a,b)=>a.date.localeCompare(b.date));
+
+function stateOf(c){
+  if(c.status==='done')return 'done';
+  if(c.ongoing)return 'always';
+  if(c.date<TODAY)return 'wrap';
+  if(startOf(c)>TODAY)return 'next';
+  return 'running';
+}
+const sprintsUsed=y=>DB.campaigns.filter(c=>c.level==1&&c.status!=='request'&&c.date&&c.date.startsWith(String(y))).length;
+
+// ---------- writes ----------
+function tick(k){
+  if(isDone(k))delete DB.ticks[k];else DB.ticks[k]={key:k,by:me,at:new Date().toISOString().slice(0,16)};
+  post('tick',{key_:k,on:isDone(k),by:me});render();if($('#dlg').open&&redrawDlg)redrawDlg();
+}
+function saveCampaign(c){
+  const i=DB.campaigns.findIndex(x=>x.id===c.id);
+  if(i<0)DB.campaigns.push(c);else DB.campaigns[i]=c;
+  post('saveCampaign',{campaign:{...c,ongoing:c.ongoing?'1':''}});
+}
+function removeCampaign(id){DB.campaigns=DB.campaigns.filter(c=>c.id!==id);post('deleteCampaign',{id})}
+function saveStory(key,story){
+  story=story.trim();
+  if(story)DB.stories[key]={key,story,by:me,at:new Date().toISOString().slice(0,16)};else delete DB.stories[key];
+  post('story',{key_:key,story,by:me});
+}
+function setLineup(sun,stage,booth){
+  DB.sundays[sun]={date:sun,stage:stage||'',booth:booth.join(','),by:me};
+  post('sunday',{date:sun,stage:stage||'',booth:booth.join(','),by:me});
+}
+function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,2800)}
+async function copy(text,done='Copied'){try{await navigator.clipboard.writeText(text);toast(done)}catch(e){toast('Select the text and copy it')}}
+
+// ---------- pieces ----------
+const LEGEND=[['ph-prep','Get ready'],['ph-Awareness','Awareness'],['ph-Interest','Interest'],['ph-Urgency','Urgency'],['ph-rest','Rest']].map(([c,l])=>`<span><i class="${c}"></i>${l}</span>`).join('');
+function todo(key,label,sub,opt){
+  const t=DB.ticks[key],on=!!t;
+  return `<button class="todo${on?' on':''}" data-tick="${esc(key)}" aria-pressed="${on}" title="${esc(on&&t.by?`Done by ${t.by}`:'Mark as done')}"><span class="box">${on?I(ICON.check,14):''}</span><span class="todo-t">${esc(label)}${opt?' <span class="opt">(optional)</span>':''}${sub?`<small>${esc(sub)}</small>`:''}</span></button>`;
+}
+const weekNow=c=>weeksOf(c).find(w=>w.sun<=TODAY&&add(w.sun,6)>=TODAY);
+const phaseClass=(w,c)=>!w.say&&c.level<=3?'ph-rest':'ph-'+w.phase;
+const angleOf=(w,c)=>w.say==='req'||w.say==='opt'||c.level>=4?w.angle:'Rest';
+function nextTask(c){return tasksOf(c).filter(t=>!t.opt&&!isDone(t.key)&&t.date>=(c.created||'')).sort((a,b)=>a.date.localeCompare(b.date))[0]}
+const shortDay=d=>fmt(d,{weekday:'short',month:'short',day:'numeric'});
+const lateCount=c=>tasksOf(c).filter(t=>!t.opt&&!t.say&&!isDone(t.key)&&t.date<TODAY&&t.date>=(c.created||'')).length;
+function pbar(c){
+  return `<div class="pbar" aria-hidden="true">${weeksOf(c).map(w=>`<i class="${phaseClass(w,c)}${add(w.sun,6)<TODAY?' past':''}${w.sun<=TODAY&&add(w.sun,6)>=TODAY?' now':''}"></i>`).join('')}</div>`;
+}
+
+// ---------- top ----------
+function chrome(active,body){
+  const asks=DB.campaigns.filter(c=>c.status==='request').length;
+  const link=(k,l,x='')=>`<a href="#/${k}"${active===k?' aria-current="page"':''}>${l}${x}</a>`;
+  return `<header class="top"><a class="logo" href="#/todo">Promo</a>
+  <nav class="nav" aria-label="Pages">${link('todo','To do',asks?`<span class="count">${asks}</span>`:'')}${link('timeline','Timeline')}${link('sunday','Sunday')}${link('rules','Rules')}</nav>
+  <button class="btn bare who" data-act="rename">${esc(me)}</button>
+  <button class="helpbtn" data-act="tour" aria-label="How this works" title="How this works">?</button>
+  <button class="fab" data-act="new" aria-label="Add an event" title="Add an event">${I(ICON.plus,22)}</button></header>
+  <main>${body}</main>`;
+}
+
+// ---------- to do ----------
+const CHGROUP={sunday:['say','slide','desk'],email:['email'],text:['text'],social:['social','fb'],web:['web'],bulletin:['bulletin']};
+function groupsFor(tasks,shared,says){
+  const byC={};tasks.forEach(t=>(byC[t.c.id]=byC[t.c.id]||{c:t.c,ts:[]}).ts.push(t));
+  const camp=Object.values(byC).sort((a,b)=>a.c.level-b.c.level||a.c.name.localeCompare(b.c.name)).map(({c,ts})=>
+    `<div class="group"><a class="group-h" href="#/c/${esc(c.id)}">${esc(c.name)}</a>${ts.map(t=>todo(t.key,t.label)).join('')}</div>`).join('');
+  const sunGroup=says||'';
+  const sh=shared.length?`<div class="group"><span class="group-h">Every campaign</span>${shared.map(t=>todo(t.key,t.name,t.list.join(', '))).join('')}</div>`:'';
+  return sunGroup+camp+sh;
+}
+function sayGroup(sun){
+  const l=lineup(sun),items=[[l.stage,'Stage'],...l.booth.map(x=>[x,'Booth'])].filter(x=>x[0]);
+  if(!items.length)return '';
+  return `<div class="group"><a class="group-h" href="#/sunday/${sun}">Sunday announcements</a>${items.map(([it,where])=>todo(itemSayKey(it,sun),`${where}: ${it.c.name}`,DB.stories[`${it.c.id}~${sun}`]?it.w.angle:`${it.w.angle}, needs a story`)).join('')}</div>`;
+}
+function weekList(from,to,chan,mark){
+  const keep=t=>!chan||(CHGROUP[chan]||[]).includes(t.ch);
+  const due=dueBetween(from,to).filter(keep),shared=sharedBetween(from,to).filter(keep);
+  const says=!chan||chan==='sunday';
+  const evs=chan?[]:dated().filter(c=>c.date>=from&&c.date<=to);
+  const dates=new Set([...due.map(t=>t.date),...shared.map(t=>t.date),...evs.map(c=>c.date)]);
+  if(says)for(let d=sunOf(from);d<=to;d=add(d,7))if(d>=from&&lineup(d).count)dates.add(d);
+  return [...dates].sort().map(d=>{
+    const ev=evs.filter(c=>c.date===d);
+    const gs=groupsFor(due.filter(t=>t.date===d),shared.filter(t=>t.date===d),says&&D(d).getDay()===0?sayGroup(d):'');
+    return `<section class="day"><div class="day-h">${esc(fmt(d,{weekday:'long',month:'short',day:'numeric'}))}${d===TODAY?'<span class="tg">Today</span>':''}${ev.length?`<span class="ev">Event: ${ev.map(c=>esc(c.name)).join(', ')}</span>`:''}</div>${gs?`<div class="groups">${gs}</div>`:''}</section>`}).join('');
+}
+function weekCount(from,to,chan){
+  const keep=t=>!chan||(CHGROUP[chan]||[]).includes(t.ch);
+  let n=dueBetween(from,to).filter(keep).filter(t=>!isDone(t.key)).length+sharedBetween(from,to).filter(keep).filter(t=>!isDone(t.key)).length;
+  if(!chan||chan==='sunday')for(let d=sunOf(from);d<=to;d=add(d,7))if(d>=from){const l=lineup(d);n+=[l.stage,...l.booth].filter(Boolean).filter(it=>!isDone(itemSayKey(it,d))).length}
+  return n;
+}
+function pageTodo(){
+  const list=dated();
+  const running=list.filter(c=>['running','wrap'].includes(stateOf(c))).sort((a,b)=>a.level-b.level||a.date.localeCompare(b.date));
+  const later=list.filter(c=>stateOf(c)==='next').sort((a,b)=>startOf(a).localeCompare(startOf(b)));
+  const starting=later.filter(c=>startOf(c)<=add(TODAY,21));
+  const asks=DB.campaigns.filter(c=>c.status==='request');
+  const end=nextSun(TODAY),chan=view.schedCh||'';
+  const inWeek=dueBetween(TODAY,end).filter(t=>!isDone(t.key)).length+sharedBetween(TODAY,end).filter(t=>!isDone(t.key)).length;
+  const l=lineup(end),says=[l.stage,...l.booth].filter(Boolean).filter(it=>!isDone(itemSayKey(it,end))).length;
+  const n=inWeek+says;
+  const late=overdue();
+  const head=n?`<em>${n===1?'One thing':cap(word(n))+' things'}</em> to do this week.`:`<em>Nothing left</em> to do this week.`;
+  const opts=[['','Everything'],['sunday','Sunday'],['email','Email'],['text','Text'],['social','Social'],['web','Website'],['bulletin','Bulletin']];
+  const weeks=view.schedWeeks||6;
+  let more='';
+  const wkOpen=view.wkOpen=view.wkOpen||new Set([add(end,1)]);
+  for(let i=1,s=add(end,1);i<weeks;i++,s=add(s,7)){
+    const to=add(s,6),cnt=weekCount(s,to,chan);
+    if(!cnt&&!dated().some(c=>c.date>=s&&c.date<=to))continue;
+    const on=wkOpen.has(s);
+    more+=`<section><button class="wk-h" data-act="wkToggle" data-s="${s}" aria-expanded="${on}"><span class="chev${on?' on':''}">${I(ICON.right,15)}</span><h2>${i===1?'Next week':`Week of ${esc(long(s))}`}</h2><span class="mute">${cnt?`${cnt} to do`:'All done'}</span></button>${on?weekList(s,to,chan):''}</section>`;
+  }
+  const thisWeek=weekList(TODAY,end,chan);
+  return chrome('todo',`
+  <h1>${head}</h1>
+  ${asks.length?`<div class="asks">${asks.map(c=>`<div class="ask"><div><b>${esc(c.name)}</b><div class="mute">Request${c.requester?` from ${esc(c.requester)}`:''}, ${c.date?esc(full(c.date)):'ongoing'}${c.level?`, looks like Level ${c.level}`:''}</div>${c.notes?`<div style="margin-top:3px">${esc(c.notes)}</div>`:''}</div><button class="btn solid" data-act="triage" data-id="${esc(c.id)}">Set the level</button></div>`).join('')}</div>`:''}
+  ${starting.length?`<div class="starts">${starting.map(startCard).join('')}</div>`:''}
+  <div class="home"><div>
+    ${late.length?`<section class="overdue"><h2>${late.length} overdue</h2>${groupsFor(late,[],'')}<button class="btn bare" data-act="skipLate" style="padding:0;margin-top:6px">Clear all ${late.length}</button></section>`:''}
+    <div class="sect-head" style="flex-wrap:wrap"><h2>This week</h2><div class="choices">${opts.map(([k,lb])=>`<button class="choice" style="min-height:34px;padding:0 12px;font-size:14.5px" data-act="schedCh" data-k="${k}" aria-pressed="${k===chan}">${lb}</button>`).join('')}</div></div>
+    <div class="todo-weeks"><div>${thisWeek||'<p class="empty">Nothing due.</p>'}</div>${more}</div>
+    <button class="btn" data-act="schedMore" style="margin-top:20px">Show 6 more weeks</button>
+  </div>
+  <aside>
+    <div class="side-h"><h2>Running</h2><a class="btn bare" href="#/timeline" style="min-height:0">Timeline</a></div>
+    <div class="runlist">${running.length?running.map(campRow).join(''):'<p class="empty">Nothing running.</p>'}</div>
+    ${later.length>starting.length?`<h2 class="upnext" style="margin:22px 0 8px">Up next</h2>${later.filter(c=>!starting.includes(c)).slice(0,6).map(c=>`<a class="compact upnext" href="#/c/${esc(c.id)}">${esc(c.name)}<span>Starts ${esc(fmt(startOf(c)))}</span></a>`).join('')}`:''}
+  </aside></div>`);
+}
+function startCard(c){
+  const st=startOf(c);
+  const ts=tasksOf(c).filter(t=>(t.w==='prep'||t.w===1)&&!t.opt&&!t.say&&t.date<=st);
+  return `<article class="startcard"><div class="start-info"><div><span class="when">Starts ${esc(full(st))}</span><h3>${esc(c.name)}</h3><span class="when">Level ${c.level}, event ${esc(fmt(c.date))}</span></div><a class="more" href="#/c/${esc(c.id)}">See the full plan</a></div>
+    <div>${ts.map(t=>todo(t.key,t.label,t.date<st?`By ${shortDay(t.date)}`:'')).join('')}</div></article>`;
+}
+function campRow(c){
+  const w=weekNow(c),next=nextTask(c),late=lateCount(c),wrap=stateOf(c)==='wrap';
+  return `<a class="camp" href="#/c/${esc(c.id)}"><div class="camp-top"><b>${esc(c.name)}</b><span>${esc(fmt(c.date))}</span></div>${pbar(c)}
+    <div class="camp-where">${wrap?'Wrap up':w?`Week ${w.i} of ${w.n}, ${esc(angleOf(w,c))}`:''}</div>
+    ${late?`<div class="camp-next late">${late} overdue</div>`:next?`<div class="camp-next">Next: ${esc(next.say?'Announce on '+fmt(next.date):next.label+', '+shortDay(next.date))}</div>`:'<div class="camp-next">All done</div>'}</a>`;
+}
+
+// ---------- timeline ----------
+const TL_COL=()=>innerWidth<760?96:118;
+function pageTimeline(){
+  const list=dated().filter(c=>stateOf(c)!=='done').sort((a,b)=>startOf(a).localeCompare(startOf(b))||a.level-b.level);
+  const running=list.filter(c=>['running','wrap'].includes(stateOf(c))).length;
+  const open=view.tlOpen||new Set();
+  const done=DB.campaigns.filter(c=>c.status==='done'&&c.date);
+  const yr=TODAY.slice(0,4);
+  const COL=TL_COL(),NAME=innerWidth<760?116:220;
+  const first=add(sunOf(TODAY),-7);
+  const lastEv=list.length?list.map(c=>c.date).reduce((a,b)=>a>b?a:b):add(first,70);
+  const n=Math.max(10,Math.round((D(sunOf(lastEv))-D(first))/6048e5)+3);
+  const W=n*COL,x=d=>Math.round((D(d)-D(first))/864e5*COL/7);
+  const wks=[];for(let i=0;i<n;i++)wks.push(add(first,i*7));
+  const nowSun=sunOf(TODAY);
+  const head=wks.map(s=>`<div class="tl-wk${s===nowSun?' this':''}"><b>${s===nowSun?'This week':''}</b>${esc(fmt(s))}</div>`).join('');
+  const rows=list.map(c=>{
+    const ws=weeksOf(c),H=c.level==1?62:c.level<=3?54:44,st=startOf(c);
+    const segs=[];
+    if(add(st,-7)>=first)segs.push(`<a class="seg first ph-prep" href="#/c/${esc(c.id)}" style="left:${x(add(st,-7))}px;width:${COL-2}px">Get ready</a>`);
+    ws.forEach((w,i)=>{if(w.sun<first)return;const end=i===ws.length-1?add(c.date,1):add(w.sun,7),wd=Math.max(COL*.25,x(end)-x(w.sun))-2;
+      const cls=[phaseClass(w,c),i===ws.length-1?'last':''].join(' ');
+      segs.push(`<a class="seg ${cls}" href="#/c/${esc(c.id)}" style="left:${x(w.sun)}px;width:${wd}px" title="${esc(fmt(w.sun))}: ${esc(angleOf(w,c))}, ${esc(w.phase)}">${angleOf(w,c).length*7+16<wd?esc(angleOf(w,c)):''}</a>`)});
+    const flag=`<span class="tl-flag" style="left:${x(add(c.date,1))}px">${esc(fmt(c.date))}</span>`;
+    const isOpen=open.has(c.id);
+    let detail='';
+    if(isOpen){
+      const cells=wks.map(s=>{
+        const ts=tasksOf(c).filter(t=>!t.opt&&sunOf(t.date)===s);
+        const sh=sharedTasks(s).filter(t=>t.list.includes(c.name));
+        return `<div class="tl-cell${s===nowSun?' this':''}">${ts.map(t=>todo(t.key,t.say?`Announce: ${t.label}`:t.label)).join('')}${sh.map(t=>todo(t.key,t.name.replace('Run the pre-service slides','Slide').replace('Stock the Welcome Desk','Welcome Desk').replace('Publish the Weekly Bulletin','Bulletin'))).join('')}</div>`}).join('');
+      detail=`<div class="tl-detail"><div class="tl-name" style="background:var(--paper)"><a href="#/c/${esc(c.id)}" style="font-size:14px">Open campaign</a></div><div class="tl-cells">${cells}</div></div>`;
+    }
+    const late=lateCount(c);
+    return `<div class="tl-row"><button class="tl-name" data-act="tlOpen" data-id="${esc(c.id)}" aria-expanded="${isOpen}"><b><span class="chev${isOpen?' on':''}">${I(ICON.right,13)}</span>${esc(c.name)}</b><small>${late?`<span style="color:var(--red)">${late} overdue</span>`:nextTask(c)?`Next ${esc(fmt(nextTask(c).date))}`:'All done'}, Level ${c.level}</small></button><div class="tl-track tl-grid" style="width:${W}px;min-height:${H}px">${segs.join('')}${flag}</div></div>${detail}`;
+  }).join('');
+  return chrome('timeline',`
+  <div class="head"><h1><em>${running===1?'One':cap(word(running))}</em> running, <em>${word(list.length-running)}</em> up next.</h1><span class="mute" style="font-size:16px">${sprintsUsed(yr)} of 4 sprints used in ${yr}</span></div>
+  <div class="tl-bar"><div class="legend">${LEGEND}</div><button class="btn" data-act="tlAll">${open.size?'Collapse all':'Show all tasks'}</button></div>
+  ${list.length?`<div class="tl" style="--col:${COL}px;--name:${NAME}px"><div class="tl-in" style="width:${W+NAME}px"><div class="tl-now" style="left:${NAME+x(nowSun)}px"></div>
+    <div class="tl-head"><div class="tl-name"></div><div class="tl-weeks tl-grid" style="width:${W}px">${head}</div></div>${rows}</div></div>`:'<p class="empty">No campaigns yet. Tap + to add one.</p>'}
+  ${ongoing().length?`<section class="sect"><div class="sect-head"><h2>Always on</h2></div><div class="always">${ongoing().map(c=>`<a class="${c.id===highlightFor(nextSun(TODAY))?.c.id?'on':''}" href="#/c/${esc(c.id)}">${esc(c.name)}</a>`).join('')}</div></section>`:''}
+  ${done.length?`<section class="sect"><div class="sect-head"><h2>Done</h2></div><div class="always">${done.map(c=>`<a href="#/c/${esc(c.id)}">${esc(c.name)}</a>`).join('')}</div></section>`:''}
+  <section class="sect"><a class="btn bare" href="#/ask" style="padding:0 12px 0 0">Open request form</a><button class="btn bare" data-act="copyAsk">Copy link</button></section>`);
+}
+
+// ---------- one campaign: laid out like the playbook, one row per week ----------
+function pageCampaign(id){
+  const c=DB.campaigns.find(x=>x.id===id);
+  if(!c)return chrome('timeline','<p class="empty">This campaign is gone.</p>');
+  if(c.ongoing)return pageOngoing(c);
+  const ws=weeksOf(c),now=weekNow(c),state=stateOf(c),next=nextTask(c),ts=tasksOf(c);
+  const field=state==='done'||!now?'ph-prep':phaseClass(now,c);
+  const where=state==='done'?'Done':state==='wrap'?'Wrap up':state==='next'?`Starts ${full(startOf(c))}`:`Week ${now.i} of ${now.n}, ${now.phase}: ${angleOf(now,c)}`;
+  const strip=[`<a class="ph-prep" href="#pw-prep" data-jump="pw-prep">Get ready<small>${esc(fmt(add(startOf(c),-3)))}</small></a>`,
+    ...ws.map(w=>`<a class="${phaseClass(w,c)}${now===w?' now':''}" href="#pw-${w.i}" data-jump="pw-${w.i}">${esc(angleOf(w,c))}<small>${esc(fmt(w.sun))}</small></a>`),
+    `<a class="ph-after" href="#pw-after" data-jump="pw-after">Wrap up<small>${esc(fmt(add(c.date,1)))}</small></a>`].join('');
+  const prep=ts.filter(t=>t.w==='prep');
+  const prepRow=rowShell('pw-prep',`<div class="pw-date">${esc(shortDay(prep[0].date))}</div><span class="pw-tag ph-prep">Get ready</span>`,
+    `<div class="pw-col">${prep.map(t=>todo(t.key,t.label)).join('')}</div>`,state==='next'&&startOf(c)<=add(TODAY,14),state!=='next'&&(prep.every(t=>isDone(t.key))||prep[0].date<(c.created||''))?`Get ready, ${shortDay(prep[0].date)}`:'');
+  const after=ts.filter(t=>t.w==='after');
+  const allAfter=after.every(t=>isDone(t.key));
+  const afterRow=rowShell('pw-after',`<div class="pw-date">${esc(fmt(c.date))}</div><span class="pw-tag ph-after">Wrap up</span><div class="pw-why">Show it was worth attending, and clean up expired promos straight away.</div>`,
+    `<div class="pw-col"><h4>${esc(fmt(c.date,{weekday:'long'}))}</h4>${after.filter(t=>t.date===c.date).map(t=>todo(t.key,t.label)).join('')}</div>
+     <div class="pw-col"><h4>${esc(fmt(add(c.date,1),{weekday:'long'}))}</h4>${after.filter(t=>t.date!==c.date).map(t=>todo(t.key,t.label)).join('')}</div>
+     <div class="pw-col">${state==='done'?`<button class="btn" data-act="reopen" data-id="${esc(c.id)}">Reopen</button>`:c.date<=TODAY?`<button class="btn${allAfter?' solid':''}" data-act="close" data-id="${esc(c.id)}">Close campaign</button>`:''}</div>`,state==='wrap','');
+  return chrome('timeline',`
+  <section class="cz ${field}">
+    <div class="cz-top"><a class="back" href="#/timeline" aria-label="Timeline">${I(ICON.left)}</a><span class="spacer"></span>
+      <button class="btn" data-act="reply" data-id="${esc(c.id)}">Reply to ministry</button><button class="btn" data-act="edit" data-id="${esc(c.id)}">Edit</button></div>
+    <div><h1>${esc(c.name)}</h1><p class="cz-date">${esc(full(c.date))}, Level ${c.level}</p>
+    <p class="cz-now">${esc(where)}</p>${next&&state!=='done'?`<div class="cz-next"><span>Next</span>${todo(next.key,next.say?`Announce: ${next.label}`:next.label,shortDay(next.date))}</div>`:''}</div>
+  </section>
+  <div class="strip">${strip}</div>
+  ${prepRow}${ws.map(w=>weekRow(c,w,now)).join('')}${afterRow}
+  ${c.notes||c.contact?`<section class="sect" style="max-width:68ch"><h2 style="margin-bottom:6px">Notes</h2>${c.contact?`<p class="mute">Contact: ${esc(c.requester?c.requester+', ':'')}${esc(c.contact)}</p>`:''}<p>${esc(c.notes||'')}</p></section>`:''}`);
+}
+function rowShell(id,left,right,isNow,collapsed){
+  if(collapsed)return `<div class="pw-done" id="${id}">${I(ICON.check,16)}<span>${esc(collapsed)}</span></div>`;
+  return `<section class="pw${isNow?' now':''}" id="${id}"><div>${isNow?'<span class="pw-tag tw">This week</span>':''}${left}</div><div class="pw-cols">${right}</div></section>`;
+}
+function weekRow(c,w,now){
+  const ts=tasksOf(c).filter(t=>t.w===w.i);
+  const shared=sharedTasks(w.sun).filter(t=>t.list.includes(c.name));
+  const say=ts.find(t=>t.say);
+  const dayTasks=d=>ts.filter(t=>!t.say&&D(t.date).getDay()===d);
+  const isNow=now===w;
+  const past=add(w.sun,6)<TODAY;
+  const openCount=ts.filter(t=>!t.opt&&!isDone(t.key)&&t.date>=(c.created||'')).length;
+  const skipped=past&&!openCount;
+  if(skipped)return rowShell('pw-'+w.i,'','',false,`${fmt(w.sun)}: ${angleOf(w,c)}`);
+  const l=lineup(w.sun),it=[l.stage,...l.booth].find(x=>x&&x.c.id===c.id);
+  const where=it?(l.stage===it?'Stage':'Booth'):'';
+  const storyKey=`${c.id}~${w.sun}`,story=DB.stories[storyKey]?.story;
+  let sayHTML='';
+  if(say){
+    sayHTML=todo(say.key,`Announce: ${say.label}`,where||(say.opt?'':'Bumped to the bulletin this Sunday'),say.opt);
+    if(it)sayHTML+=`<button class="storyline" data-act="story" data-id="${esc(c.id)}" data-sun="${w.sun}">${story?esc(story):'<u>Add the story</u>'}</button>`;
+  }
+  const sh=k=>shared.filter(t=>t.ch===k).map(t=>todo(t.key,t.name.replace('Run the pre-service slides','Run the slide').replace('Publish the Weekly Bulletin','Weekly Bulletin'),k==='bulletin'?w.bull:'')).join('');
+  const col=(h,inner)=>`<div class="pw-col"><h4>${h}</h4>${inner||'<span class="note">Nothing</span>'}</div>`;
+  const row=t=>todo(t.key,t.label,'',t.opt);
+  const left=`<div class="pw-date">${esc(fmt(w.sun))}</div><span class="pw-tag ph-${esc(w.phase)}">${esc(w.phase)}</span><div class="pw-angle">${esc(angleOf(w,c))}</div><div class="pw-why">${esc(WHYWEEK[c.level]?.[w.tw]||'')}</div>`;
+  const right=col('Sunday',sayHTML+dayTasks(0).map(row).join('')+sh('slide')+sh('desk'))+col('Tuesday',dayTasks(2).map(row).join(''))+col('Thursday',sh('bulletin'));
+  return rowShell('pw-'+w.i,left,right,isNow,'');
+}
+function pageOngoing(c){
+  const sundays=[];
+  if(c.level==2)for(let s=nextSun(TODAY),i=0;i<26&&sundays.length<4;i++,s=add(s,7)){const h=highlightFor(s);if(h&&h.c.id===c.id)sundays.push(s)}
+  const every=c.level==2?'Pre-service slide, Welcome Desk, Launcher action, web page, Weekly Bulletin':LEVEL[c.level]?.web||'';
+  return chrome('timeline',`
+  <section class="cz ph-prep"><div class="cz-top"><a class="back" href="#/timeline" aria-label="Timeline">${I(ICON.left)}</a><span class="spacer"></span><button class="btn" data-act="edit" data-id="${esc(c.id)}">Edit</button></div>
+    <div><h1>${esc(c.name)}</h1><p class="cz-date">Always on, Level ${c.level}</p></div></section>
+  <section class="pw" style="margin-top:20px"><div><div class="pw-angle">Every week</div></div><div><p style="font-size:18px">${esc(every)}</p></div></section>
+  ${sundays.length?`<section class="pw"><div><div class="pw-angle">Highlight weeks</div></div><div class="rail">${sundays.map(s=>`<a href="#/sunday/${s}">${esc(fmt(s))}</a>`).join('')}</div></section>`:''}`);
+}
+
+// ---------- sunday ----------
+function pageSunday(sun){
+  const cur=nextSun(TODAY);
+  sun=sun||cur;
+  const l=lineup(sun);
+  const when=sun===TODAY?'today':sun===cur?'on Sunday':'on '+long(sun);
+  const n=l.count;
+  const head=n===1?`Say <em>one thing</em> ${when}.`:n===0?`Say <em>nothing</em> ${when}.`:`Say <em>${word(n)} things</em> ${when}.`;
+  const rail=[];for(let i=-1;i<=5;i++){const s=add(sun,i*7);rail.push(`<a href="#/sunday/${s}" aria-current="${s===sun}">${esc(fmt(s))}<small>${lineup(s).count} of 3</small></a>`)}
+  const q=[];
+  if(l.bumped.length)q.push(['Bumped to the bulletin',l.bumped.map(x=>x.c)]);
+  if(l.bulletin.length)q.push(['Bulletin only',l.bulletin]);
+  if(l.resting.length)q.push(['Resting',l.resting]);
+  return chrome('sunday',`
+  <h1>${head}</h1>
+  <div class="rail" style="margin:16px 0 clamp(18px,3vw,28px)">${rail.join('')}</div>
+  <div class="slots">
+    ${slot('stage','Stage',l.stage,sun,l)}
+    ${slot('booth','Booth',l.booth[0],sun,l)}
+    ${slot('booth','Booth',l.booth[1],sun,l)}
+  </div>
+  ${q.length?`<dl class="quiet">${q.map(([t,cs])=>`<div><dt>${t}</dt><dd>${cs.map(c=>`<a href="#/c/${esc(c.id)}">${esc(c.name)}</a>`).join(', ')}</dd></div>`).join('')}</dl>`:''}`);
+}
+function slot(kind,label,it,sun,l){
+  if(!it){
+    const can=l.spare.length>0;
+    return `<button class="slot slot-open${can?'':' locked'}" ${can?`data-act="fill" data-sun="${sun}" data-kind="${kind}"`:'disabled'}>${can?`<span class="plus">${I(ICON.plus)}</span>`:''}<span>${label} open</span></button>`;
+  }
+  const c=it.c,w=it.w,key=itemSayKey(it,sun),story=DB.stories[`${c.id}~${sun}`]?.story;
+  const prev=lineup(add(sun,-7)),repeat=[prev.stage,...prev.booth].some(x=>x&&x.c.id===c.id);
+  const sub=[it.hl?'':`Week ${w.i} of ${w.n}`,it.hl||w.phase===w.angle?'':w.phase,repeat?'also last Sunday':''].filter(Boolean).join(', ');
+  return `<article class="slot ${kind} ${it.hl?'ph-prep':'ph-'+w.phase}"><div class="slot-top"><span class="tag">${label}</span><a class="btn bare" href="#/c/${esc(c.id)}" style="min-height:0">Plan</a></div>
+    <div style="display:grid;gap:14px"><button class="slot-name" data-act="story" data-id="${esc(c.id)}" data-sun="${sun}">${esc(c.name)}</button>
+    <div class="slot-foot"><b>${esc(w.angle)}</b>${sub?`<span class="sub">${esc(sub)}</span>`:''}
+    <p data-act="story" data-id="${esc(c.id)}" data-sun="${sun}" role="button" tabindex="0">${story?esc(story):'<span class="story">Add the story</span>'}</p>${todo(key,'Announced')}</div></div></article>`;
+}
+function storySheet(id,sun){
+  const c=DB.campaigns.find(x=>x.id===id);if(!c)return;
+  const l=lineup(sun),it=[l.stage,...l.booth].find(x=>x&&x.c.id===id);
+  const key=`${id}~${sun}`;
+  const earlier=Object.values(DB.stories).filter(s=>s.key.startsWith(id+'~')&&s.key!==key).sort((a,b)=>b.key.localeCompare(a.key));
+  openDlg(`<form class="sheet" id="storyForm"><div class="sheet-head"><div><h2>${esc(c.name)}</h2><p class="sheet-sub">${esc(long(sun))}${it?`, ${esc(it.w.angle)}`:''}</p></div>${closeBtn()}</div>
+    <label class="f">One story<textarea name="story" rows="5">${esc(DB.stories[key]?.story||'')}</textarea></label>
+    <div><span class="lbl">One next step</span><span>${esc(CONFIG.nextStep)}</span></div>
+    ${earlier.length?`<div><span class="lbl" style="margin-bottom:6px">Already told</span><ul class="earlier">${earlier.map(s=>`<li>${esc(s.story)}<span>${esc(long(s.key.split('~').pop()))}</span></li>`).join('')}</ul></div>`:''}
+    <div class="sheet-foot">${it?`<button type="button" class="btn bare left" data-act="takeOff" data-id="${esc(id)}" data-sun="${sun}">Take off this Sunday</button>`:''}<button class="btn solid">Save</button></div></form>`);
+  $('#storyForm').onsubmit=e=>{e.preventDefault();saveStory(key,e.target.story.value);closeDlg();render()};
+}
+function fillSheet(sun,kind){
+  const l=lineup(sun);
+  openDlg(`<div class="sheet"><div class="sheet-head"><h2>${kind==='stage'?'Stage':'Booth'}, ${esc(long(sun))}</h2>${closeBtn()}</div>
+    <div class="opts">${l.spare.map(x=>`<button class="opt-row" data-act="fillPick" data-id="${esc(x.c.id)}" data-sun="${sun}" data-kind="${kind}">${esc(x.c.name)}<span>${x.hl?'Highlight week':x.w.say==='smuggle'?'Under a Level 2 ask':esc(x.w.angle)}</span></button>`).join('')}</div></div>`);
+}
+
+// ---------- rules ----------
+function pageRules(){
+  const camps=dated();
+  const lvl=view.askLevel||4,ask=view.ask||'stage';
+  const a=ASKS[ask],[v,headline,instead]=a.at(lvl);
+  const big={no:'No',yes:'Yes',some:'Sometimes'}[v];
+  const rowsM=[['Website','web'],['Email and text','msg'],['Social','social'],['Sunday','sun'],['Length','len']];
+  return chrome('rules',`
+  <h1>Who gets <em>what</em>.</h1>
+  <div class="matrix-wrap" style="margin-top:clamp(18px,3vw,28px)"><table class="matrix"><thead><tr><th></th>${[1,2,3,4,5].map(l=>`<th class="${l===lvl?'sel':''}">Level ${l}<small>${esc(LEVEL[l].name)}</small></th>`).join('')}</tr></thead>
+    <tbody><tr><th>For example</th>${[1,2,3,4,5].map(l=>`<td class="${l===lvl?'sel':''}">${esc(LEVEL[l].eg)}</td>`).join('')}</tr>${rowsM.map(([t,k])=>`<tr><th>${t}</th>${[1,2,3,4,5].map(l=>`<td class="${l===lvl?'sel':''}">${esc(LEVEL[l][k])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+  <section class="sect"><h2 style="font:300 clamp(30px,3.6vw,46px)/1.05 var(--sans);letter-spacing:-.03em;margin-bottom:18px">Someone asked for <em style="font-style:normal;font-weight:700">more</em>?</h2>
+    <div class="steps-ask">
+      <div><div class="step-n">1. What is it?</div><div class="choices">${[1,2,3,4,5].map(l=>`<button class="choice" data-act="askLevel" data-l="${l}" aria-pressed="${l===lvl&&!view.askCamp}">Level ${l}</button>`).join('')}</div>
+        ${camps.length?`<div class="choices" style="margin-top:6px">${camps.sort((x,y)=>x.level-y.level).map(c=>`<button class="choice" style="min-height:34px;font-size:14.5px;padding:0 12px" data-act="askPick" data-l="${c.level}" data-id="${esc(c.id)}" aria-pressed="${view.askCamp===c.id}">${esc(c.name)}</button>`).join('')}</div>`:''}</div>
+      <div><div class="step-n">2. What do they want?</div><div class="choices">${Object.entries(ASKS).map(([k,x])=>`<button class="choice" data-act="askWhat" data-k="${k}" aria-pressed="${k===ask}">${esc(x.label)}</button>`).join('')}</div></div>
+      <div><div class="step-n">3. The answer</div><div class="verdict" aria-live="polite"><div class="big">${big}. ${esc(headline)}</div><p class="instead">${esc(instead)}</p><p class="because">Policy: ${esc(a.rule)}</p><div><button class="btn solid" data-act="copyVerdict">Copy reply</button></div></div></div>
+    </div></section>
+  <section class="sect"><div class="sect-head"><h2>The limits</h2></div><div class="rules"><div><b>1 on stage, 2 in the Booth.</b><span>Three or fewer each Sunday, one story and one next step each.</span></div><div><b>Sprints, 2 to 4 a year.</b><span>Level 1 only, 7 days at most.</span></div><div><b>Sunday, Tuesday, Thursday.</b><span>Booth and slides, then email and social, then the Weekly Bulletin.</span></div></div></section>
+  <section class="sect"><div class="sect-head"><h2>The policy</h2></div><div class="rules">${RULES.map(([t,d])=>`<div><b>${esc(t)}.</b><span>${esc(d)}</span></div>`).join('')}</div></section>
+  <section class="sect"><div class="sect-head"><h2>Words we use</h2></div><dl class="gloss">${WORDS.map(([t,d])=>`<div><dt>${esc(t)}</dt><dd>${esc(d)}</dd></div>`).join('')}</dl></section>`);
+}
+const rung=(sel,act)=>l=>`<button class="rung l${l}" data-act="${act}" data-l="${l}" aria-pressed="${l===sel}"><span>Level ${l}</span><small>${esc(LEVEL[l].name)}</small></button>`;
+function replyFor(c,opts={}){
+  const hi=c&&c.requester?`Hi ${c.requester.split(' ')[0]},`:'Hi,';
+  const l=c?c.level:opts.level,L=LEVEL[l];
+  const lines=[hi,''];
+  if(c){
+    lines.push(`Thanks for sending ${c.name}. It's a Level ${l} (${L.name.toLowerCase()}), so here's how we'll promote it:`,'');
+    lines.push(`Website: ${L.web}`,`Email and text: ${L.msg}`,`Social: ${L.social}`,`Sunday: ${L.sun}`,`Length: ${L.len}`,'');
+    if(c.date)lines.push(`Promo starts ${full(startOf(c))}.`,'');
+    lines.push(`Every promo points to one place: the Next Steps button at oceansidechurch.ca.`,'',`Have a story from this ministry? Send it over. A story moves people more than details do, and it's the best thing you can give us.`);
+  }else{
+    const a=ASKS[opts.ask],[,headline,instead]=a.at(l);
+    lines.push(`Thanks for caring about this. Here's how our communications policy handles it.`,'',`${headline} ${instead}`,'',`We use the same levels for every ministry, so nothing gets drowned out: ${a.rule.toLowerCase()}.`,'',`Have a story from this ministry? Send it over. A story moves people more than details do.`);
+  }
+  return lines.join('\n');
+}
+function replySheet(c){
+  const text=replyFor(c);
+  openDlg(`<div class="sheet"><div class="sheet-head"><div><h2>Level ${c.level}.</h2>${c.contact?`<p class="sheet-sub">${esc(c.contact)}</p>`:''}</div>${closeBtn()}</div><textarea class="reply" aria-label="Reply" id="replyText">${esc(text)}</textarea>
+  <div class="sheet-foot"><button class="btn solid" data-act="copyReply">Copy reply</button></div></div>`);
+}
+
+// ---------- add / edit ----------
+let wiz=null;
+function openWizard(c,fromRequest){
+  wiz={id:c?.id||'',name:c?.name||'',date:c?.date||'',ministry:c?.ministry||'',notes:c?.notes||'',level:c?.level||MINISTRY[c?.ministry]||0,weeks:c?.weeks||0,story:c?.story||'',requester:c?.requester||'',contact:c?.contact||'',status:c?.status||'active',ongoing:!!c?.ongoing,created:c?.created||TODAY,step:fromRequest?2:1,isNew:!c,fromRequest:!!fromRequest};
+  drawWizard();
+}
+function fitWeeks(){
+  if(wiz.level==1)return 8;
+  const avail=wiz.date?Math.floor((D(sunOf(wiz.date))-D(sunOf(TODAY)))/6048e5)+1:4;
+  return wiz.weeks&&WEEKMAP[wiz.weeks]?wiz.weeks:avail>=4?4:avail>=3?3:2;
+}
+function drawWizard(){
+  const w=wiz,title=w.isNew?'New event':w.fromRequest?w.name:'Edit';
+  const dots=`<div class="choices" style="margin:0">${w.ongoing?'':''}</div>`;
+  let body='';
+  if(w.step===1){
+    body=`<form class="sheet" id="wiz1"><div class="sheet-head"><h2>${esc(title)}</h2>${closeBtn()}</div>
+    <label class="f">Name<input name="name" required value="${esc(w.name)}" autocomplete="off"></label>
+    ${w.ongoing?'':`<label class="f">Event date<input name="date" type="date" required value="${esc(w.date)}"></label><p class="echo" id="echo">${w.date?esc(full(w.date)):''}</p>`}
+    <label class="f">Ministry<input name="ministry" list="mins" value="${esc(w.ministry)}" autocomplete="off"><datalist id="mins">${Object.keys(MINISTRY).map(m=>`<option value="${esc(m)}">`).join('')}</datalist></label>
+    <label class="f">Notes<textarea name="notes" rows="2">${esc(w.notes)}</textarea></label>
+    <div class="sheet-foot">${w.isNew?'':`<button type="button" class="btn bare left" data-act="delAsk" data-id="${esc(w.id)}">Delete</button>`}<button class="btn solid">Next</button></div></form>`;
+  }else if(w.step===2){
+    body=`<div class="sheet"><div class="sheet-head"><h2>${esc(w.name)}</h2>${closeBtn()}</div>
+    ${w.fromRequest&&w.notes?`<p>${esc(w.notes)}</p>`:''}
+    <div class="ladder">${[1,2,3,4,5].map(rung(w.level,'wizLevel')).join('')}</div>
+    <div class="sheet-foot"><button class="btn left" data-act="wizBack">Back</button><button class="btn solid" data-act="wizNext"${w.level?'':' disabled style="opacity:.4"'}>Next</button></div></div>`;
+  }else{
+    const n=fitWeeks();wiz.weeks=n;
+    const tmp={...w,weeks:n,id:'tmp'};cache={};
+    const ws=weeksOf(tmp),L=LEVEL[w.level];
+    const st=ws[0].sun;
+    const past=st<TODAY;
+    const sayN=ws.filter(x=>x.say==='req').length;
+    cache={};
+    body=`<div class="sheet"><div class="sheet-head"><div><h2>Starts ${esc(long(st))}.</h2><p class="sheet-sub">${past?'Already passed. Earlier tasks stay off the overdue list.':`Event ${esc(full(w.date))}`}</p></div>${closeBtn()}</div>
+    ${w.level==1?'':`<div><span class="lbl">Weeks</span><div class="choices">${[4,3,2].map(x=>`<button class="choice" data-act="wizWeeks" data-n="${x}" aria-pressed="${x===n}">${x} weeks</button>`).join('')}</div></div>`}
+    ${planList(w.level,n,w.date)}
+    <div class="sheet-foot"><button class="btn left" data-act="wizBack">Back</button><button class="btn solid" data-act="wizSave">${w.isNew||w.fromRequest?'Start campaign':'Save'}</button></div></div>`;
+  }
+  openDlg(body);
+  const f=$('#wiz1');
+  if(f){
+    if(f.date)f.date.oninput=()=>{$('#echo').textContent=f.date.value?full(f.date.value):''};
+    f.ministry.oninput=()=>{const lv=MINISTRY[f.ministry.value];if(lv&&!wiz.level)wiz.level=lv};
+    f.onsubmit=e=>{e.preventDefault();wiz.name=f.name.value.trim();wiz.date=f.date?f.date.value:'';wiz.ministry=f.ministry.value.trim();wiz.notes=f.notes.value.trim();if(!wiz.level&&MINISTRY[wiz.ministry])wiz.level=MINISTRY[wiz.ministry];
+      if(wiz.ongoing){finishWizard();return}wiz.step=2;drawWizard()};
+  }
+}
+// One line per week: when it goes out and through what.
+function planList(level,weeks,date){
+  const tmp={id:'tmp-plan',level,weeks,date};
+  cache={};
+  const rows=weeksOf(tmp).map(w=>{
+    const chs=[...new Set(w.tasks.filter(t=>!t[3]).map(t=>CH[t[1]]))];
+    const parts=[w.say==='req'?'Announcement':'',w.slide?'Slide':'',w.desk?'Welcome Desk':'',...chs,w.bull?'Bulletin':''].filter(Boolean);
+    return `<li><time>${esc(fmt(w.sun))}</time><div><b>${esc(w.say==='req'||w.say==='opt'||level>=4?w.angle:'Rest')}</b><span>${esc(parts.join(', '))}</span></div></li>`});
+  cache={};
+  const st=add(sunOf(date),-(WEEKMAP[level==1?8:weeks].length-1)*7);
+  return `<ul class="plan-list"><li><time>${esc(fmt(add(st,-3)))}</time><div><b>Get ready</b><span>${esc(PREP(level).join(', '))}</span></div></li>${rows.join('')}<li><time>${esc(fmt(add(date,1)))}</time><div><b>Wrap up</b><span>Recap post and email, take promos down</span></div></li></ul>`;
+}
+function finishWizard(){
+  const w=wiz,id=w.id||(w.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,32)+'-'+Date.now().toString(36));
+  const c={story:w.story||'',id,name:w.name,date:w.date,level:w.level,weeks:w.level==1?8:w.weeks,ministry:w.ministry,notes:w.notes,status:w.status==='request'?'active':w.status,ongoing:w.ongoing,requester:w.requester,contact:w.contact,created:w.fromRequest?TODAY:w.created,by:me};
+  saveCampaign(c);closeDlg();
+  if(w.fromRequest){go('c/'+id);setTimeout(()=>replySheet(c),60)}else if(w.isNew)go('c/'+id);else render();
+}
+
+// ---------- questionnaire ----------
+let Q=null;
+const quizLevel=()=>Q.aud==='all'&&(Q.half==='yes'||Q.half==='bridge')?1:Q.aud==='core'?2:Q.aud==='nextgen'?3:Q.type==='ongoing'?4:5;
+const quizOngoing=()=>Q.type==='ongoing'&&quizLevel()!==1;
+const WHY={1:Q=>Q.half==='bridge'?'It reaches people who do not come here yet.':'It reaches at least half the room.',
+  2:()=>'It is a core next step.',3:()=>'Next gen gets its own level, whatever the numbers.',
+  4:()=>'It serves one part of the church, so it gets its own permanent home.',5:()=>'It is one event for one group, so it goes through their channels.'};
+function startQuiz(mode){Q={mode,step:'type',hist:[],name:'',date:'',ministry:'',contact:'',requester:'',notes:''};drawQuiz()}
+function qGo(step){Q.hist.push(Q.step);Q.step=step;drawQuiz()}
+function quizOpt(act,v,t,d){return `<button class="q-opt" data-act="${act}" data-v="${v}"><b>${t}</b>${d?`<span>${d}</span>`:''}</button>`}
+function quizFrame(n,inner){
+  const back=Q.hist.length?`<button class="x" data-act="qBack" aria-label="Back">${I(ICON.left)}</button>`:'';
+  const dashes=[1,2,3,4,5].map(i=>`<i class="${i<=n?'past':''}"></i>`).join('');
+  return `<div class="quiz"><div class="q-top">${back}<div class="segs" aria-label="Step ${n} of 5">${dashes}</div>${Q.mode==='office'?closeBtn():''}</div>${inner}</div>`;
+}
+function quizBody(){
+  if(Q.step==='type')return quizFrame(1,`<p class="q-text">Is this a <em>one-off event</em>, or something <em>ongoing</em>?</p><div class="q-opts">
+    ${quizOpt('qType','event','A one-off event','A retreat, a fundraiser, a serve day')}${quizOpt('qType','ongoing','Something ongoing','A ministry, a next step, a weekly gathering')}</div>`);
+  if(Q.step==='aud')return quizFrame(2,`<p class="q-text">Who is this <em>really</em> for?</p><div class="q-opts">
+    ${quizOpt('qAud','all','The whole church or the wider community','Christmas, Easter, Kick-Off Sunday, a service time change')}${quizOpt('qAud','core','Anyone taking a next step','Baptism, giving, serving, groups, newcomers')}${quizOpt('qAud','nextgen','Kids, youth or young adults','ONE80 Kids, Ocean Youth')}${quizOpt('qAud','ministry','One ministry or group','Rooted, Foster Care, Missions, Outreach')}</div>`);
+  if(Q.step==='half')return quizFrame(3,`<p class="q-text">On a normal Sunday, would this reach <em>at least half</em> the room?</p><div class="q-opts">
+    ${quizOpt('qHalf','yes','Yes, at least half','')}${quizOpt('qHalf','bridge','It is aimed at people who do not come here yet','A bridge event for Nanaimo')}${quizOpt('qHalf','no','Honestly, fewer than half','Most things are')}</div>`);
+  if(Q.step==='fallback')return quizFrame(3,`<p class="q-text">So which of these <em>is it</em>?</p><div class="q-opts">
+    ${quizOpt('qFall','core','A next step','Baptism, giving, serving, groups, newcomers')}${quizOpt('qFall','nextgen','Kids, youth or young adults','')}${quizOpt('qFall','ministry','One ministry or group','')}</div>`);
+  if(Q.step==='details'){
+    const ask=Q.mode==='ask';
+    return quizFrame(4,`<form id="qForm" style="display:grid;gap:14px"><p class="q-text">A few <em>details</em>.</p>
+    <label class="f">What is it called?<input name="name" required maxlength="120" value="${esc(Q.name)}" autocomplete="off"></label>
+    ${quizOngoing()?'':`<label class="f">When is it?<input name="date" type="date" required value="${esc(Q.date)}"></label><p class="echo" id="qEcho">${Q.date?esc(full(Q.date)):''}</p>`}
+    <label class="f">Which ministry?<input name="ministry" maxlength="120" list="qmins" value="${esc(Q.ministry)}" autocomplete="off"><datalist id="qmins">${Object.keys(MINISTRY).map(m=>`<option value="${esc(m)}">`).join('')}</datalist></label>
+    ${ask?`<div class="two"><label class="f">Your name<input name="requester" required maxlength="120" value="${esc(Q.requester)}" autocomplete="name"></label><label class="f">Your email<input name="contact" type="email" required maxlength="160" value="${esc(Q.contact)}" autocomplete="email"></label></div>
+    <label class="hp" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label>`:`<label class="f">Who should we talk to?<input name="contact" maxlength="160" value="${esc(Q.contact)}" autocomplete="off"></label>`}
+    <div><button class="btn solid">Next</button></div></form>`);
+  }
+  if(Q.step==='story')return quizFrame(5,`<p class="q-text">Is there a <em>real story</em> attached to this?</p><div class="q-opts">
+    ${quizOpt('qStory','yes','Yes, and I know who could tell it','')}${quizOpt('qStory','maybe','Probably, I would need to find it','')}${quizOpt('qStory','no','Not yet','')}</div>`);
+  // result
+  const level=Q.level||quizLevel(),L=LEVEL[level],ong=quizOngoing()&&level!==1;
+  const weeks=ong?0:Q.weeks&&(level!==1)?Q.weeks:level===1?8:fitWeeksFor(level,0,Q.date);
+  if(!ong)Q.weeks=weeks;
+  const start=ong?null:(()=>{cache={};const st=weeksOf({id:'tmp-plan',level,weeks,date:Q.date})[0].sun;cache={};return st})();
+  const nots=NOTS[level];
+  const ask=Q.mode==='ask';
+  return quizFrame(5,`<div class="q-result l${level}"><small>${esc(L.name)}</small><b>Level ${level}</b><p>${esc((Q.level?'':WHY[level](Q)))}</p></div>
+    ${ong?`<ul class="plan-list"><li><time>Weekly</time><div><b>Always on</b><span>${esc(L.web)}</span></div></li>${level===2?'<li><time>Rotates</time><div><b>Highlight week</b><span>A one-week spotlight every 4 to 6 weeks</span></div></li>':''}</ul>`:
+    `<p class="q-text" style="font-size:clamp(24px,3vw,30px)">Starts <em>${esc(long(start))}</em>.</p>
+    ${level===1?'':`<div class="choices" style="margin:0">${[4,3,2].map(x=>`<button class="choice" data-act="qWeeks" data-n="${x}" aria-pressed="${x===weeks}">${x} weeks</button>`).join('')}</div>`}
+    ${planList(level,weeks,Q.date)}`}
+    ${nots.length?`<div class="nots">${nots.map(n=>`<span>${esc(n)}</span>`).join('')}</div>`:''}
+    ${Q.choose?`<div class="ladder">${[1,2,3,4,5].map(rung(level,'qLevel')).join('')}</div>`:''}
+    <div class="sheet-foot">${ask?'':`<button class="btn bare left" data-act="qChange">Change level</button>`}<p class="err" id="qErr" hidden style="width:100%"></p><button class="btn solid" data-act="${ask?'qSend':'qSave'}">${ask?'Send request':'Start campaign'}</button></div>`);
+}
+function drawQuiz(){
+  const html=quizBody();
+  if(Q.mode==='ask')$('#app').innerHTML=`<div class="solo"><div class="logo">Oceanside Church</div>${html}</div>`;
+  else{openDlg(html);$('#dlg').scrollTop=0}
+  const f=$('#qForm');if(!f)return;
+  if(f.date)f.date.oninput=()=>{$('#qEcho').textContent=f.date.value?full(f.date.value):''};
+  f.onsubmit=e=>{e.preventDefault();Q.name=f.name.value.trim();Q.date=f.date?f.date.value:'';Q.ministry=f.ministry.value.trim();Q.contact=f.contact.value.trim();
+    if(f.requester)Q.requester=f.requester.value.trim();if(f.website)Q.website=f.website.value;qGo('story')};
+}
+function fitWeeksFor(level,weeks,date){
+  if(level==1)return 8;
+  const avail=date?Math.floor((D(sunOf(date))-D(sunOf(TODAY)))/6048e5)+1:4;
+  return weeks&&WEEKMAP[weeks]?weeks:avail>=4?4:avail>=3?3:2;
+}
+function quizRecord(status){
+  const level=Q.level||quizLevel(),ong=quizOngoing()&&level!==1;
+  return {id:Q.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,32)+'-'+Date.now().toString(36),name:Q.name,date:ong?'':Q.date,level,weeks:ong?0:Q.weeks,ministry:Q.ministry,notes:'',status,ongoing:ong,requester:Q.requester,contact:Q.contact,story:Q.story,created:TODAY,by:me};
+}
+async function quizSend(){
+  const c=quizRecord('request'),btn=$('[data-act=qSend]');btn.disabled=true;btn.textContent='Sending';
+  try{
+    if(DEV){DB.campaigns.push({...c,ongoing:false,level:c.level});store()}
+    else{const r=await fetch(CONFIG.apiUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'request',...c,ongoing:c.ongoing?'1':'',website:Q.website||''})});const j=await r.json();if(!j.ok)throw 0}
+    const L=LEVEL[c.level];
+    $('#app').innerHTML=`<div class="solo"><div class="logo">Oceanside Church</div><h1>Sent.</h1><p style="font-size:19px">It looks like a Level ${c.level}. We'll confirm that and reply with your promo plan.</p>${route==='#/ask'?'<div><a class="btn solid" href="#/todo">Back to the planner</a></div>':''}</div>`;
+  }catch(x){const m=$('#qErr');m.hidden=false;m.textContent="That didn't send. Try again, or email office@oceansidechurch.ca.";btn.disabled=false;btn.textContent='Send request'}
+}
+
+// ---------- walkthrough ----------
+const TOUR=[
+  ()=>`<h2>Know <em>what's next</em>.</h2><div class="tour-body"><p>Every event becomes a campaign with a dated plan from the playbooks. This app tells you which ones are running, where each one is, and what to do this week.</p></div>`,
+  ()=>`<h2>The <em>To do</em> page is your week.</h2><div class="tour-body"><p>It shows what is overdue, what is about to start, and every task by day. A faded circle is a task you haven't done. Tap it when it's done, and everyone sees who did it. Try one.</p><div class="group"><span class="group-h">Christmas Services</span><button class="todo" data-act="tourTick"><span class="box"></span><span class="todo-t">Send the launch email</span></button><button class="todo" data-act="tourTick"><span class="box"></span><span class="todo-t">Send the launch text</span></button></div></div>`,
+  ()=>`<h2>The <em>Timeline</em> shows it all.</h2><div class="tour-body"><p>One row per campaign, one column per week. Colour is the playbook phase, and it builds toward the event. Open a row to see the tasks for each week.</p><div class="mini-tl"><div><i class="ph-prep">Get ready</i><i class="ph-Awareness">Launch</i><i class="ph-rest">Rest</i><i class="ph-Awareness">Handoff</i><i class="ph-Interest">Interest</i><i class="ph-Urgency">Sprint</i></div></div><div class="legend">${LEGEND}</div></div>`,
+  ()=>`<h2>Then <em>Sunday</em> and <em>Rules</em>.</h2><div class="tour-body"><div class="gets"><div><dt>Sunday</dt><dd>The campaigns due an announcement fill 1 stage spot and 2 Booth spots. Anything else goes to the bulletin.</dd></div><div><dt>Rules</dt><dd>What each level gets, and an answer to copy when someone asks for more.</dd></div><div><dt>The + button</dt><dd>A few questions find the level and build the plan.</dd></div></div></div>`,
+];
+function openTour(i=0){
+  view.tourAt=i;
+  const last=i===TOUR.length-1;
+  redrawDlg=null;
+  const d=$('#dlg');d.className='tourd';
+  d.innerHTML=`<div class="tour"><div class="tour-head"><div class="tour-dots">${TOUR.map((_,n)=>`<i class="${n<=i?'on':''}"></i>`).join('')}</div>${last?'':'<button class="btn bare" data-act="tourEnd">Skip</button>'}</div>
+    <div style="display:grid;align-content:start;gap:14px">${TOUR[i]()}</div>
+    <div class="tour-foot">${i?`<button class="x" data-act="tourGo" data-i="${i-1}" aria-label="Back">${I(ICON.left)}</button>`:'<span></span>'}${last?'<button class="btn solid" data-act="tourEnd">Get started</button>':`<button class="btn solid" data-act="tourGo" data-i="${i+1}">Next</button>`}</div></div>`;
+  if(!d.open)d.showModal();
+  d.scrollTop=0;
+}
+
+// ---------- dialog ----------
+const closeBtn=()=>`<button type="button" class="x" data-act="closeDlg" aria-label="Close">${I(ICON.x)}</button>`;
+function openDlg(html){const d=$('#dlg');d.innerHTML=html;if(!d.open)d.showModal();d.scrollTop=0}
+function closeDlg(){const d=$('#dlg');if(d.open)d.close();d.innerHTML='';d.className='';redrawDlg=null}
+let redrawDlg=null;
+$('#dlg').addEventListener('click',e=>{if(e.target.id==='dlg')closeDlg()});
+
+// ---------- actions ----------
+const ACT={
+  new:()=>startQuiz('office'),
+  tour:()=>openTour(),
+  tourGo:b=>openTour(+b.dataset.i),
+  tourEnd:()=>{try{localStorage.setItem('pp-tour2','1')}catch(e){}closeDlg()},
+  tourTick:b=>{const on=b.classList.toggle('on');$('.box',b).innerHTML=on?I(ICON.check,14):''},
+  qType:b=>{Q.type=b.dataset.v;qGo('aud')},
+  qAud:b=>{Q.aud=b.dataset.v;Q.half=null;qGo(Q.aud==='all'?'half':'details')},
+  qHalf:b=>{Q.half=b.dataset.v;qGo(Q.half==='no'?'fallback':'details')},
+  qFall:b=>{Q.aud=b.dataset.v;Q.half=null;qGo('details')},
+  qStory:b=>{Q.story=b.dataset.v;qGo('result')},
+  qBack:()=>{Q.step=Q.hist.pop();Q.level=0;Q.choose=false;drawQuiz()},
+  qWeeks:b=>{Q.weeks=+b.dataset.n;drawQuiz()},
+  qChange:()=>{Q.choose=!Q.choose;drawQuiz()},
+  qLevel:b=>{Q.level=+b.dataset.l;Q.weeks=0;drawQuiz()},
+  qSave:()=>{const c=quizRecord('active');saveCampaign(c);closeDlg();go('c/'+c.id)},
+  qSend:()=>quizSend(),
+  schedCh:b=>{view.schedCh=b.dataset.k;render()},
+  wkToggle:b=>{const o=view.wkOpen,k=b.dataset.s;o.has(k)?o.delete(k):o.add(k);render()},
+  tlOpen:b=>{const o=view.tlOpen=view.tlOpen||new Set(),id=b.dataset.id;o.has(id)?o.delete(id):o.add(id);render()},
+  tlAll:()=>{const o=view.tlOpen=view.tlOpen||new Set();if(o.size)o.clear();else dated().forEach(c=>o.add(c.id));render()},
+  askPick:b=>{view.askLevel=+b.dataset.l;view.askCamp=b.dataset.id||'';render()},
+  schedMore:()=>{view.schedWeeks=(view.schedWeeks||6)+6;render()},
+  edit:b=>openWizard(DB.campaigns.find(c=>c.id===b.dataset.id)),
+  triage:b=>openWizard(DB.campaigns.find(c=>c.id===b.dataset.id),true),
+  reply:b=>replySheet(DB.campaigns.find(c=>c.id===b.dataset.id)),
+  rename:()=>{openDlg(`<form class="sheet" id="nameForm"><div class="sheet-head"><h2>Your name</h2>${closeBtn()}</div><label class="f">Name<input name="me" required value="${esc(me)}"></label><div class="sheet-foot"><button class="btn solid">Save</button></div></form>`);
+    $('#nameForm').onsubmit=e=>{e.preventDefault();me=e.target.me.value.trim();try{localStorage.setItem('pp-me',me)}catch(x){}closeDlg();render()}},
+  closeDlg:()=>closeDlg(),
+  wizLevel:b=>{wiz.level=+b.dataset.l;drawWizard()},
+  wizNext:()=>{if(!wiz.level)return;if(wiz.ongoing){finishWizard();return}wiz.step=3;drawWizard()},
+  wizBack:()=>{wiz.step=wiz.step===3?2:1;drawWizard()},
+  wizWeeks:b=>{wiz.weeks=+b.dataset.n;drawWizard()},
+  wizSave:()=>finishWizard(),
+  delAsk:b=>{if(b.dataset.sure){removeCampaign(b.dataset.id);closeDlg();go('timeline');toast('Deleted')}else{b.dataset.sure='1';b.textContent='Delete for good?'}},
+  story:b=>storySheet(b.dataset.id,b.dataset.sun),
+  fill:b=>fillSheet(b.dataset.sun,b.dataset.kind),
+  fillPick:b=>{const{sun,kind,id}=b.dataset,l=lineup(sun);const st=kind==='stage'?id:l.stage?.c.id;const bo=kind==='booth'?[...l.booth.map(x=>x.c.id),id].slice(0,SLOTS.booth):l.booth.map(x=>x.c.id);setLineup(sun,st,bo);closeDlg();render()},
+  takeOff:b=>{const{sun,id}=b.dataset,l=lineup(sun);setLineup(sun,l.stage?.c.id===id?'':l.stage?.c.id,l.booth.map(x=>x.c.id).filter(x=>x!==id));closeDlg();render()},
+    close:b=>{const c=DB.campaigns.find(x=>x.id===b.dataset.id);saveCampaign({...c,status:'done'});toast('Campaign closed');go('timeline')},
+  reopen:b=>{const c=DB.campaigns.find(x=>x.id===b.dataset.id);saveCampaign({...c,status:'active'});render()},
+  askLevel:b=>{view.askLevel=+b.dataset.l;view.askCamp='';render()},
+  askWhat:b=>{view.ask=b.dataset.k;render()},
+    copyVerdict:()=>copy(replyFor(null,{level:view.askLevel||4,ask:view.ask||'stage'}),'Reply copied'),
+  copyReply:()=>copy($('#replyText').value,'Reply copied'),
+  copyAsk:()=>copy(location.origin+location.pathname+'?ask','Request link copied'),
+  lateToggle:()=>{view.lateOpen=!view.lateOpen},
+  skipLate:()=>{overdue().forEach(t=>{DB.ticks[t.key]={key:t.key,by:'Cleared',at:TODAY};post('tick',{key_:t.key,on:true,by:'Cleared'})});render()},
+};
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-tick]');
+  if(t){e.preventDefault();tick(t.dataset.tick);return}
+  const j=e.target.closest('[data-jump]');
+  if(j){e.preventDefault();document.getElementById(j.dataset.jump)?.scrollIntoView({behavior:'smooth',block:'start'});return}
+  const l=e.target.closest('a[href^="#/"]');
+  if(l){e.preventDefault();closeDlg();setRoute(l.getAttribute('href'));return}
+  const b=e.target.closest('[data-act]');
+  if(b&&ACT[b.dataset.act])ACT[b.dataset.act](b);
+});
+document.addEventListener('keydown',e=>{
+  if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-act]')){e.preventDefault();e.target.click()}
+});
+document.addEventListener('change',e=>{
+  const s=e.target.closest('[data-story]');
+  if(s){saveStory(s.dataset.story,s.value);toast('Story saved')}
+});
+
+// ---------- routes ----------
+let route=location.hash||'#/todo';
+function setRoute(h){
+  if(h!==route)view.week=null;
+  route=h;
+  try{history.pushState(null,'',h)}catch(e){}
+  render();
+}
+function go(p){setRoute('#/'+p)}
+function render(){
+  const app=$('#app');
+  if(qs.has('ask')||route==='#/ask'){
+    if(app.dataset.ask)return;
+    app.dataset.ask='1';startQuiz('ask');return;
+  }
+  delete app.dataset.ask;
+  if(!DEV&&!code){app.innerHTML=pageGate();bindGate();return}
+  if(!me){app.innerHTML=pageGate();bindGate();return}
+  const y=scrollY;
+  const[,name='todo',arg]=route.split('/');
+  const html=name==='timeline'?pageTimeline():name==='c'?pageCampaign(decodeURIComponent(arg||'')):name==='sunday'?pageSunday(arg):name==='rules'?pageRules():pageTodo();
+  const ss=$('.tl')?.scrollLeft;
+  app.innerHTML=html;
+  if($('.tl')){const t=$('.tl');t.scrollLeft=render.at===route&&ss!=null?ss:Math.max(0,$('.tl-now',t).offsetLeft-$('.tl-name',t).offsetWidth-TL_COL())}
+  if(render.at===route)scrollTo(0,y);else scrollTo(0,0);
+  render.at=route;
+  if(!render.toured){render.toured=true;let seen=false;try{seen=!!localStorage.getItem('pp-tour2')}catch(e){}if(!seen)openTour()}
+}
+const syncRoute=()=>{const h=location.hash||'#/todo';if(h!==route){view.week=null;route=h;render()}};
+addEventListener('hashchange',syncRoute);
+addEventListener('popstate',syncRoute);
+
+// ---------- gate ----------
+function pageGate(){
+  return `<div class="solo"><div class="logo">Promo</div><h1><em>Promo</em> Planner.</h1>
+  <form id="gate"><label class="f">Your name<input name="me" required value="${esc(me)}" autocomplete="name"></label>
+  ${DEV?'':`<label class="f">Office code<input name="code" type="password" required autocomplete="off"></label>`}
+  <p class="err" id="gerr" hidden></p><div><button class="btn solid">Open</button></div></form></div>`;
+}
+function bindGate(){
+  $('#gate').onsubmit=async e=>{e.preventDefault();const f=e.target;const n=f.me.value.trim();
+    if(!DEV){
+      const c=f.code.value.trim();
+      try{const j=await fetchAll(c);if(!j.ok){const x=$('#gerr');x.hidden=false;x.textContent="That code didn't work.";return}
+        ingest(j);code=c;try{localStorage.setItem('pp-code',c)}catch(x){}}
+      catch(x){const y=$('#gerr');y.hidden=false;y.textContent="Couldn't reach the planner. Check your connection.";return}
+    }
+    me=n;try{localStorage.setItem('pp-me',n)}catch(x){}
+    render()};
+}
 
 // ---------- boot ----------
-render();setView(view);
-(async()=>{
-  const timer=setTimeout(()=>{if(!db)$('sync').textContent='Offline: view only'},10000);
-  db=window.claude?await claude.use('db'):null;
-  if(!db){clearTimeout(timer);$('sync').textContent='Sign in to edit';render();return}
-  if(await claude.use('downloads'))$('exportBtn').hidden=false;
-  db.collection('events').onSnapshot(s=>{clearTimeout(timer);events=s.docs.map(d=>({id:d.id,...d.data()}));$('sync').textContent='Shared · live';render()},e=>{$('sync').textContent='Sync error: '+e.code});
-  db.collection('checks').onSnapshot(s=>{checks={};s.docs.forEach(d=>{const x=d.data();if(x&&x.id)checks[x.id]=true});render()});
+(async function boot(){
+  if(qs.has('ask')){render();return}
+  if(DEV){
+    let saved=null;try{saved=JSON.parse(localStorage.getItem('pp-demo'))}catch(e){}
+    if(!saved||qs.has('reset')){if(!window.DEMO)await new Promise(r=>{const s=document.createElement('script');s.src='_local/demo.js';s.onload=r;s.onerror=r;document.head.append(s)});saved=window.DEMO||{}}
+    ingest(saved);if(!me&&qs.has('me')){me=qs.get('me')}
+    render();return;
+  }
+  try{const c=JSON.parse(localStorage.getItem('pp-data'));if(c)ingest(c)}catch(e){}
+  render();
+  await refresh(true);
+  setInterval(()=>{if(!document.hidden)refresh()},45000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
 })();
 </script>
+</body>
+</html>
