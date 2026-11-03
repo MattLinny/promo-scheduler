@@ -243,6 +243,21 @@ button.tl-name:hover b{text-decoration:underline}
 .tl-day{font-size:12.5px;font-weight:700;line-height:1.2;margin:10px 0 3px}
 .tl-day:first-child{margin-top:0}
 .tl-day.past{color:var(--grey)}
+.tl-corner{display:flex;align-items:flex-end;padding-bottom:8px}
+.tl-wk{position:relative}
+.tl-n{display:inline-flex;align-items:center;gap:2px;margin-left:6px;padding:0 6px;border-radius:99px;background:var(--pale);color:var(--ink2);font-size:11.5px;font-weight:700;line-height:1.5;vertical-align:1px}
+.tl-n.busy{background:var(--ur);color:#fff}
+.tl-later{position:absolute;top:50%;translate:0 -50%;margin-left:8px;font-size:13px;color:var(--mute);white-space:nowrap;text-decoration:none}
+.tl-first{font-size:13px;color:var(--mute);white-space:nowrap;padding-left:3px}
+.tl-cells.f .tl-cell{padding:7px 5px 3px}
+.tl-cells.f .tl-cell.this{background:none}
+a.tl-name{text-decoration:none;color:var(--ink)}
+.tl-chip{display:block;background:var(--pale);border-radius:7px;padding:4px 7px;margin-bottom:4px;font-size:12.5px;line-height:1.2;color:var(--ink);text-decoration:none}
+.tl-chip:hover{filter:brightness(.96)}
+.tl-chip b{font-weight:700}
+.tl-chip.opt{background:none;box-shadow:inset 0 0 0 1px var(--line);color:var(--mute)}
+.tl-chip.done{opacity:.5;text-decoration:line-through}
+.legend i.lg-ev{background:var(--indigo);border-radius:99px}
 .tl-cell .todo{gap:6px;padding:4px 0;font-size:13px;line-height:1.2}
 .tl-cell .box{width:15px;height:15px}
 .tl-cell .box svg{width:10px;height:10px}
@@ -642,7 +657,7 @@ const MID=l=>{const who=l==2?'churchwide':'ministry';return {
   1:W('Interest','Launch','req',1,1,'Highlight',[[0,'web','Publish the Launcher action'],[0,'web','Publish the page or Next Steps section'],...TUE(`Send the ${who} sprinkle email`,`Send the ${who} sprinkle text`,'Social: repurpose Sunday'),[2,'fb','Create the Facebook event',1]]),
   2:W(l==3?'Awareness':'Interest','Rest',null,1,1,'Highlight'),
   3:W('Interest','Values and voice','opt',1,1,'Highlight',TUE(`Send the ${who} sprinkle email`,`Send the ${who} sprinkle text`,'Social: repurpose Sunday',{email:l==2,text:l==2})),
-  4:W('Urgency','Urgency','req',1,1,'Highlight',TUE(`Send the ${who} sprinkle email`,`Send the ${who} sprinkle text`,'Social: repurpose Sunday'))}};
+  4:W('Urgency','Final push','req',1,1,'Highlight',TUE(`Send the ${who} sprinkle email`,`Send the ${who} sprinkle text`,'Social: repurpose Sunday'))}};
 PB[2]=MID(2);PB[3]=MID(3);
 PB[4]=PB[5]={1:W('Interest','Launch',null,0,1,'Featured',[[0,'web','Publish the post in the ministry collection'],[0,'web','Add the event to the Calendar page'],[0,'web','Add a Next Steps section',1],...TUE('Send the ministry email','Send the ministry text','Post a sprinkle',{social:1}),[2,'fb','Create the Facebook event',1]]),
   2:W('Interest','Hold',null,0,1,'Featured'),
@@ -977,7 +992,7 @@ function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeou
 async function copy(text,done='Copied'){try{await navigator.clipboard.writeText(text);toast(done)}catch(e){toast('Select the text and copy it')}}
 
 // ---------- pieces ----------
-const LEGEND=[['ph-prep','Upcoming'],['ph-Awareness','Awareness'],['ph-Interest','Interest'],['ph-Urgency','Urgency'],['ph-rest','Rest']].map(([c,l])=>`<span><i class="${c}"></i>${l}</span>`).join('');
+const LEGEND=[['ph-prep','Upcoming'],['ph-Awareness','Awareness'],['ph-Interest','Interest'],['ph-Urgency','Urgency'],['ph-rest','Rest'],['lg-ev','Event']].map(([c,l])=>`<span><i class="${c}"></i>${l}</span>`).join('');
 function todo(key,label,sub,opt){
   const t=DB.ticks[key],on=!!t;
   return `<button class="todo${on?' on':''}${view.popped===key?' pop':''}" data-tick="${esc(key)}" aria-pressed="${on}" title="${esc(on&&t.by?`Done by ${t.by}`:'Mark as done')}"><span class="box">${on?I(ICON.check,14):''}</span><span class="todo-t">${esc(label)}${opt?' <span class="opt">(optional)</span>':''}${sub?`<small>${esc(sub)}</small>`:''}</span></button>`;
@@ -1008,7 +1023,7 @@ function chrome(active,body){
   const asks=DB.campaigns.filter(c=>c.status==='request').length;
   const link=(k,l,x='')=>`<a href="#/${k}"${active===k?' aria-current="page"':''}>${l}${x}</a>`;
   return `<header class="top"><a class="logo" href="#/todo">Promo</a>
-  <nav class="nav" aria-label="Pages">${link('todo','To do',asks?`<span class="count">${asks}</span>`:'')}${link('campaigns','Campaigns')}${link('timeline','Timeline')}${link('sunday','Sunday')}${link('rules','Rules')}</nav>
+  <nav class="nav" aria-label="Pages">${link('todo','To do',asks?`<span class="count" title="${asks} new ${asks===1?'request':'requests'}">${asks}</span>`:'')}${link('campaigns','Campaigns')}${link('timeline','Timeline')}${link('sunday','Sunday')}${link('rules','Rules')}</nav>
   
   <button class="helpbtn" data-act="tour" aria-label="How this works" title="How this works">?</button>
   <button class="fab" data-act="new" aria-label="Add an event" title="Add an event">${I(ICON.plus,22)}</button></header>
@@ -1155,10 +1170,27 @@ function pageCampaigns(){
 
 // ---------- timeline ----------
 const TL_COL=()=>innerWidth<760?96:118;
+const TL_SHOW=[['','Everything'],['social','Social'],['msg','Email and text'],['sunday','Sunday announcements'],['room','In the building'],['slide','Pre-service slides'],['desk','Welcome Desk'],['bulletin','Weekly Bulletin'],['web','Website']];
+const chipName=l=>{const t=l.replace(/^Post an? /,'').replace(/^Send (the|an?) /,'').replace(/^Social: /,'').replace(/^(Create|Publish|Add|Upgrade) (the |an? )?/,'').replace(/^(Run the sprint):.*/,'$1');return cap(t)};
+function tlItems(c,s,chan){
+  if(['social','msg','web'].includes(chan))return tasksOf(c).filter(t=>!t.say&&chanHas(chan,t.ch)&&sunOf(t.date)===s).sort((a,b)=>a.date.localeCompare(b.date)).map(t=>({day:fmt(t.date,{weekday:'short'}),label:chipName(t.label),title:`${shortDay(t.date)}: ${t.label}`,opt:t.opt,done:isDone(t.key)}));
+  if(chan==='sunday'){const l=lineup(s),it=[l.stage,...l.booth].find(x=>x&&x.c.id===c.id&&!x.hl);return it?[{label:l.stage===it?'Stage':'Booth',title:it.w.angle,done:isDone(itemSayKey(it,s))}]:[]}
+  const w=c.level&&c.date>=s?weekAt(c,s):null;if(!w)return [];
+  const out=[],room=chan==='room';
+  if((room||chan==='slide')&&w.slide)out.push({label:'Slide',title:CH.slide});
+  if((room||chan==='desk')&&w.desk)out.push({label:'Welcome Desk',title:CH.desk});
+  if((room||chan==='bulletin')&&w.bull)out.push({label:room?'Bulletin':w.bull,title:`${CH.bulletin}: ${w.bull}`});
+  return out;
+}
+const tlRotation=(s,chan)=>{
+  if(chan==='sunday'){const l=lineup(s);return [l.stage,...l.booth].some(x=>x&&x.hl)?[{label:'Highlight',title:'Highlight week'}]:[]}
+  return ['social','msg'].includes(chan)?highlightTasks(s).filter(t=>chanHas(chan,t.ch)).map(t=>({day:fmt(t.date,{weekday:'short'}),label:chipName(t.label),title:`${shortDay(t.date)}: ${t.label}`,opt:t.opt,done:isDone(t.key)})):[];
+};
+const tlChip=(x,href)=>`<a class="tl-chip${x.opt?' opt':''}${x.done?' done':''}" href="${href}" title="${esc(x.title||x.label)}">${x.day?`<b>${esc(x.day)}</b> `:''}${esc(x.label)}</a>`;
 function pageTimeline(){
   const list=dated().filter(c=>stateOf(c)!=='done').sort((a,b)=>startOf(a).localeCompare(startOf(b))||a.level-b.level);
   const running=list.filter(c=>['running','wrap'].includes(stateOf(c))).length;
-  const open=view.tlOpen||new Set();
+  const open=view.tlOpen||new Set(),chan=view.tlCh||'';
   const COL=TL_COL(),NAME=innerWidth<760?116:220;
   const first=add(sunOf(TODAY),-7);
   const lastEv=list.length?list.map(c=>c.date).reduce((a,b)=>a>b?a:b):add(first,70);
@@ -1168,7 +1200,13 @@ function pageTimeline(){
   const wks=[];for(let i=0;i<n;i++)wks.push(add(first,i*7));
   const nowSun=sunOf(TODAY);
   const weekSpan=s=>{const e=add(s,6);return `${fmt(s)} – ${e.slice(0,7)===s.slice(0,7)?D(e).getDate():fmt(e)}`};
-  const head=wks.map(s=>`<div class="tl-wk${s===nowSun?' this':''}"><b>${s===nowSun?'This week':''}</b>${esc(s===nowSun?weekSpan(s):fmt(s))}</div>`).join('');
+  // With a filter on, each week counts what's in it, and flags weeks where three or more campaigns compete.
+  const filtered=chan?[...list.map(c=>({c,href:`#/c/${esc(c.id)}`,items:wks.map(s=>tlItems(c,s,chan))})),{name:'Next Steps',href:'#/sunday',items:wks.map(s=>tlRotation(s,chan))}].filter(r=>r.items.some(i=>i.length)):[];
+  const mark=(s,i)=>{
+    if(chan){const n=filtered.reduce((a,r)=>a+r.items[i].filter(x=>!x.opt).length,0),who=filtered.filter(r=>r.items[i].some(x=>!x.opt)).length;return n?`<span class="tl-n${who>=3&&['social','msg'].includes(chan)?' busy':''}" title="${who} ${who===1?'campaign':'campaigns'}">${n}</span>`:''}
+    const n=list.filter(c=>startOf(c)===s).length;return n>=2?`<span class="tl-n busy" title="${n} launching">${I(ICON.rocket,12)}${n}</span>`:'';
+  };
+  const head=wks.map((s,i)=>`<div class="tl-wk${s===nowSun?' this':''}"><b>${s===nowSun?'This week':s===add(nowSun,-7)?'Last week':s===add(nowSun,7)?'Next week':''}</b>${esc(s===nowSun?weekSpan(s):fmt(s))}${mark(s,i)}</div>`).join('');
   const rows=list.map(c=>{
     const ws=weeksOf(c),H=c.level==1?62:c.level<=3?54:44,st=startOf(c);
     const segs=[];
@@ -1176,8 +1214,10 @@ function pageTimeline(){
     ws.forEach((w,i)=>{if(w.sun<first)return;const end=i===ws.length-1?add(c.date,1):add(w.sun,7),wd=Math.max(COL*.25,x(end)-x(w.sun))-2;
       const cls=[liveClass(w,c),i===ws.length-1?'last':''].join(' ');
       segs.push(`<a class="seg ${cls}" href="#/c/${esc(c.id)}" style="left:${x(w.sun)}px;width:${wd}px" title="${esc(fmt(w.sun))}: ${esc(angleOf(w,c))}, ${esc(w.phase)}">${i===0?I(ICON.rocket,15):''}${angleOf(w,c).length*6.2+(i===0?36:16)<wd?`<span>${esc(angleOf(w,c))}</span>`:''}</a>`)});
-    tasksOf(c).filter(t=>t.say&&t.w==='early'&&t.date>=first&&t.date<add(st,-7)).forEach(t=>{const wd=x(add(t.date,7))-x(t.date)-2;segs.push(`<a class="seg first ${t.date>TODAY?'ph-prep':'ph-Awareness'}" href="#/c/${esc(c.id)}" style="left:${x(t.date)}px;width:${wd}px" title="${esc(fmt(t.date))}: ${esc(t.label)}">${I(ICON.say,15)}${t.label.length*6.2+36<wd?`<span>${esc(t.label)}</span>`:''}</a>`)});
-    const flag=`<span class="tl-flag" style="left:${x(add(c.date,1))}px">${esc(fmt(c.date))}</span>`;
+    tasksOf(c).filter(t=>t.say&&t.w==='early'&&t.date>=first&&t.date<add(st,-7)).forEach(t=>{const wd=x(add(t.date,7))-x(t.date)-2;segs.push(`<a class="seg first ${t.date>TODAY?'ph-prep':'ph-Awareness'}" href="#/c/${esc(c.id)}" style="left:${x(t.date)}px;width:${wd}px" title="${esc(fmt(t.date))}: ${esc(t.label)}">${I(ICON.say,15)}<span>${esc(t.label.length*6.2+36<wd?t.label:'Announce')}</span></a>`)});
+    // A row whose bar is far off the page still says when it begins.
+    if(add(st,-7)>add(nowSun,28)&&segs.length<=ws.length+1&&!segs.some(g=>g.includes('tl-later')))segs.push(`<a class="tl-later" href="#/c/${esc(c.id)}" style="left:${x(add(nowSun,7))}px">Starts ${esc(fmt(st))}</a>`);
+    const flag=`<span class="tl-flag" style="left:${x(add(c.date,1))}px">Event ${esc(fmt(c.date))}</span>`;
     const isOpen=open.has(c.id);
     let detail='';
     if(isOpen){
@@ -1191,9 +1231,9 @@ function pageTimeline(){
   }).join('');
   return chrome('timeline',`
   <div class="head"><h1>Timeline.</h1></div>
-  <div class="tl-bar"><div class="legend">${LEGEND}</div><button class="btn" data-act="tlAll">${open.size?'Collapse all':'Show all tasks'}</button></div>
-  ${list.length?`<div class="tl" style="--col:${COL}px;--name:${NAME}px"><div class="tl-in" style="width:${W+NAME}px"><div class="tl-now" style="left:${NAME+x(nowSun)}px"></div>
-    <div class="tl-head"><div class="tl-name"></div><div class="tl-weeks tl-grid" style="width:${W}px">${head}</div></div>${rows}</div></div>`:'<p class="empty">No campaigns yet. Tap + to launch your first one.</p>'}
+  <div class="tl-bar"><div class="sels">${pickSel('tlCh','Show',TL_SHOW,chan)}</div>${chan?'':`<div class="legend">${LEGEND}</div><button class="btn" data-act="tlAll">${open.size?'Collapse all':'Show all tasks'}</button>`}</div>
+  ${chan&&!filtered.length?'<p class="empty">Nothing here yet.</p>':list.length?`<div class="tl" style="--col:${COL}px;--name:${NAME}px"><div class="tl-in" style="width:${W+NAME}px"><div class="tl-now" style="left:${NAME+x(nowSun)}px"></div>
+    <div class="tl-head"><div class="tl-name tl-corner"><small>Campaign</small></div><div class="tl-weeks tl-grid" style="width:${W}px">${head}</div></div>${chan?filtered.map(r=>`<div class="tl-row"><a class="tl-name" href="${r.href}"><b>${esc(r.c?r.c.name:r.name)}${r.c?`<span class="tl-lv" title="Level ${r.c.level}">L${r.c.level}</span>`:''}</b></a><div class="tl-cells tl-grid f" style="width:${W}px">${r.items.map((it,i)=>{const at=r.items.findIndex(y=>y.length);return `<div class="tl-cell${wks[i]===nowSun?' this':''}">${i===2&&at>6?`<span class="tl-first">First ${esc(fmt(wks[at]))}</span>`:''}${it.map(x=>tlChip(x,r.href)).join('')}</div>`}).join('')}</div></div>`).join(''):rows}</div></div>`:'<p class="empty">No campaigns yet. Tap + to launch your first one.</p>'}
   `);
 }
 
@@ -1223,7 +1263,7 @@ function pageCampaign(id){
   return chrome('campaigns',`
   <section class="cz ${field}">
     <div class="cz-top"><a class="back" href="#/campaigns" aria-label="Campaigns">${I(ICON.left)}</a><span class="spacer"></span>
-      ${c.requester||c.contact?`<button class="btn" data-act="reply" data-id="${esc(c.id)}">Reply to ministry</button>`:''}${state==='done'||editing?'':`<button class="btn" data-act="taskMode" data-id="${esc(c.id)}">Edit tasks</button>`}<button class="btn" data-act="edit" data-id="${esc(c.id)}">Edit</button></div>
+      ${c.requester||c.contact?`<button class="btn" data-act="reply" data-id="${esc(c.id)}">Reply to ministry</button>`:''}${state==='done'||editing?'':`<button class="btn" data-act="taskMode" data-id="${esc(c.id)}">Edit tasks</button>`}<button class="btn" data-act="edit" data-id="${esc(c.id)}">Edit campaign</button></div>
     <div><h1>${esc(c.name)}</h1><p class="cz-date">${esc(spanOf(c))}</p>
     <p class="cz-now">${esc(where)}</p>${next&&state!=='done'?`<div class="cz-next"><span>Next</span>${todo(next.key,next.say?`Announce: ${next.label}`:next.label,shortDay(next.date))}</div>`:''}</div>
   </section>
@@ -1676,7 +1716,7 @@ async function quizSend(){
 const TOUR=[
   ()=>`<h2>Know <em>what's next</em>.</h2><div class="tour-body"><p>Every event becomes a campaign with a dated plan from the playbooks. This app tells you which ones are running, where each one is, and what to do this week.</p></div>`,
   ()=>`<h2>The <em>To do</em> page is your week.</h2><div class="tour-body"><p>It shows what is overdue, what is about to start, and every task by day. A faded circle is a task you haven't done. Tap it when it's done, and everyone sees who did it. Try one.</p><div class="group"><span class="group-h">Christmas Services</span><button class="todo" data-act="tourTick"><span class="box"></span><span class="todo-t">Send the launch email</span></button><button class="todo" data-act="tourTick"><span class="box"></span><span class="todo-t">Send the launch text</span></button></div></div>`,
-  ()=>`<h2>The <em>Timeline</em> shows it all.</h2><div class="tour-body"><p>One row per campaign, one column per week. Colour is the playbook phase, and it builds toward the event. Open a row to see the tasks for each week.</p><div class="mini-tl"><div><i class="ph-prep">Get ready</i><i class="ph-Awareness">Launch</i><i class="ph-rest">Rest</i><i class="ph-Awareness">Handoff</i><i class="ph-Interest">Interest</i><i class="ph-Urgency">Sprint</i></div></div><div class="legend">${LEGEND}</div></div>`,
+  ()=>`<h2>The <em>Timeline</em> shows it all.</h2><div class="tour-body"><p>One row per campaign, one column per week. A bar is the promo, and the dark pill is the event. Bars stay grey until their week arrives, then show the playbook phase. Open a row for its tasks, or use Show to see one channel, like social.</p><div class="mini-tl"><div><i class="ph-prep">Get ready</i><i class="ph-Awareness">Launch</i><i class="ph-rest">Rest</i><i class="ph-Awareness">Handoff</i><i class="ph-Interest">Interest</i><i class="ph-Urgency">Sprint</i></div></div><div class="legend">${LEGEND}</div></div>`,
   ()=>`<h2>The other <em>tabs</em>.</h2><div class="tour-body"><div class="gets"><div><dt>Campaigns</dt><dd>Every campaign in a sortable list: where it is, what's next, and whether it's on track.</dd></div><div><dt>Sunday</dt><dd>The campaigns due an announcement fill 1 stage spot and 2 Booth spots. Anything else goes to the bulletin.</dd></div><div><dt>Rules</dt><dd>What each level gets, and an answer to copy when someone asks for more.</dd></div><div><dt>The + button</dt><dd>A few questions find the level and build the plan.</dd></div></div></div>`,
 ];
 function openTour(i=0){
