@@ -30,7 +30,7 @@ const ctx = { SpreadsheetApp: { getActive: () => ss }, PropertiesService: { getS
   Logger: { log() {} }, MailApp: { sendEmail: m => mails.push(m) }, ScriptApp: { getProjectTriggers: () => [], deleteTrigger() {}, WeekDay: {}, newTrigger: h => Object.assign(builder, { h }) },
   DriveApp: { getFileById: () => ({ getParents: () => ({ hasNext: () => false }) }) }, console };
 vm.createContext(ctx);
-vm.runInContext(gs + ';Object.assign(this,{setup,doGet,doPost,tasksOf_,lineup_,digest_,norm_,sendWeeklyDigest,installTriggers,backupSheet});', ctx);
+vm.runInContext(gs + ';Object.assign(this,{setup,doGet,doPost,tasksOf_,weeksOf_,lineup_,digest_,norm_,sendWeeklyDigest,installTriggers,backupSheet});', ctx);
 const get = k => JSON.parse(ctx.doGet({ parameter: { key: k } }).t), post = b => JSON.parse(ctx.doPost({ postData: { contents: JSON.stringify(b) } }).t);
 
 // the plan in the page, without a browser
@@ -67,6 +67,15 @@ assert(says(run('2026-10-01', '2026-11-20'))[0] === '2026-11-22', 'a run already
 assert(ctx.tasksOf_(ctx.norm_({ id: 'f2', level: 1, date: '2026-12-24', start: '2026-12-01', created: '2026-11-01' })).some(t => t.key === 'f2~w1~email2'), 'Level 1 keeps its 8 week plan');
 post({ action: 'request', name: 'Run request', date: '2027-03-01', start: '2027-01-10', requester: 'R', contact: 'r@x.ca', level: 5 });
 assert(get(code).campaigns.find(x => x.name === 'Run request').start === '2027-01-10', 'a request keeps its start date');
+
+// a campaign's own task changes
+const edited = ctx.norm_({ id: 'e1', name: 'Conference', level: 1, status: 'active', date: '2027-03-20', created: '2026-11-03', edits: JSON.stringify({ add: [{ id: 'a', label: 'Save the date', date: '2026-11-15', say: 1 }, { id: 'b', label: 'Book the venue', date: '2026-11-18' }], del: ['e1~prep~0', 'e1~w1~say'] }) });
+const editedTasks = ctx.tasksOf_(edited);
+assert(editedTasks.some(t => t.key === 'e1~x~b' && t.date === '2026-11-18') && !editedTasks.some(t => t.key === 'e1~prep~0' || t.key === 'e1~w1~say'), 'tasks can be added and removed');
+const editedData = { campaigns: [edited], stories: [], ticks: [], sundays: [] };
+assert(ctx.lineup_('2026-11-15', editedData).stage.w.angle === 'Save the date', 'an early announcement goes on its Sunday');
+const firstSun = ctx.weeksOf_(edited)[0].sun;
+assert(!ctx.lineup_(firstSun, editedData).stage, 'a removed announcement comes off its Sunday');
 
 const mcBad = JSON.parse(ctx.doGet({ parameter: { mc: 'nope' } }).t);
 assert(mcBad.ok === false, 'bad MC token refused');

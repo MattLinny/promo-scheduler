@@ -24,7 +24,7 @@ const TICKS = 'Ticks';
 const LINES = 'Stories';
 const SUNDAYS = 'Sundays';
 const TABS = {
-  Campaigns: ['id', 'name', 'date', 'level', 'weeks', 'ministry', 'notes', 'status', 'ongoing', 'requester', 'contact', 'created', 'by', 'story', 'start'],
+  Campaigns: ['id', 'name', 'date', 'level', 'weeks', 'ministry', 'notes', 'status', 'ongoing', 'requester', 'contact', 'created', 'by', 'story', 'start', 'edits'],
   Ticks: ['key', 'by', 'at'],
   Stories: ['key', 'story', 'by', 'at'],
   Sundays: ['date', 'stage', 'booth', 'by', 'at'],
@@ -233,6 +233,12 @@ function weeksOf_(c) {
   const n = length_(c), map = WEEKMAP[n];
   return map.map((tw, i) => Object.assign({ i: i + 1, n, tw, k: tw, sun: add_(last, -(n - 1 - i) * 7) }, pb[tw]));
 }
+const editsOf_ = c => { try { const e = JSON.parse(c.edits || '{}'); return { add: e.add || [], del: e.del || [] }; } catch (err) { return { add: [], del: [] }; } };
+function sundayWeek_(c, sun) {
+  const w = weeksOf_(c).find(x => x.sun === sun), e = editsOf_(c), x = e.add.find(a => a.say && a.date === sun);
+  if (x) return Object.assign({}, w || {}, { say: 'req', angle: x.label });
+  return w && e.del.indexOf(c.id + '~w' + w.k + '~say') >= 0 ? Object.assign({}, w, { say: null }) : w;
+}
 function tasksOf_(c) {
   const out = [], start = weeksOf_(c)[0].sun;
   PREP(c.level).forEach((label, j) => out.push({ key: c.id + '~prep~' + j, date: add_(start, -3), ch: 'prep', label, opt: false, c }));
@@ -246,12 +252,14 @@ function tasksOf_(c) {
     });
   });
   AFTER(c.level).forEach((t, j) => out.push({ key: c.id + '~after~' + j, date: add_(c.date, t[0]), ch: t[1], label: t[2], opt: false, c }));
-  return out;
+  const e = editsOf_(c);
+  e.add.forEach(x => out.push({ key: c.id + '~x~' + x.id, date: x.date, ch: x.say ? 'say' : 'other', label: x.label, opt: false, c, say: !!x.say }));
+  return out.filter(t => e.del.indexOf(t.key) < 0);
 }
 function lineup_(sun, data) {
   const active = data.campaigns.filter(c => c.status === 'active');
   const items = active.filter(c => !c.ongoing && c.date && c.level && c.date >= sun)
-    .map(c => ({ c, w: weeksOf_(c).find(w => w.sun === sun) })).filter(x => x.w);
+    .map(c => ({ c, w: sundayWeek_(c, sun) })).filter(x => x.w);
   const req = items.filter(x => x.w.say === 'req').sort((a, b) => a.c.level - b.c.level || a.c.date.localeCompare(b.c.date));
   const list = active.filter(c => c.ongoing && c.level == 2).sort((a, b) => a.name.localeCompare(b.name));
   const every = Math.max(4, Math.min(6, list.length));
@@ -332,7 +340,7 @@ function installTriggers() {
 
 function campaign_(c) {
   const rec = {};
-  TABS.Campaigns.forEach(k => { rec[k] = clean_(c && c[k], k === 'notes' ? 2000 : 160); });
+  TABS.Campaigns.forEach(k => { rec[k] = clean_(c && c[k], k === 'notes' ? 2000 : k === 'edits' ? 20000 : 160); });
   if (!rec.id) throw new Error('no id');
   return rec;
 }

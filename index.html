@@ -277,6 +277,10 @@ button.tl-name:hover b{text-decoration:underline}
 .pw-tag.tw{background:var(--indigo);color:#fff}
 .pw-tag.nx{background:var(--aw);color:var(--ink)}
 .said-past{opacity:.55}
+.edit-bar{position:sticky;top:8px;z-index:5;display:flex;align-items:center;gap:8px;background:var(--white);border-radius:99px;padding:6px 6px 6px 18px;margin:12px 0;box-shadow:0 2px 14px rgba(24,6,42,.1)}
+.edit-bar .spacer{flex:1}
+.kind{display:flex;flex-wrap:wrap;gap:8px}
+.tw.removed{justify-content:space-between;align-items:center;padding:4px 0}
 .pw-angle{font-size:16px;font-weight:600;margin-top:6px;line-height:1.2}
 .pw-why{font-size:14.5px;color:var(--mute);line-height:1.32;margin-top:3px}
 .pw-also{grid-column:1/-1;font-size:14px;color:var(--mute);margin-top:2px}
@@ -619,7 +623,7 @@ const ICON={
   cal:'<rect x="3.500" y="5" width="17" height="15.500" rx="3"/><path d="M3.500 10h17M8 3v4M16 3v4"/>',
   go:'<path d="M7 17 17 7M8.5 7H17v8.5"/>',
 };
-const CH={say:'Announcement',slide:'Pre-service slide',desk:'Welcome Desk',web:'Website',email:'Email',text:'Text',social:'Social',fb:'Facebook event',bulletin:'Weekly Bulletin',post:'After',prep:'Get ready'};
+const CH={other:'Task',say:'Announcement',slide:'Pre-service slide',desk:'Welcome Desk',web:'Website',email:'Email',text:'Text',social:'Social',fb:'Facebook event',bulletin:'Weekly Bulletin',post:'After',prep:'Get ready'};
 
 // ---------- playbooks ----------
 // One week: phase, the announcement angle, say (req/opt/none), on the slide, at the desk, bulletin spot, tasks [weekday, channel, label, optional].
@@ -796,8 +800,10 @@ const weekAt=(c,sun)=>weeksOf(c).find(w=>w.sun===sun);
 const startOf=c=>weeksOf(c)[0].sun;
 const sayKey=(c,w)=>`${c.id}~w${w.k}~say`;
 
-function tasksOf(c){
-  const k='t'+c.id;if(cache[k])return cache[k];
+// A campaign's own changes to its plan: tasks added, and plan tasks removed.
+const editsOf=c=>{try{const e=JSON.parse(c.edits||'{}');return {add:e.add||[],del:e.del||[]}}catch(e){return {add:[],del:[]}}};
+const addedKey=(c,x)=>`${c.id}~x~${x.id}`;
+function planTasks(c){
   const out=[];
   PREP(c.level).forEach((label,j)=>out.push({key:`${c.id}~prep~${j}`,date:add(startOf(c),-3),ch:'prep',label,opt:false,c,w:'prep'}));
   weeksOf(c).forEach(w=>{
@@ -806,7 +812,19 @@ function tasksOf(c){
       out.push({key:`${c.id}~w${w.k}~${t[1]}${j}`,date,ch:t[1],label:t[2],opt:!!t[3],c,w:w.i})});
   });
   AFTER(c.level).forEach((t,j)=>out.push({key:`${c.id}~after~${j}`,date:add(c.date,t[0]),ch:t[1],label:t[2],opt:false,c,w:'after'}));
-  return cache[k]=out;
+  return out;
+}
+function tasksOf(c){
+  const k='t'+c.id;if(cache[k])return cache[k];
+  const e=editsOf(c),st=startOf(c);
+  const added=e.add.map(x=>({key:addedKey(c,x),date:x.date,ch:x.say?'say':'other',label:x.label,opt:false,c,w:x.date>c.date?'after':x.date<st?'early':weekAt(c,sunOf(x.date))?.i||'early',say:!!x.say,added:true}));
+  return cache[k]=[...planTasks(c).filter(t=>!e.del.includes(t.key)),...added];
+}
+// The week as Sunday sees it: an added announcement switches it on, a removed one switches it off.
+function sundayWeek(c,sun){
+  const w=weekAt(c,sun),e=editsOf(c),x=e.add.find(a=>a.say&&a.date===sun);
+  if(x)return {...(w||{i:0,n:0,sun,tasks:[]}),say:'req',angle:x.label,x:addedKey(c,x)};
+  return w&&e.del.includes(sayKey(c,w))?{...w,say:null}:w;
 }
 const isDone=k=>!!DB.ticks[k];
 const openTasks=c=>tasksOf(c).filter(t=>!t.opt&&!isDone(t.key)&&!(t.date<(c.created||'')));
@@ -819,11 +837,11 @@ function highlightFor(sun){
   const c=list[idx];
   return c?{c,hl:true,w:{angle:'Highlight week',i:0,n:0,sun,say:'req',tasks:HIGHLIGHT}}:null;
 }
-const itemSayKey=(it,sun)=>it.hl?`${it.c.id}~hl~${sun}`:sayKey(it.c,it.w);
+const itemSayKey=(it,sun)=>it.hl?`${it.c.id}~hl~${sun}`:it.w.x||sayKey(it.c,it.w);
 
 function lineup(sun){
   const k='l'+sun;if(cache[k])return cache[k];
-  const items=dated().filter(c=>c.date>=sun&&c.level).map(c=>({c,w:weekAt(c,sun)})).filter(x=>x.w);
+  const items=dated().filter(c=>c.date>=sun&&c.level).map(c=>({c,w:sundayWeek(c,sun)})).filter(x=>x.w);
   const byPri=(a,b)=>a.c.level-b.c.level||a.c.date.localeCompare(b.c.date);
   const req=items.filter(x=>x.w.say==='req').sort(byPri);
   const hl=highlightFor(sun);
@@ -845,7 +863,7 @@ function lineup(sun){
   const bumped=req.filter(x=>!on.has(x.c.id));
   const spare=all.filter(x=>!on.has(x.c.id));
   const resting=items.filter(x=>!x.w.say&&x.c.level<=3).map(x=>x.c);
-  const bulletin=items.filter(x=>x.c.level>=4).map(x=>x.c);
+  const bulletin=items.filter(x=>x.c.level>=4&&x.w.phase).map(x=>x.c);
   return cache[k]={stage,booth,bumped,spare,resting,bulletin,count:on.size};
 }
 
@@ -965,10 +983,11 @@ function todo(key,label,sub,opt){
   return `<button class="todo${on?' on':''}${view.popped===key?' pop':''}" data-tick="${esc(key)}" aria-pressed="${on}" title="${esc(on&&t.by?`Done by ${t.by}`:'Mark as done')}"><span class="box">${on?I(ICON.check,14):''}</span><span class="todo-t">${esc(label)}${opt?' <span class="opt">(optional)</span>':''}${sub?`<small>${esc(sub)}</small>`:''}</span></button>`;
 }
 const linkOf=k=>DB.stories['link~'+k]?.story||'';
+const removeBtn=t=>`<button class="linkbtn" data-act="taskDel" data-id="${esc(t.c.id)}" data-k="${esc(t.key)}" aria-label="Remove ${esc(t.label)}" title="Remove">${I(ICON.x,15)}</button>`;
 function taskLine(t,sub,edit){
   const url=linkOf(t.key);
   const a=url?`<a class="tasklink" href="${esc(url)}" target="_blank" rel="noopener">Open</a>`:'';
-  const add=edit?`<button class="linkbtn" data-act="linkEdit" data-k="${esc(t.key)}" aria-label="${url?'Edit link':'Add link'}" title="${url?'Edit link':'Add link'}">${I(ICON.link,15)}</button>`:'';
+  const add=edit&&view.editTasks===t.c.id?removeBtn(t):edit?`<button class="linkbtn" data-act="linkEdit" data-k="${esc(t.key)}" aria-label="${url?'Edit link':'Add link'}" title="${url?'Edit link':'Add link'}">${I(ICON.link,15)}</button>`:'';
   const inner=todo(t.key,t.label,sub,t.opt);
   return a||add?`<div class="tw">${inner}${a}${add}</div>`:inner;
 }
@@ -1157,6 +1176,7 @@ function pageTimeline(){
     ws.forEach((w,i)=>{if(w.sun<first)return;const end=i===ws.length-1?add(c.date,1):add(w.sun,7),wd=Math.max(COL*.25,x(end)-x(w.sun))-2;
       const cls=[liveClass(w,c),i===ws.length-1?'last':''].join(' ');
       segs.push(`<a class="seg ${cls}" href="#/c/${esc(c.id)}" style="left:${x(w.sun)}px;width:${wd}px" title="${esc(fmt(w.sun))}: ${esc(angleOf(w,c))}, ${esc(w.phase)}">${i===0?I(ICON.rocket,15):''}${angleOf(w,c).length*6.2+(i===0?36:16)<wd?`<span>${esc(angleOf(w,c))}</span>`:''}</a>`)});
+    tasksOf(c).filter(t=>t.say&&t.w==='early'&&t.date>=first&&t.date<add(st,-7)).forEach(t=>{const wd=x(add(t.date,7))-x(t.date)-2;segs.push(`<a class="seg first ${t.date>TODAY?'ph-prep':'ph-Awareness'}" href="#/c/${esc(c.id)}" style="left:${x(t.date)}px;width:${wd}px" title="${esc(fmt(t.date))}: ${esc(t.label)}">${I(ICON.say,15)}${t.label.length*6.2+36<wd?`<span>${esc(t.label)}</span>`:''}</a>`)});
     const flag=`<span class="tl-flag" style="left:${x(add(c.date,1))}px">${esc(fmt(c.date))}</span>`;
     const isOpen=open.has(c.id);
     let detail='';
@@ -1188,24 +1208,29 @@ function pageCampaign(id){
   const strip=[`<a class="ph-prep" href="#pw-prep" data-jump="pw-prep">Get ready<small>${esc(fmt(add(startOf(c),-3)))}</small></a>`,
     ...ws.map(w=>`<a class="${liveClass(w,c)}${now===w?' now':''}" href="#pw-${w.i}" data-jump="pw-${w.i}">${esc(angleOf(w,c))}<small>${esc(fmt(w.sun))}</small></a>`),
     `<a class="ph-after" href="#pw-after" data-jump="pw-after">Wrap up<small>${esc(fmt(add(c.date,1)))}</small></a>`].join('');
-  const prep=ts.filter(t=>t.w==='prep');
-  const prepRow=rowShell('pw-prep',`<div class="pw-date">${esc(shortDay(prep[0].date))}</div><span class="pw-tag ph-prep">Get ready</span>`,
-    `<div class="pw-col">${prep.map((t,j)=>taskLine(t,j===0&&storyIdea(c)?`Idea: ${storyIdea(c)}`:'',true)).join('')}</div>`,state==='next'&&startOf(c)<=add(TODAY,14),state!=='next'&&(prep.every(t=>isDone(t.key))||prep[0].date<(c.created||''))?`Get ready, ${shortDay(prep[0].date)}`:'');
+  const prep=ts.filter(t=>t.w==='prep'),editing=view.editTasks===c.id;
+  const early=ts.filter(t=>t.w==='early').sort((a,b)=>a.date.localeCompare(b.date));
+  const earlyRow=early.length?rowShell('pw-early',`<div class="pw-date">${esc(fmt(early[0].date))}</div><span class="pw-tag ph-prep">Early</span>`,`<div class="pw-col">${early.map(t=>earlyLine(c,t)).join('')}</div>`,false,''):'';
+  const removed=editing?planTasks(c).filter(t=>editsOf(c).del.includes(t.key)):[];
+  const prepRow=!prep.length?'':rowShell('pw-prep',`<div class="pw-date">${esc(shortDay(prep[0].date))}</div><span class="pw-tag ph-prep">Get ready</span>`,
+    `<div class="pw-col">${prep.map((t,j)=>taskLine(t,j===0&&storyIdea(c)?`Idea: ${storyIdea(c)}`:'',true)).join('')}</div>`,state==='next'&&startOf(c)<=add(TODAY,14),!editing&&state!=='next'&&(prep.every(t=>isDone(t.key))||prep[0].date<(c.created||''))?`Get ready, ${shortDay(prep[0].date)}`:'');
   const after=ts.filter(t=>t.w==='after');
   const allAfter=after.every(t=>isDone(t.key));
   const afterRow=rowShell('pw-after',`<div class="pw-date">${esc(fmt(c.date))}</div><span class="pw-tag ph-after">Wrap up</span><div class="pw-why">Show it was worth attending, and clean up expired promos straight away.</div>`,
     `<div class="pw-col"><h4>${esc(fmt(c.date,{weekday:'long'}))}</h4>${after.filter(t=>t.date===c.date).map(t=>taskLine(t,'',true)).join('')}</div>
-     <div class="pw-col"><h4>${esc(fmt(add(c.date,1),{weekday:'long'}))}</h4>${after.filter(t=>t.date!==c.date).map(t=>taskLine(t,'',true)).join('')}</div>
+     <div class="pw-col"><h4>${esc(fmt(add(c.date,1),{weekday:'long'}))}</h4>${after.filter(t=>t.date!==c.date).map(t=>taskLine(t,t.added?shortDay(t.date):'',true)).join('')}</div>
      <div class="pw-col" style="display:grid;gap:8px;justify-items:start;align-content:start;grid-column:1/-1;grid-auto-flow:row">${debriefOf(c)?`<div class="q-story"><span>Debrief</span>${esc(debriefText(c))}</div>`:''}${c.date<=TODAY?`<button class="btn" data-act="debrief" data-id="${esc(c.id)}">${debriefOf(c)?'Edit debrief':'Write debrief'}</button>`:''}<button class="btn" data-act="runAgain" data-id="${esc(c.id)}">Run again</button>${state==='done'?`<button class="btn" data-act="reopen" data-id="${esc(c.id)}">Reopen</button>`:c.date<=TODAY?`<button class="btn${allAfter?' solid':''}" data-act="close" data-id="${esc(c.id)}">Close campaign</button>`:''}</div>`,state==='wrap','');
   return chrome('campaigns',`
   <section class="cz ${field}">
     <div class="cz-top"><a class="back" href="#/campaigns" aria-label="Campaigns">${I(ICON.left)}</a><span class="spacer"></span>
-      ${c.requester||c.contact?`<button class="btn" data-act="reply" data-id="${esc(c.id)}">Reply to ministry</button>`:''}<button class="btn" data-act="edit" data-id="${esc(c.id)}">Edit</button></div>
+      ${c.requester||c.contact?`<button class="btn" data-act="reply" data-id="${esc(c.id)}">Reply to ministry</button>`:''}${state==='done'||editing?'':`<button class="btn" data-act="taskMode" data-id="${esc(c.id)}">Edit tasks</button>`}<button class="btn" data-act="edit" data-id="${esc(c.id)}">Edit</button></div>
     <div><h1>${esc(c.name)}</h1><p class="cz-date">${esc(spanOf(c))}</p>
     <p class="cz-now">${esc(where)}</p>${next&&state!=='done'?`<div class="cz-next"><span>Next</span>${todo(next.key,next.say?`Announce: ${next.label}`:next.label,shortDay(next.date))}</div>`:''}</div>
   </section>
-  <div class="strip">${strip}</div>
-  ${prepRow}${ws.map(w=>weekRow(c,w,now)).join('')}${afterRow}
+  <div class="strip">${early.length?`<a class="${early[0].date>TODAY?'ph-prep':'ph-Awareness'}" href="#pw-early" data-jump="pw-early">Early<small>${esc(fmt(early[0].date))}</small></a>`:''}${strip}</div>
+  ${editing?`<div class="edit-bar"><b>Editing tasks</b><span class="spacer"></span><button class="btn solid" data-act="taskAdd" data-id="${esc(c.id)}">Add</button><button class="btn" data-act="taskMode" data-id="${esc(c.id)}">Done</button></div>`:''}
+  ${earlyRow}${prepRow}${ws.map(w=>weekRow(c,w,now)).join('')}${afterRow}
+  ${removed.length?`<section class="pw"><div><div class="pw-angle">Removed</div></div><div class="pw-col">${removed.map(t=>`<div class="tw removed"><span class="todo-t">${esc(t.say?`Announce: ${t.label}`:t.label)}<small>${esc(shortDay(t.date))}</small></span><button class="btn bare" style="min-height:0" data-act="taskBack" data-id="${esc(c.id)}" data-k="${esc(t.key)}">Restore</button></div>`).join('')}</div></section>`:''}
   ${c.notes||c.contact?`<section class="sect" style="max-width:68ch"><h2 style="margin-bottom:6px">Notes</h2>${c.contact?`<p class="mute">Contact: ${esc(c.requester?c.requester+', ':'')}${esc(c.contact)}</p>`:''}<p>${esc(c.notes||'')}</p></section>`:''}`);
 }
 const debriefOf=c=>{try{return JSON.parse(DB.stories[`${c.id}~debrief`]?.story||'null')}catch(e){return null}};
@@ -1234,7 +1259,7 @@ function runAgainSheet(c){
   const f=$('#againForm');bindDate(f);
   f.onsubmit=e=>{e.preventDefault();if(dateMissing(f))return;const date=f.date.value;
     withName(()=>{const last=debriefText(c),notes=[(c.notes||'').replace(/\n*Last time:[\s\S]*$/,''),last&&`Last time: ${last}`].filter(Boolean).join('\n\n');
-      const n={...c,id:c.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,32)+'-'+Date.now().toString(36),date,start:c.start?add(date,Math.round((D(c.start)-D(c.date))/864e5)):'',notes,status:'active',created:TODAY,by:me,requester:'',contact:''};
+      const n={...c,id:c.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,32)+'-'+Date.now().toString(36),date,start:c.start?add(date,Math.round((D(c.start)-D(c.date))/864e5)):'',edits:'',notes,status:'active',created:TODAY,by:me,requester:'',contact:''};
       saveCampaign(n);closeDlg();go('c/'+n.id)})};
 }
 function linkSheet(k){
@@ -1244,6 +1269,28 @@ function linkSheet(k){
   view.linkKey=k;
   $('#linkForm').onsubmit=e=>{e.preventDefault();const v=e.target.url.value.trim();if(!/^https?:\/\//.test(v)){$('#linkErr').hidden=false;return}
     withName(()=>{saveStory('link~'+k,v);closeDlg();render()})};
+}
+function earlyLine(c,t){
+  if(!t.say)return taskLine(t,shortDay(t.date),true);
+  const l=lineup(t.date),it=[l.stage,...l.booth].find(x=>x&&x.c.id===c.id),where=it?(l.stage===it?'Stage':'Booth'):'Bumped to the bulletin';
+  const line=taskLine({...t,label:`Announce: ${t.label}`},`${shortDay(t.date)}, ${where}`,true);
+  if(t.date<TODAY)return `<div class="said-past">${line}</div>`;
+  const story=DB.stories[`${c.id}~${t.date}`]?.story;
+  return line+(it?`<button class="storyline" data-act="story" data-id="${esc(c.id)}" data-sun="${t.date}">${story?esc(story):'<u>Add the story</u>'}</button>`:'');
+}
+function saveEdits(c,e){saveCampaign({...c,edits:e.add.length||e.del.length?JSON.stringify(e):''});cache={}}
+function taskAddSheet(c,kind,label,date,sun){
+  const fills=[];for(let s=nextSun(TODAY);s<=sunOf(c.date);s=add(s,7))if(!tasksOf(c).some(t=>t.say&&t.date===s))fills.push(s);
+  openDlg(`<form class="sheet" id="taskForm"><div class="sheet-head"><div><h2>Add to ${esc(c.name)}</h2></div>${closeBtn()}</div>
+    <div class="kind">${[['task','Task'],['say','Sunday announcement']].map(([k,t])=>`<button type="button" class="btn${k===kind?' solid':''}" data-act="taskKind" data-id="${esc(c.id)}" data-kind="${k}" aria-pressed="${k===kind}">${t}</button>`).join('')}</div>
+    <label class="f">Name<input name="label" required maxlength="120" autocomplete="off" value="${esc(label)}"></label>
+    ${kind==='say'?`<label class="f">Which Sunday<select name="sun" required>${fills.map(s=>`<option value="${s}"${s===sun?' selected':''}>${esc(fmt(s,{month:'long',day:'numeric',year:s.slice(0,4)===TODAY.slice(0,4)?undefined:'numeric'}))} (${lineup(s).count} of 3)</option>`).join('')}</select></label>`:dateField('Date','date',date)}
+    <div class="sheet-foot"><button class="btn solid">Add</button></div></form>`);
+  const f=$('#taskForm');bindDate(f);
+  f.onsubmit=e=>{e.preventDefault();const name=f.label.value.trim(),when=kind==='say'?f.sun.value:f.date.value;if(!name||!when)return;
+    const cur=editsOf(c);cur.add.push({id:Date.now().toString(36),label:name,date:when,...(kind==='say'?{say:1}:{})});
+    saveEdits(c,cur);closeDlg();render();
+    if(kind==='say'){const l=lineup(when);if(![l.stage,...l.booth].some(x=>x&&x.c.id===c.id))toast(`${long(when)} is full. Swap it on the Sunday tab.`)}}
 }
 function rowShell(id,left,right,isNow,collapsed,isNext){
   if(collapsed)return `<div class="pw-done" id="${id}">${I(ICON.check,16)}<span>${esc(collapsed)}</span></div>`;
@@ -1257,7 +1304,8 @@ function weekRow(c,w,now){
   const isNow=now===w;
   const past=add(w.sun,6)<TODAY;
   const openCount=ts.filter(t=>!t.opt&&!isDone(t.key)&&t.date>=(c.created||'')).length;
-  const skipped=past&&!openCount;
+  const editing=view.editTasks===c.id;
+  const skipped=past&&!openCount&&!editing;
   if(skipped)return rowShell('pw-'+w.i,'','',false,`${fmt(w.sun)}: ${angleOf(w,c)}`);
   const l=lineup(w.sun),it=[l.stage,...l.booth].find(x=>x&&x.c.id===c.id);
   const where=it?(l.stage===it?'Stage':'Booth'):'';
@@ -1265,6 +1313,7 @@ function weekRow(c,w,now){
   let sayHTML='';
   if(say){
     sayHTML=todo(say.key,`Announce: ${say.label}`,where||(say.opt?'':'Bumped to the bulletin'),say.opt);
+    if(editing)sayHTML=`<div class="tw">${sayHTML}${removeBtn(say)}</div>`;
     if(w.sun<TODAY)sayHTML=`<div class="said-past">${sayHTML}</div>`;
     else if(it)sayHTML+=`<button class="storyline" data-act="story" data-id="${esc(c.id)}" data-sun="${w.sun}">${story?esc(story):'<u>Add the story</u>'}</button>`;
   }
@@ -1273,7 +1322,7 @@ function weekRow(c,w,now){
   const row=t=>taskLine(t,'',true);
   const left=`<div class="pw-date">${esc(fmt(w.sun))}</div><span class="pw-tag ph-${esc(w.phase)}">${esc(w.phase)}</span><div class="pw-angle">${esc(angleOf(w,c))}</div><div class="pw-why">${esc(WHYWEEK[c.level]?.[w.tw]||'')}</div>`;
   const sunHead=w.sun===TODAY?'Today':w.sun<TODAY&&isNow?'Last Sunday':'Sunday';
-  const right=col(sunHead,sayHTML+dayTasks(0).map(row).join(''))+col('Tuesday',dayTasks(2).map(row).join(''))+`<p class="pw-also">Also on: ${esc(also)}</p>`;
+  const right=col(sunHead,sayHTML+dayTasks(0).map(row).join(''))+col('Tuesday',dayTasks(2).map(row).join(''))+col('Other days',ts.filter(t=>!t.say&&![0,2].includes(D(t.date).getDay())).map(t=>taskLine(t,shortDay(t.date),true)).join(''))+`<p class="pw-also">Also on: ${esc(also)}</p>`;
   return rowShell('pw-'+w.i,left,right,isNow,'',w.sun===nextSun(TODAY));
 }
 function pageOngoing(c){
@@ -1423,7 +1472,7 @@ function replySheet(c){
 // ---------- add / edit ----------
 let wiz=null;
 function openWizard(c,fromRequest){
-  wiz={id:c?.id||'',name:c?.name||'',date:c?.date||'',ministry:c?.ministry||'',notes:c?.notes||'',level:c?.level||MINISTRY[c?.ministry]||0,weeks:c?.weeks||0,start:c?.start||'',run:!!c?.start,story:c?.story||'',requester:c?.requester||'',contact:c?.contact||'',status:c?.status||'active',ongoing:!!c?.ongoing,created:fromRequest?TODAY:c?.created||TODAY,step:fromRequest?2:1,isNew:!c,fromRequest:!!fromRequest};
+  wiz={edits:c?.edits||'',id:c?.id||'',name:c?.name||'',date:c?.date||'',ministry:c?.ministry||'',notes:c?.notes||'',level:c?.level||MINISTRY[c?.ministry]||0,weeks:c?.weeks||0,start:c?.start||'',run:!!c?.start,story:c?.story||'',requester:c?.requester||'',contact:c?.contact||'',status:c?.status||'active',ongoing:!!c?.ongoing,created:fromRequest?TODAY:c?.created||TODAY,step:fromRequest?2:1,isNew:!c,fromRequest:!!fromRequest};
   drawWizard();
 }
 function fitWeeks(){
@@ -1483,7 +1532,7 @@ function planList(level,weeks,date,start,created){
 }
 function finishWizard(){
   const w=wiz,id=w.id||(w.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,32)+'-'+Date.now().toString(36));
-  const c={story:w.story||'',id,name:w.name,date:w.date,level:w.level,weeks:w.level==1?8:w.weeks,start:w.run?w.start:'',ministry:w.ministry,notes:w.notes,status:w.status==='request'?'active':w.status,ongoing:w.ongoing,requester:w.requester,contact:w.contact,created:w.fromRequest?TODAY:w.created,by:me};
+  const c={edits:w.edits||'',story:w.story||'',id,name:w.name,date:w.date,level:w.level,weeks:w.level==1?8:w.weeks,start:w.run?w.start:'',ministry:w.ministry,notes:w.notes,status:w.status==='request'?'active':w.status,ongoing:w.ongoing,requester:w.requester,contact:w.contact,created:w.fromRequest?TODAY:w.created,by:me};
   saveCampaign(c);closeDlg();
   if(w.fromRequest){go('c/'+id);setTimeout(()=>replySheet(c),60)}else if(w.isNew)go('c/'+id);else render();
 }
@@ -1675,6 +1724,12 @@ const ACT={
   qSave:()=>{const c=quizRecord('active');saveCampaign(c);closeDlg();go('c/'+c.id)},
   qSend:()=>quizSend(),
     wkToggle:b=>{const o=view.wkOpen,k=b.dataset.s;o.has(k)?o.delete(k):o.add(k);render()},
+  taskMode:b=>{view.editTasks=view.editTasks===b.dataset.id?'':b.dataset.id;render()},
+  taskAdd:b=>{const c=DB.campaigns.find(x=>x.id===b.dataset.id);taskAddSheet(c,'task','',TODAY,'')},
+  taskKind:b=>{const c=DB.campaigns.find(x=>x.id===b.dataset.id),f=$('#taskForm');taskAddSheet(c,b.dataset.kind,f.label.value,f.date?.value||TODAY,f.sun?.value||'')},
+  taskDel:b=>{const c=DB.campaigns.find(x=>x.id===b.dataset.id),e=editsOf(c),k=b.dataset.k,x=e.add.find(a=>addedKey(c,a)===k);
+    if(x)e.add=e.add.filter(a=>a!==x);else e.del.push(k);saveEdits(c,e);render()},
+  taskBack:b=>{const c=DB.campaigns.find(x=>x.id===b.dataset.id),e=editsOf(c);e.del=e.del.filter(k=>k!==b.dataset.k);saveEdits(c,e);render()},
   tlOpen:b=>{const o=view.tlOpen=view.tlOpen||new Set(),id=b.dataset.id;o.has(id)?o.delete(id):o.add(id);render()},
   tlAll:()=>{const o=view.tlOpen=view.tlOpen||new Set();if(o.size)o.clear();else dated().forEach(c=>o.add(c.id));render()},
 
