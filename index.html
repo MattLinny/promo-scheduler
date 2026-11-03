@@ -722,6 +722,15 @@ function stateOf(c){
 }
 const sprintsUsed=y=>DB.campaigns.filter(c=>c.level==1&&c.status!=='request'&&c.date&&c.date.startsWith(String(y))).length;
 
+// ---------- who ----------
+// Changes record a name. It's asked for once per device, the first time it's needed.
+function withName(then){
+  if(me)return then();
+  openDlg(`<form class="sheet" id="nameForm"><div class="sheet-head"><h2>Who's this?</h2>${closeBtn()}</div><label class="f">Your name<input name="me" required autocomplete="name"></label><div class="sheet-foot"><button class="btn solid">Save</button></div></form>`);
+  $('#nameForm').onsubmit=e=>{e.preventDefault();me=e.target.me.value.trim();try{localStorage.setItem('pp-me',me)}catch(x){}closeDlg();render();then()};
+}
+const WRITES=new Set(['qSave','wizSave','fillPick','takeOff','close','reopen','skipLate']);
+
 // ---------- writes ----------
 function tick(k){
   if(isDone(k))delete DB.ticks[k];else DB.ticks[k]={key:k,by:me,at:new Date().toISOString().slice(0,16)};
@@ -767,7 +776,7 @@ function chrome(active,body){
   const link=(k,l,x='')=>`<a href="#/${k}"${active===k?' aria-current="page"':''}>${l}${x}</a>`;
   return `<header class="top"><a class="logo" href="#/todo">Promo</a>
   <nav class="nav" aria-label="Pages">${link('todo','To do',asks?`<span class="count">${asks}</span>`:'')}${link('timeline','Timeline')}${link('sunday','Sunday')}${link('rules','Rules')}</nav>
-  <button class="btn bare who" data-act="rename">${esc(me)}</button>
+  ${me?`<button class="btn bare who" data-act="rename">${esc(me)}</button>`:''}
   <button class="helpbtn" data-act="tour" aria-label="How this works" title="How this works">?</button>
   <button class="fab" data-act="new" aria-label="Add an event" title="Add an event">${I(ICON.plus,22)}</button></header>
   <main>${body}</main>`;
@@ -1021,7 +1030,7 @@ function storySheet(id,sun){
     <div><span class="lbl">One next step</span><span>${esc(CONFIG.nextStep)}</span></div>
     ${earlier.length?`<div><span class="lbl" style="margin-bottom:6px">Already told</span><ul class="earlier">${earlier.map(s=>`<li>${esc(s.story)}<span>${esc(long(s.key.split('~').pop()))}</span></li>`).join('')}</ul></div>`:''}
     <div class="sheet-foot">${it?`<button type="button" class="btn bare left" data-act="takeOff" data-id="${esc(id)}" data-sun="${sun}">Take off this Sunday</button>`:''}<button class="btn solid">Save</button></div></form>`);
-  $('#storyForm').onsubmit=e=>{e.preventDefault();saveStory(key,e.target.story.value);closeDlg();render()};
+  $('#storyForm').onsubmit=e=>{e.preventDefault();const v=e.target.story.value;withName(()=>{saveStory(key,v);closeDlg();render()})};
 }
 function fillSheet(sun,kind){
   const l=lineup(sun);
@@ -1252,7 +1261,7 @@ const ACT={
   new:()=>startQuiz('office'),
   tour:()=>openTour(),
   tourGo:b=>openTour(+b.dataset.i),
-  tourEnd:()=>{try{localStorage.setItem('pp-tour2','1')}catch(e){}closeDlg()},
+  tourEnd:()=>closeDlg(),
   tourTick:b=>{const on=b.classList.toggle('on');$('.box',b).innerHTML=on?I(ICON.check,14):''},
   qType:b=>{Q.type=b.dataset.v;qGo('aud')},
   qAud:b=>{Q.aud=b.dataset.v;Q.half=null;qGo(Q.aud==='all'?'half':'details')},
@@ -1299,13 +1308,13 @@ const ACT={
 };
 document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tick]');
-  if(t){e.preventDefault();tick(t.dataset.tick);return}
+  if(t){e.preventDefault();const k=t.dataset.tick;withName(()=>tick(k));return}
   const j=e.target.closest('[data-jump]');
   if(j){e.preventDefault();document.getElementById(j.dataset.jump)?.scrollIntoView({behavior:'smooth',block:'start'});return}
   const l=e.target.closest('a[href^="#/"]');
   if(l){e.preventDefault();closeDlg();setRoute(l.getAttribute('href'));return}
   const b=e.target.closest('[data-act]');
-  if(b&&ACT[b.dataset.act])ACT[b.dataset.act](b);
+  if(b&&ACT[b.dataset.act]){if(WRITES.has(b.dataset.act))withName(()=>ACT[b.dataset.act](b));else ACT[b.dataset.act](b)}
 });
 document.addEventListener('keydown',e=>{
   if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-act]')){e.preventDefault();e.target.click()}
@@ -1332,7 +1341,6 @@ function render(){
   }
   delete app.dataset.ask;
   if(!DEV&&!code){app.innerHTML=pageGate();bindGate();return}
-  if(!me){app.innerHTML=pageGate();bindGate();return}
   const y=scrollY;
   const[,name='todo',arg]=route.split('/');
   const html=name==='timeline'?pageTimeline():name==='c'?pageCampaign(decodeURIComponent(arg||'')):name==='sunday'?pageSunday(arg):name==='rules'?pageRules():pageTodo();
@@ -1341,7 +1349,6 @@ function render(){
   if($('.tl')){const t=$('.tl');t.scrollLeft=render.at===route&&ss!=null?ss:Math.max(0,$('.tl-now',t).offsetLeft-$('.tl-name',t).offsetWidth-TL_COL())}
   if(render.at===route)scrollTo(0,y);else scrollTo(0,0);
   render.at=route;
-  if(!render.toured){render.toured=true;let seen=false;try{seen=!!localStorage.getItem('pp-tour2')}catch(e){}if(!seen)openTour()}
 }
 const syncRoute=()=>{const h=location.hash||'#/todo';if(h!==route){view.week=null;route=h;render()}};
 addEventListener('hashchange',syncRoute);
@@ -1350,19 +1357,14 @@ addEventListener('popstate',syncRoute);
 // ---------- gate ----------
 function pageGate(){
   return `<div class="solo"><div class="logo">Promo</div><h1><em>Promo</em> Planner.</h1>
-  <form id="gate"><label class="f">Your name<input name="me" required value="${esc(me)}" autocomplete="name"></label>
-  ${DEV?'':`<label class="f">Office code<input name="code" type="password" required autocomplete="off"></label>`}
+  <form id="gate"><label class="f">Office code<input name="code" type="password" required autocomplete="off"></label>
   <p class="err" id="gerr" hidden></p><div><button class="btn solid">Open</button></div></form></div>`;
 }
 function bindGate(){
-  $('#gate').onsubmit=async e=>{e.preventDefault();const f=e.target;const n=f.me.value.trim();
-    if(!DEV){
-      const c=f.code.value.trim();
-      try{const j=await fetchAll(c);if(!j.ok){const x=$('#gerr');x.hidden=false;x.textContent="That code didn't work.";return}
-        ingest(j);code=c;try{localStorage.setItem('pp-code',c)}catch(x){}}
-      catch(x){const y=$('#gerr');y.hidden=false;y.textContent="Couldn't reach the planner. Check your connection.";return}
-    }
-    me=n;try{localStorage.setItem('pp-me',n)}catch(x){}
+  $('#gate').onsubmit=async e=>{e.preventDefault();const c=e.target.code.value.trim();
+    try{const j=await fetchAll(c);if(!j.ok){const x=$('#gerr');x.hidden=false;x.textContent="That code didn't work.";return}
+      ingest(j);code=c;try{localStorage.setItem('pp-code',c)}catch(x){}}
+    catch(x){const y=$('#gerr');y.hidden=false;y.textContent="Couldn't reach the planner. Check your connection.";return}
     render()};
 }
 
