@@ -953,7 +953,7 @@ function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeou
 async function copy(text,done='Copied'){try{await navigator.clipboard.writeText(text);toast(done)}catch(e){toast('Select the text and copy it')}}
 
 // ---------- pieces ----------
-const LEGEND=[['ph-prep','Get ready'],['ph-Awareness','Awareness'],['ph-Interest','Interest'],['ph-Urgency','Urgency'],['ph-rest','Rest']].map(([c,l])=>`<span><i class="${c}"></i>${l}</span>`).join('');
+const LEGEND=[['ph-prep','Upcoming'],['ph-Awareness','Awareness'],['ph-Interest','Interest'],['ph-Urgency','Urgency'],['ph-rest','Rest']].map(([c,l])=>`<span><i class="${c}"></i>${l}</span>`).join('');
 function todo(key,label,sub,opt){
   const t=DB.ticks[key],on=!!t;
   return `<button class="todo${on?' on':''}${view.popped===key?' pop':''}" data-tick="${esc(key)}" aria-pressed="${on}" title="${esc(on&&t.by?`Done by ${t.by}`:'Mark as done')}"><span class="box">${on?I(ICON.check,14):''}</span><span class="todo-t">${esc(label)}${opt?' <span class="opt">(optional)</span>':''}${sub?`<small>${esc(sub)}</small>`:''}</span></button>`;
@@ -1147,7 +1147,7 @@ function pageTimeline(){
     const segs=[];
     if(add(st,-7)>=first)segs.push(`<a class="seg first ph-prep" href="#/c/${esc(c.id)}" style="left:${x(add(st,-7))}px;width:${COL-2}px">Get ready</a>`);
     ws.forEach((w,i)=>{if(w.sun<first)return;const end=i===ws.length-1?add(c.date,1):add(w.sun,7),wd=Math.max(COL*.25,x(end)-x(w.sun))-2;
-      const cls=[phaseClass(w,c),i===ws.length-1?'last':''].join(' ');
+      const cls=[liveClass(w,c),i===ws.length-1?'last':''].join(' ');
       segs.push(`<a class="seg ${cls}" href="#/c/${esc(c.id)}" style="left:${x(w.sun)}px;width:${wd}px" title="${esc(fmt(w.sun))}: ${esc(angleOf(w,c))}, ${esc(w.phase)}">${i===0?I(ICON.rocket,15):''}${angleOf(w,c).length*6.2+(i===0?36:16)<wd?`<span>${esc(angleOf(w,c))}</span>`:''}</a>`)});
     const flag=`<span class="tl-flag" style="left:${x(add(c.date,1))}px">${esc(fmt(c.date))}</span>`;
     const isOpen=open.has(c.id);
