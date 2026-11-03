@@ -242,6 +242,7 @@ button.tl-name:hover b{text-decoration:underline}
 .tl-cell.this{background:rgba(113,67,254,.07);width:calc(2*var(--col))}
 .tl-day{font-size:12.5px;font-weight:700;line-height:1.2;margin:10px 0 3px}
 .tl-day:first-child{margin-top:0}
+.tl-day.past{color:var(--grey)}
 .tl-cell .todo{gap:6px;padding:4px 0;font-size:13px;line-height:1.2}
 .tl-cell .box{width:15px;height:15px}
 .tl-cell .box svg{width:10px;height:10px}
@@ -274,6 +275,8 @@ button.tl-name:hover b{text-decoration:underline}
 .pw-date{font-size:17px;font-weight:600;letter-spacing:-.012em;line-height:1.2}
 .pw-tag{display:inline-block;font-size:13px;font-weight:600;padding:2px 9px;border-radius:99px;margin:6px 6px 0 0}
 .pw-tag.tw{background:var(--indigo);color:#fff}
+.pw-tag.nx{background:var(--aw);color:var(--ink)}
+.said-past{opacity:.55}
 .pw-angle{font-size:16px;font-weight:600;margin-top:6px;line-height:1.2}
 .pw-why{font-size:14.5px;color:var(--mute);line-height:1.32;margin-top:3px}
 .pw-also{grid-column:1/-1;font-size:14px;color:var(--mute);margin-top:2px}
@@ -1145,7 +1148,8 @@ function pageTimeline(){
   const W=(n+1)*COL,x=d=>{const days=Math.round((D(d)-D(first))/864e5);return Math.round((days<=7?days:days<=14?2*days-7:days+7)*COL/7)};
   const wks=[];for(let i=0;i<n;i++)wks.push(add(first,i*7));
   const nowSun=sunOf(TODAY);
-  const head=wks.map(s=>`<div class="tl-wk${s===nowSun?' this':''}"><b>${s===nowSun?'This week':''}</b>${esc(fmt(s))}</div>`).join('');
+  const weekSpan=s=>{const e=add(s,6);return `${fmt(s)} – ${e.slice(0,7)===s.slice(0,7)?D(e).getDate():fmt(e)}`};
+  const head=wks.map(s=>`<div class="tl-wk${s===nowSun?' this':''}"><b>${s===nowSun?'This week':''}</b>${esc(s===nowSun?weekSpan(s):fmt(s))}</div>`).join('');
   const rows=list.map(c=>{
     const ws=weeksOf(c),H=c.level==1?62:c.level<=3?54:44,st=startOf(c);
     const segs=[];
@@ -1159,7 +1163,7 @@ function pageTimeline(){
     if(isOpen){
       const cells=wks.map(s=>{
         const ts=tasksOf(c).filter(t=>!t.opt&&sunOf(t.date)===s).sort((a,b)=>a.date.localeCompare(b.date));
-        return `<div class="tl-cell${s===nowSun?' this':''}">${ts.map((t,i)=>`${i&&ts[i-1].date===t.date?'':`<div class="tl-day">${esc(fmt(t.date,{weekday:'long',month:'short',day:'numeric'}))}</div>`}${todo(t.key,t.say?`Announce: ${t.label}`:t.label)}`).join('')}</div>`}).join('');
+        return `<div class="tl-cell${s===nowSun?' this':''}">${ts.map((t,i)=>`${i&&ts[i-1].date===t.date?'':`<div class="tl-day${t.date<TODAY?' past':''}">${esc(fmt(t.date,{weekday:'long',month:'short',day:'numeric'}))}</div>`}${todo(t.key,t.say?`Announce: ${t.label}`:t.label)}`).join('')}</div>`}).join('');
       detail=`<div class="tl-detail"><div class="tl-name" style="background:var(--paper)"><a href="#/c/${esc(c.id)}" style="font-size:14px">Open campaign</a></div><div class="tl-cells">${cells}</div></div>`;
     }
     const late=lateCount(c);
@@ -1241,9 +1245,9 @@ function linkSheet(k){
   $('#linkForm').onsubmit=e=>{e.preventDefault();const v=e.target.url.value.trim();if(!/^https?:\/\//.test(v)){$('#linkErr').hidden=false;return}
     withName(()=>{saveStory('link~'+k,v);closeDlg();render()})};
 }
-function rowShell(id,left,right,isNow,collapsed){
+function rowShell(id,left,right,isNow,collapsed,isNext){
   if(collapsed)return `<div class="pw-done" id="${id}">${I(ICON.check,16)}<span>${esc(collapsed)}</span></div>`;
-  return `<section class="pw${isNow?' now':''}" id="${id}"><div>${isNow?'<span class="pw-tag tw">This week</span>':''}${left}</div><div class="pw-cols">${right}</div></section>`;
+  return `<section class="pw${isNow?' now':''}" id="${id}"><div>${isNow?'<span class="pw-tag tw">This week</span>':isNext?'<span class="pw-tag nx">This Sunday</span>':''}${left}</div><div class="pw-cols">${right}</div></section>`;
 }
 function weekRow(c,w,now){
   const ts=tasksOf(c).filter(t=>t.w===w.i);
@@ -1260,15 +1264,17 @@ function weekRow(c,w,now){
   const storyKey=`${c.id}~${w.sun}`,story=DB.stories[storyKey]?.story;
   let sayHTML='';
   if(say){
-    sayHTML=todo(say.key,`Announce: ${say.label}`,where||(say.opt?'':'Bumped to the bulletin this Sunday'),say.opt);
-    if(it)sayHTML+=`<button class="storyline" data-act="story" data-id="${esc(c.id)}" data-sun="${w.sun}">${story?esc(story):'<u>Add the story</u>'}</button>`;
+    sayHTML=todo(say.key,`Announce: ${say.label}`,where||(say.opt?'':'Bumped to the bulletin'),say.opt);
+    if(w.sun<TODAY)sayHTML=`<div class="said-past">${sayHTML}</div>`;
+    else if(it)sayHTML+=`<button class="storyline" data-act="story" data-id="${esc(c.id)}" data-sun="${w.sun}">${story?esc(story):'<u>Add the story</u>'}</button>`;
   }
   const also=[w.slide?'Pre-service slide':'',w.desk?'Welcome Desk':'',w.bull?'Weekly Bulletin':''].filter(Boolean).join(', ');
   const col=(h,inner)=>inner?`<div class="pw-col"><h4>${h}</h4>${inner}</div>`:'';
   const row=t=>taskLine(t,'',true);
   const left=`<div class="pw-date">${esc(fmt(w.sun))}</div><span class="pw-tag ph-${esc(w.phase)}">${esc(w.phase)}</span><div class="pw-angle">${esc(angleOf(w,c))}</div><div class="pw-why">${esc(WHYWEEK[c.level]?.[w.tw]||'')}</div>`;
-  const right=col('Sunday',sayHTML+dayTasks(0).map(row).join(''))+col('Tuesday',dayTasks(2).map(row).join(''))+`<p class="pw-also">Also on: ${esc(also)}</p>`;
-  return rowShell('pw-'+w.i,left,right,isNow,'');
+  const sunHead=w.sun===TODAY?'Today':w.sun<TODAY&&isNow?'Last Sunday':'Sunday';
+  const right=col(sunHead,sayHTML+dayTasks(0).map(row).join(''))+col('Tuesday',dayTasks(2).map(row).join(''))+`<p class="pw-also">Also on: ${esc(also)}</p>`;
+  return rowShell('pw-'+w.i,left,right,isNow,'',w.sun===nextSun(TODAY));
 }
 function pageOngoing(c){
   const sundays=[];
@@ -1365,7 +1371,7 @@ function changeSheet(sun,kind,id){
   const rows=[...other,...l.spare.map(x=>[x,x.hl?'Highlight week':x.w.say==='smuggle'?'Under a Level 2 ask':x.w.angle])];
   openDlg(`<div class="sheet"><div class="sheet-head"><div><h2>${kind==='stage'?'Stage':'Booth'}, ${esc(long(sun))}</h2><p class="sheet-sub">${esc(on.c.name)}</p></div>${closeBtn()}</div>
     ${rows.length?`<div class="opts">${rows.map(([x,t])=>`<button class="opt-row" data-act="fillPick" data-id="${esc(x.c.id)}" data-replace="${esc(id)}" data-sun="${sun}" data-kind="${kind}">${esc(x.c.name)}<span>${esc(t)}</span></button>`).join('')}</div>`:''}
-    <div class="sheet-foot"><button class="btn" data-act="takeOff" data-id="${esc(id)}" data-sun="${sun}">Take off this Sunday</button></div></div>`);
+    <div class="sheet-foot"><button class="btn" data-act="takeOff" data-id="${esc(id)}" data-sun="${sun}">Take off ${esc(long(sun))}</button></div></div>`);
 }
 
 // ---------- rules ----------
