@@ -304,6 +304,7 @@ textarea{line-height:1.4;resize:vertical;min-height:110px}
 .slot.stage .todo.on .box{background:#fff;color:var(--ink);box-shadow:none}
 .slot.stage .todo.on .todo-t{color:rgba(255,255,255,.75)}
 .slot-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.slot-acts{display:flex;align-items:center;gap:16px}
 .tag{color:var(--ink);display:inline-flex;align-items:center;min-height:30px;padding:0 13px;border-radius:99px;background:var(--white);font-weight:600;font-size:14.5px}
 .slot-open{align-items:center;justify-content:center;gap:10px;color:var(--mute);text-align:center;font-weight:500;box-shadow:inset 0 0 0 1.5px var(--line)}
 .slot-open:hover{background:var(--faint)}
@@ -1317,7 +1318,7 @@ function slot(kind,label,it,sun,l){
   const c=it.c,w=it.w,key=itemSayKey(it,sun),story=DB.stories[`${c.id}~${sun}`]?.story;
   const prev=lineup(add(sun,-7)),repeat=[prev.stage,...prev.booth].some(x=>x&&x.c.id===c.id);
   const sub=repeat?'Also last Sunday':'';
-  return `<article class="slot ${kind}"><div class="slot-top"><span class="tag">${label}</span><a class="btn bare" href="#/c/${esc(c.id)}" style="min-height:0">Plan</a></div>
+  return `<article class="slot ${kind}"><div class="slot-top"><span class="tag">${label}</span><span class="slot-acts"><button class="btn bare" data-act="change" data-id="${esc(c.id)}" data-sun="${sun}" data-kind="${kind}" style="min-height:0">Change</button><a class="btn bare" href="#/c/${esc(c.id)}" style="min-height:0">Plan</a></span></div>
     <div style="display:grid;gap:14px"><button class="slot-name" data-act="story" data-id="${esc(c.id)}" data-sun="${sun}">${esc(c.name)}</button>
     <div class="slot-foot"><b>${w.angle==='Launch'?I(ICON.rocket,16)+' ':''}${esc(w.angle)}</b>${sub?`<span class="sub">${esc(sub)}</span>`:''}
     <p data-act="story" data-id="${esc(c.id)}" data-sun="${sun}" role="button" tabindex="0">${story?esc(story):'<span class="story">Add the story</span>'}</p>${todo(key,'Announced')}</div></div></article>`;
@@ -1334,13 +1335,23 @@ function storySheet(id,sun){
     ${storyExamples()}
     <div><span class="lbl">One next step</span><span>${esc(CONFIG.nextStep)}</span></div>
     ${earlier.length?`<div><span class="lbl" style="margin-bottom:6px">Already told</span><ul class="earlier">${earlier.map(s=>`<li>${esc(s.story)}<span>${esc(long(s.key.split('~').pop()))}</span></li>`).join('')}</ul></div>`:''}
-    <div class="sheet-foot">${it?`<button type="button" class="btn bare left" data-act="takeOff" data-id="${esc(id)}" data-sun="${sun}">Take off this Sunday</button>`:''}<button class="btn solid">Save</button></div></form>`);
+    <div class="sheet-foot"><button class="btn solid">Save</button></div></form>`);
   $('#storyForm').onsubmit=e=>{e.preventDefault();const v=e.target.story.value;withName(()=>{saveStory(key,v);closeDlg();render()})};
 }
 function fillSheet(sun,kind){
   const l=lineup(sun);
   openDlg(`<div class="sheet"><div class="sheet-head"><h2>${kind==='stage'?'Stage':'Booth'}, ${esc(long(sun))}</h2>${closeBtn()}</div>
     <div class="opts">${l.spare.map(x=>`<button class="opt-row" data-act="fillPick" data-id="${esc(x.c.id)}" data-sun="${sun}" data-kind="${kind}">${esc(x.c.name)}<span>${x.hl?'Highlight week':x.w.say==='smuggle'?'Under a Level 2 ask':esc(x.w.angle)}</span></button>`).join('')}</div></div>`);
+}
+
+function changeSheet(sun,kind,id){
+  const l=lineup(sun),on=[l.stage,...l.booth].find(x=>x&&x.c.id===id);if(!on)return;
+  // Stage and Booth can trade places, so the other slot's campaigns are offered too.
+  const other=kind==='stage'?l.booth.map(x=>[x,'In the Booth']):l.stage?[[l.stage,'On stage']]:[];
+  const rows=[...other,...l.spare.map(x=>[x,x.hl?'Highlight week':x.w.say==='smuggle'?'Under a Level 2 ask':x.w.angle])];
+  openDlg(`<div class="sheet"><div class="sheet-head"><div><h2>${kind==='stage'?'Stage':'Booth'}, ${esc(long(sun))}</h2><p class="sheet-sub">${esc(on.c.name)}</p></div>${closeBtn()}</div>
+    ${rows.length?`<div class="opts">${rows.map(([x,t])=>`<button class="opt-row" data-act="fillPick" data-id="${esc(x.c.id)}" data-replace="${esc(id)}" data-sun="${sun}" data-kind="${kind}">${esc(x.c.name)}<span>${esc(t)}</span></button>`).join('')}</div>`:''}
+    <div class="sheet-foot"><button class="btn" data-act="takeOff" data-id="${esc(id)}" data-sun="${sun}">Take off this Sunday</button></div></div>`);
 }
 
 // ---------- rules ----------
@@ -1656,7 +1667,11 @@ const ACT={
   delAsk:b=>{if(b.dataset.sure){removeCampaign(b.dataset.id);closeDlg();go('campaigns');toast('Deleted')}else{b.dataset.sure='1';b.textContent='Delete for good?'}},
   story:b=>storySheet(b.dataset.id,b.dataset.sun),
   fill:b=>fillSheet(b.dataset.sun,b.dataset.kind),
-  fillPick:b=>{const{sun,kind,id}=b.dataset,l=lineup(sun);const st=kind==='stage'?id:l.stage?.c.id;const bo=kind==='booth'?[...l.booth.map(x=>x.c.id),id].slice(0,SLOTS.booth):l.booth.map(x=>x.c.id);setLineup(sun,st,bo);closeDlg();render()},
+  fillPick:b=>{const{sun,kind,id,replace}=b.dataset,l=lineup(sun);let st=l.stage?.c.id,bo=l.booth.map(x=>x.c.id);
+    if(replace){const swap=x=>x===replace?id:x===id?replace:x;st=swap(st);bo=bo.map(swap)}
+    else if(kind==='stage')st=id;else bo=[...bo,id].slice(0,SLOTS.booth);
+    setLineup(sun,st,bo);closeDlg();render()},
+  change:b=>changeSheet(b.dataset.sun,b.dataset.kind,b.dataset.id),
   takeOff:b=>{const{sun,id}=b.dataset,l=lineup(sun);setLineup(sun,l.stage?.c.id===id?'':l.stage?.c.id,l.booth.map(x=>x.c.id).filter(x=>x!==id));closeDlg();render()},
     close:b=>{const c=DB.campaigns.find(x=>x.id===b.dataset.id);saveCampaign({...c,status:'done'});burst(innerWidth/2,innerHeight/3,26);toast('That\'s a wrap. Nice work.');go('campaigns')},
   reopen:b=>{const c=DB.campaigns.find(x=>x.id===b.dataset.id);saveCampaign({...c,status:'active'});render()},
