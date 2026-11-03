@@ -62,9 +62,6 @@ h2{font:600 20px/1.2 var(--sans);letter-spacing:-.015em}
 .ph-Urgency{background:var(--ur);color:#fff;--tilemute:rgba(255,255,255,.85);--mute:rgba(255,255,255,.85);--line:rgba(255,255,255,.3)}
 .ph-prep{background:var(--neutral);color:var(--ink)}
 .ph-rest{background:repeating-linear-gradient(135deg,var(--neutral) 0 2px,var(--white) 2px 9px);color:var(--ink)}
-.slot.ph-Urgency .box{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7)}
-.slot.ph-Urgency .todo.on .box{background:#fff;color:var(--ink);box-shadow:none}
-.slot.ph-Urgency .todo.on .todo-t{color:rgba(255,255,255,.75)}
 .ph-after{background:var(--white);box-shadow:inset 0 0 0 1px var(--line)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14.5px}
 .legend span{display:inline-flex;align-items:center;gap:7px}
@@ -301,6 +298,11 @@ textarea{line-height:1.4;resize:vertical;min-height:110px}
 .rail small{font-size:13px;opacity:.65;margin-left:5px}
 .slots{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr);gap:12px}
 .slot{display:flex;flex-direction:column;justify-content:space-between;gap:18px;min-height:250px;padding:16px 18px;border-radius:24px;width:100%}
+.slot.stage{background:var(--indigo);color:#fff;--tilemute:rgba(255,255,255,.85);--mute:rgba(255,255,255,.85);--line:rgba(255,255,255,.3)}
+.slot.booth{background:var(--aw);color:var(--ink)}
+.slot.stage .box{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7)}
+.slot.stage .todo.on .box{background:#fff;color:var(--ink);box-shadow:none}
+.slot.stage .todo.on .todo-t{color:rgba(255,255,255,.75)}
 .slot-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .tag{color:var(--ink);display:inline-flex;align-items:center;min-height:30px;padding:0 13px;border-radius:99px;background:var(--white);font-weight:600;font-size:14.5px}
 .slot-open{align-items:center;justify-content:center;gap:10px;color:var(--mute);text-align:center;font-weight:500;box-shadow:inset 0 0 0 1.5px var(--line)}
@@ -1269,7 +1271,7 @@ function pageSunday(sun){
   const cur=nextSun(TODAY);
   sun=sun||cur;
   const l=lineup(sun);
-  const when=sun===TODAY?'today':sun===cur?'on Sunday':'on '+long(sun);
+  const when=sun===TODAY?'today':sun===cur?'this Sunday':'on '+long(sun);
   const n=l.count;
   const head=n===1?`Say <em>one thing</em> ${when}.`:n===0?`Say <em>nothing</em> ${when}.`:`Say <em>${word(n)} things</em> ${when}.`;
   const rail=[];const a0=add(sun<cur?sun:cur,-56),a1=add(sun>cur?sun:cur,182);for(let s=a0;s<=a1;s=add(s,7))rail.push(`<a href="#/sunday/${s}" aria-current="${s===sun}">${esc(fmt(s))}<small>${lineup(s).count} of 3</small></a>`);
@@ -1315,7 +1317,7 @@ function slot(kind,label,it,sun,l){
   const c=it.c,w=it.w,key=itemSayKey(it,sun),story=DB.stories[`${c.id}~${sun}`]?.story;
   const prev=lineup(add(sun,-7)),repeat=[prev.stage,...prev.booth].some(x=>x&&x.c.id===c.id);
   const sub=repeat?'Also last Sunday':'';
-  return `<article class="slot ${kind} ${it.hl?'ph-prep':'ph-'+w.phase}"><div class="slot-top"><span class="tag">${label}</span><a class="btn bare" href="#/c/${esc(c.id)}" style="min-height:0">Plan</a></div>
+  return `<article class="slot ${kind}"><div class="slot-top"><span class="tag">${label}</span><a class="btn bare" href="#/c/${esc(c.id)}" style="min-height:0">Plan</a></div>
     <div style="display:grid;gap:14px"><button class="slot-name" data-act="story" data-id="${esc(c.id)}" data-sun="${sun}">${esc(c.name)}</button>
     <div class="slot-foot"><b>${w.angle==='Launch'?I(ICON.rocket,16)+' ':''}${esc(w.angle)}</b>${sub?`<span class="sub">${esc(sub)}</span>`:''}
     <p data-act="story" data-id="${esc(c.id)}" data-sun="${sun}" role="button" tabindex="0">${story?esc(story):'<span class="story">Add the story</span>'}</p>${todo(key,'Announced')}</div></div></article>`;
