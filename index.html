@@ -212,8 +212,8 @@ a.group-h:hover{text-decoration:underline}
 .tl-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
 .tl{overflow-x:auto;background:var(--white);border-radius:26px;padding-bottom:14px}
 .tl-in{position:relative}
-.tl-grid{background-image:repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px var(--col))}
-.tl-now{position:absolute;top:0;bottom:0;width:var(--col);background:rgba(113,67,254,.07);pointer-events:none}
+.tl-grid{--g:repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px var(--col));background-image:var(--g),var(--g);background-size:calc(2*var(--col)) 100%,100% 100%;background-position:0 0,calc(3*var(--col)) 0;background-repeat:no-repeat}
+.tl-now{position:absolute;top:0;bottom:0;width:calc(2*var(--col));background:rgba(113,67,254,.07);pointer-events:none}
 .tl-head{display:flex;position:sticky;top:0}
 .tl-name{position:sticky;left:0;z-index:3;flex:none;width:var(--name);background:var(--white);padding:6px 8px 6px 16px;box-shadow:1px 0 0 var(--line);display:block}
 button.tl-name{cursor:pointer}
@@ -223,7 +223,7 @@ button.tl-name:hover b{text-decoration:underline}
 .tl-weeks{display:flex;height:52px}
 .tl-wk{width:var(--col);flex:none;padding:8px 0 0 8px;font-size:14px;line-height:1.2}
 .tl-wk b{display:block;font-weight:700;font-size:13px;height:16px;color:var(--violet)}
-.tl-wk.this{font-weight:700}
+.tl-wk.this{font-weight:700;width:calc(2*var(--col))}
 .tl-row{display:flex;align-items:stretch;border-top:1px solid var(--faint)}
 .tl-track{position:relative;flex:none;min-height:54px}
 .seg{position:absolute;top:8px;bottom:8px;display:flex;align-items:center;padding:0 8px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-decoration:none;border-radius:4px;color:var(--ink)}
@@ -238,7 +238,7 @@ button.tl-name:hover b{text-decoration:underline}
 .tl-detail{display:flex;border-top:1px dashed var(--line);background:var(--paper)}
 .tl-cells{display:flex;flex:none}
 .tl-cell{width:var(--col);flex:none;padding:8px 7px 10px;font-size:13px}
-.tl-cell.this{background:rgba(113,67,254,.07)}
+.tl-cell.this{background:rgba(113,67,254,.07);width:calc(2*var(--col))}
 .tl-cell .todo{gap:6px;padding:4px 0;font-size:13px;line-height:1.2}
 .tl-cell .box{width:15px;height:15px}
 .tl-cell .box svg{width:10px;height:10px}
@@ -1138,14 +1138,15 @@ function pageTimeline(){
   const first=add(sunOf(TODAY),-7);
   const lastEv=list.length?list.map(c=>c.date).reduce((a,b)=>a>b?a:b):add(first,70);
   const n=Math.max(10,Math.round((D(sunOf(lastEv))-D(first))/6048e5)+3);
-  const W=n*COL,x=d=>Math.round((D(d)-D(first))/864e5*COL/7);
+  // The current week, the second column, is twice as wide.
+  const W=(n+1)*COL,x=d=>{const days=Math.round((D(d)-D(first))/864e5);return Math.round((days<=7?days:days<=14?2*days-7:days+7)*COL/7)};
   const wks=[];for(let i=0;i<n;i++)wks.push(add(first,i*7));
   const nowSun=sunOf(TODAY);
   const head=wks.map(s=>`<div class="tl-wk${s===nowSun?' this':''}"><b>${s===nowSun?'This week':''}</b>${esc(fmt(s))}</div>`).join('');
   const rows=list.map(c=>{
     const ws=weeksOf(c),H=c.level==1?62:c.level<=3?54:44,st=startOf(c);
     const segs=[];
-    if(add(st,-7)>=first)segs.push(`<a class="seg first ph-prep" href="#/c/${esc(c.id)}" style="left:${x(add(st,-7))}px;width:${COL-2}px">Get ready</a>`);
+    if(add(st,-7)>=first)segs.push(`<a class="seg first ph-prep" href="#/c/${esc(c.id)}" style="left:${x(add(st,-7))}px;width:${x(st)-x(add(st,-7))-2}px">Get ready</a>`);
     ws.forEach((w,i)=>{if(w.sun<first)return;const end=i===ws.length-1?add(c.date,1):add(w.sun,7),wd=Math.max(COL*.25,x(end)-x(w.sun))-2;
       const cls=[liveClass(w,c),i===ws.length-1?'last':''].join(' ');
       segs.push(`<a class="seg ${cls}" href="#/c/${esc(c.id)}" style="left:${x(w.sun)}px;width:${wd}px" title="${esc(fmt(w.sun))}: ${esc(angleOf(w,c))}, ${esc(w.phase)}">${i===0?I(ICON.rocket,15):''}${angleOf(w,c).length*6.2+(i===0?36:16)<wd?`<span>${esc(angleOf(w,c))}</span>`:''}</a>`)});
