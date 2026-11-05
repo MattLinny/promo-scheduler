@@ -87,13 +87,13 @@ assert(ctx.lineup_(ctx.weeksOf_(renamed)[0].sun, { campaigns: [renamed], stories
 const artOf = c => ctx.tasksOf_(c).filter(t => t.ch === 'art');
 const xmas = ctx.norm_({ id: 'x', level: 1, status: 'active', date: '2026-12-24', created: '2026-10-01' }), xArt = artOf(xmas);
 const byKey = k => xArt.find(t => t.key === 'x~art~' + k);
-assert(['story', 'feed', 'fb', 'email', 'slide', 'desk', 'main', 'page', 'poll', 'sprint'].every(byKey), 'a Level 1 plan lists its graphics');
-assert(!['launcher', 'info', 'banner', 'post', 'calendar', 'bulletin'].some(byKey), 'links and cards need no graphic, and one main graphic covers post, calendar and bulletin');
+assert(['story', 'feed', 'fb', 'email', 'slide', 'main', 'page', 'poll', 'sprint'].every(byKey), 'a Level 1 plan lists its graphics');
+assert(!['launcher', 'info', 'banner', 'post', 'calendar', 'bulletin', 'desk'].some(byKey), 'links and cards need no graphic, and one main graphic covers post, calendar and bulletin');
 assert(xArt.filter(t => t.key === 'x~art~main').length === 1, 'the main graphic is listed once');
 assert(byKey('story').date === '2026-10-29', 'each graphic is due the Thursday before its first use');
 assert(!ctx.tasksOf_(xmas).some(t => t.label === 'Make the graphics') && ctx.tasksOf_(xmas).some(t => t.key === 'x~prep~2' && t.label === 'Build the web page'), 'the list replaces Make the graphics and keeps other task keys');
 const small5 = artOf(ctx.norm_({ id: 'y', level: 5, weeks: 4, status: 'active', date: '2026-12-24', created: '2026-10-01' }));
-assert(!small5.some(t => t.key === 'y~art~slide') && small5.some(t => t.key === 'y~art~desk') && small5.find(t => t.key === 'y~art~feed').opt, 'a small event gets only what its plan uses');
+assert(!small5.some(t => t.key === 'y~art~slide') && small5.some(t => t.key === 'y~art~main') && small5.find(t => t.key === 'y~art~feed').opt, 'a small event gets only what its plan uses');
 const noFb = artOf(ctx.norm_({ id: 'x', level: 1, status: 'active', date: '2026-12-24', created: '2026-10-01', edits: JSON.stringify({ add: [], del: ['x~w1~fb5'] }) }));
 assert(!noFb.some(t => t.key === 'x~art~fb'), 'removing a task removes its graphic');
 
