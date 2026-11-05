@@ -942,7 +942,7 @@ const WORDS=[
   ['Stage','The one live announcement from the Sunday MC.'],
   ['The Booth','The short pre-recorded video segment on Sunday.'],
   ['Pre-service slide','The slide on screen before the service.'],
-  ['Welcome Desk','Printed info and answers in the lobby.'],
+  ['Welcome Desk','A person in the lobby who knows what's on and points people to the website.'],
   ['Weekly Bulletin','The weekly list of everything happening. Anything without a Sunday spot still shows up here.'],
   ['Ministry list','The people subscribed to that ministry\'s collection at oceansidechurch.ca/posts/collections. Each campaign sends its own email.'],
   ['Next Steps button','The one place every promo points to, at oceansidechurch.ca.'],
@@ -1150,7 +1150,7 @@ function sharedTasks(sun){
   const slide=[...names(w=>w.slide),...ns],desk=[...names(w=>w.desk),...ns];
   const bull=[...list.filter(x=>x.w.bull).sort((a,b)=>(a.w.bull.startsWith('Featured')?0:1)-(b.w.bull.startsWith('Featured')?0:1)||a.c.level-b.c.level).map(x=>x.c.name),...ns];
   if(slide.length)out.push({key:'slide~'+sun,date:sun,ch:'slide',name:'Run the pre-service slides',list:slide});
-  if(desk.length)out.push({key:'desk~'+sun,date:sun,ch:'desk',name:'Stock the Welcome Desk',list:desk});
+  if(desk.length)out.push({key:'desk~'+sun,date:sun,ch:'desk',name:'Brief the Welcome Desk',list:desk});
   if(bull.length)out.push({key:'bulletin~'+sun,date:add(sun,4),ch:'bulletin',name:'Publish the Weekly Bulletin',list:bull});
   return cache[k]=out;
 }
