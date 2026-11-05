@@ -97,6 +97,12 @@ assert(!small5.some(t => t.key === 'y~art~slide') && small5.some(t => t.key === 
 const noFb = artOf(ctx.norm_({ id: 'x', level: 1, status: 'active', date: '2026-12-24', created: '2026-10-01', edits: JSON.stringify({ add: [], del: ['x~w1~fb5'] }) }));
 assert(!noFb.some(t => t.key === 'x~art~fb'), 'removing a task removes its graphic');
 
+// every launch writes the website post, adds it to Featured Events and the main calendar, and old keys stay put
+const xAll = ctx.tasksOf_(xmas), lab = k => (xAll.find(t => t.key === k) || {}).label;
+assert(lab('x~prep~3') === 'Write the website post' && lab('x~w1~web6') === 'Add to Featured Events' && lab('x~w1~web7') === 'Add to the main calendar' && lab('x~w1~fb5') === 'Create the Facebook event', 'a Level 1 launch adds the website post, Featured Events and the main calendar');
+const l4 = ctx.tasksOf_(ctx.norm_({ id: 'm', level: 4, weeks: 4, status: 'active', date: '2026-12-24', created: '2026-10-01' })), lab4 = k => (l4.find(t => t.key === k) || {}).label;
+assert(lab4('m~prep~1') === 'Write the website post' && lab4('m~w1~web1') === 'Add to the main calendar' && lab4('m~w1~web7') === 'Add to Featured Events' && lab4('m~w1~fb6') === 'Create the Facebook event', 'a Level 4 launch does the same');
+
 // four launches in a week: one leads, one rides along, the rest wait for room
 const rt = (id, level, end, date = '2026-11-03', extra = {}) => ({ key: id + '~s', id, level, end, date, opt: false, fixed: false, kind: 'social', ...extra });
 const four = ctx.RANKWEEKS([rt('xmas', 1, '2026-12-24'), rt('baby', 2, '2026-11-08'), rt('movie', 3, '2026-11-30'), rt('soul', 5, '2026-11-28')], {}, ctx.add_, ctx.sunOf_);
