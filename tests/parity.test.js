@@ -102,6 +102,9 @@ const xAll = ctx.tasksOf_(xmas), lab = k => (xAll.find(t => t.key === k) || {}).
 assert(lab('x~prep~3') === 'Write the website post' && lab('x~w1~web6') === 'Add to Featured Events' && lab('x~w1~web7') === 'Add to the main calendar' && lab('x~w1~fb5') === 'Create the Facebook event', 'a Level 1 launch adds the website post, Featured Events and the main calendar');
 const l4 = ctx.tasksOf_(ctx.norm_({ id: 'm', level: 4, weeks: 4, status: 'active', date: '2026-12-24', created: '2026-10-01' })), lab4 = k => (l4.find(t => t.key === k) || {}).label;
 assert(lab4('m~prep~1') === 'Write the website post' && lab4('m~w1~web1') === 'Add to the main calendar' && lab4('m~w1~web7') === 'Add to Featured Events' && lab4('m~w1~fb6') === 'Create the Facebook event', 'a Level 4 launch does the same');
+assert(lab4('m~w1~web8') === 'Publish the Info Card' && lab4('m~after~2') === 'Remove the Info Card and Next Steps section', 'Level 4 puts up an Info Card and takes it down after');
+const l5 = ctx.tasksOf_(ctx.norm_({ id: 'n', level: 5, weeks: 4, status: 'active', date: '2026-12-24', created: '2026-10-01' }));
+assert(!l5.some(t => /Info Card/.test(t.label)) && l5.find(t => t.key === 'n~after~2').label === 'Remove the Next Steps section', 'Level 5 has no Info Card');
 
 // four launches in a week: one leads, one rides along, the rest wait for room
 const rt = (id, level, end, date = '2026-11-03', extra = {}) => ({ key: id + '~s', id, level, end, date, opt: false, fixed: false, kind: 'social', ...extra });

@@ -892,10 +892,11 @@ const MID=l=>{const who=l==2?'churchwide':'ministry';return {
   3:W('Interest','Why it matters','opt',1,1,'Highlight',TUE(`Send the ${who} sprinkle email`,`Send the ${who} sprinkle text`,"Social: reuse Sunday's story",{email:l==2,text:l==2})),
   4:W('Urgency','Final push','req',1,1,'Highlight',TUE(`Send the ${who} sprinkle email`,`Send the ${who} sprinkle text`,"Social: reuse Sunday's story"))}};
 PB[2]=MID(2);PB[3]=MID(3);
-PB[4]=PB[5]={1:W('Interest','Launch',null,0,1,'Featured',[[0,'web','Publish the post in the ministry collection'],[0,'web','Add to the main calendar'],[0,'web','Add a Next Steps section',1],...TUE('Send the ministry email','Send the ministry text','Post a sprinkle',{social:1}),[2,'fb','Create the Facebook event',1],[0,'web','Add to Featured Events']]),
+PB[5]={1:W('Interest','Launch',null,0,1,'Featured',[[0,'web','Publish the post in the ministry collection'],[0,'web','Add to the main calendar'],[0,'web','Add a Next Steps section',1],...TUE('Send the ministry email','Send the ministry text','Post a sprinkle',{social:1}),[2,'fb','Create the Facebook event',1],[0,'web','Add to Featured Events']]),
   2:W('Interest','Rest',null,0,1,'Featured'),
   3:W('Interest','New creative',null,0,1,'Featured',TUE('Send the ministry email, new creative','Send the ministry text','Post a sprinkle',{social:1})),
   4:W('Urgency','Last call','smuggle',0,1,'Featured: this weekend',TUE('Send the ministry email: final chance','Send the ministry text','Post a sprinkle',{social:1}))};
+PB[4]={...PB[5],1:{...PB[5][1],tasks:[...PB[5][1].tasks,[0,'web','Publish the Info Card']]}};
 // Why each week looks the way it does, from the playbooks.
 const WHYWEEK={
   1:{1:'Begin promotion churchwide with one story and one next step.',2:'Stay visible without oversaturating. No churchwide reminders.',3:'Re-surface it with something interactive. Connect in-person and online.',4:'Recap last week and carry the momentum.',5:'Shift to interest. Social, email and text rest for a week.',6:'Anchor it in a value and repurpose it across channels.',7:'Keep momentum with creative variety.',8:'Final push: high-visibility web, plus a sprint.'},
@@ -906,7 +907,7 @@ const PREP=l=>l<=3?['Find the story','','Build the web page','Write the website 
 const WEEKMAP={8:[1,2,3,4,5,6,7,8],4:[1,2,3,4],3:[1,3,4],2:[1,4]};
 const RUNMAP=n=>n<2?[4]:n<5?WEEKMAP[n]:[1,...Array.from({length:n-2},(_,i)=>i%2?3:2),4];
 const RUNNAME={2:'Rest',3:'New story',4:'Last week'};
-const AFTER=l=>[[0,'post','Post live updates and behind-the-scenes'],[1,'post','Publish the recap post and email'],[1,'web',l==1?'Remove the banner, Launcher action and Info Card':'Remove the Launcher action and Next Steps section']];
+const AFTER=l=>[[0,'post','Post live updates and behind-the-scenes'],[1,'post','Publish the recap post and email'],[1,'web',l==1?'Remove the banner, Launcher action and Info Card':l<=3?'Remove the Launcher action and Next Steps section':l==4?'Remove the Info Card and Next Steps section':'Remove the Next Steps section']];
 const HIGHLIGHT=[[2,'social','Post a spotlight sprinkle'],[2,'email','Send a churchwide sprinkle email',1],[2,'text','Send a churchwide sprinkle text',1]];
 const ASSETS=[['story','Instagram Story','1080 x 1920',t=>/Story/.test(t.label)],['poll','Story poll','1080 x 1920',t=>/poll/.test(t.label)],['feed','Feed post','1080 x 1350',(t,w)=>t.ch==='social'&&/sprinkle|reuse/.test(t.label)&&!/New (creative|story)/.test(w.angle)],['fresh','New creative: feed post','1080 x 1350',(t,w)=>t.ch==='social'&&/New (creative|story)/.test(w.angle)],['sprint','Sprint set: Story and feed','1080 x 1920, 1080 x 1350',t=>/^Run the sprint/.test(t.label)],['fb','Facebook event cover','1920 x 1005',t=>t.ch==='fb'],['email','Email header','600 wide',t=>t.ch==='email'],['page','Web page header','',t=>/web page|page or Next Steps/.test(t.label)],['main','Main graphic','1920 x 1080',t=>/ministry collection|main calendar|Featured Events/.test(t.label)]];
 const ASSETFLAGS=[['slide','Pre-service slide','1920 x 1080','slide'],['main','Main graphic','1920 x 1080','bull']];
