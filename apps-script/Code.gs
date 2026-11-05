@@ -210,8 +210,11 @@ const RUNMAP=n=>n<2?[4]:n<5?WEEKMAP[n]:[1,...Array.from({length:n-2},(_,i)=>i%2?
 const RUNNAME={2:'Rest',3:'New story',4:'Last week'};
 const AFTER=l=>[[0,'post','Post live updates and behind-the-scenes'],[1,'post','Publish the recap post and email'],[1,'web',l==1?'Remove the banner, Launcher action and Info Card':'Remove the Launcher action and Next Steps section']];
 const HIGHLIGHT=[[2,'social','Post a spotlight sprinkle'],[2,'email','Send a churchwide sprinkle email',1],[2,'text','Send a churchwide sprinkle text',1]];
+const ASSETS=[['story','Instagram Story','1080 x 1920',t=>/Story/.test(t.label)],['poll','Story poll','1080 x 1920',t=>/poll/.test(t.label)],['feed','Feed post','1080 x 1350',(t,w)=>t.ch==='social'&&/sprinkle|reuse/.test(t.label)&&!/New (creative|story)/.test(w.angle)],['fresh','New creative: feed post','1080 x 1350',(t,w)=>t.ch==='social'&&/New (creative|story)/.test(w.angle)],['sprint','Sprint set: Story and feed','1080 x 1920, 1080 x 1350',t=>/^Run the sprint/.test(t.label)],['fb','Facebook event cover','1920 x 1005',t=>t.ch==='fb'],['email','Email header','600 wide',t=>t.ch==='email'],['launcher','Launcher graphic','',t=>/Launcher action$/.test(t.label)&&!/Upgrade/.test(t.label)],['page','Web page header','',t=>/web page|page or Next Steps/.test(t.label)],['info','Info Card graphic','',t=>/Info Card/.test(t.label)&&t.ch==='web'&&!/Remove/.test(t.label)],['banner','Floating banner','',t=>/floating banner/.test(t.label)],['post','Post image','',t=>/ministry collection/.test(t.label)],['calendar','Calendar image','',t=>/Calendar page/.test(t.label)]];
+const ASSETFLAGS=[['slide','Pre-service slide','1920 x 1080','slide'],['desk','Welcome Desk card','5 x 7 in','desk'],['bulletin','Bulletin image','','bull']];
+const ASSETLIST=(weeks,tasks,add)=>{const use={},weekOf=d=>[...weeks].reverse().find(w=>w.sun<=d)||weeks[0],mark=(a,w,date,opt)=>{const u=use[a[0]];if(!u)use[a[0]]={slug:a[0],name:a[1],spec:a[2],date:add(w.sun,-3),first:date,opt};else if(!opt)u.opt=false};weeks.forEach(w=>ASSETFLAGS.forEach(a=>{if(w[a[3]])mark(a,w,w.sun,false)}));tasks.forEach(t=>{if(t.say||t.ch==='prep')return;const w=weekOf(t.date);ASSETS.forEach(a=>{if(a[3](t,w))mark(a,w,t.date,!!t.opt)})});return Object.values(use).sort((a,b)=>a.first.localeCompare(b.first))};
 const RANKWEEKS=(ts,over,add,sunOf)=>{const out={};['social','msg'].forEach(kind=>{const items=ts.filter(t=>t.kind===kind);if(!items.length)return;const suns=items.map(t=>sunOf(t.date)),last=suns.reduce((a,b)=>a>b?a:b);let s=suns.reduce((a,b)=>a<b?a:b),carry=[];for(;s<=last||carry.length;s=add(s,7)){const sun=s,here=[...items.filter(t=>sunOf(t.date)===sun),...carry.filter(t=>add(sun,2)<=t.end)];carry.filter(t=>add(sun,2)>t.end).forEach(t=>{out[t.key]={date:t.date,rank:'hold',hold:1,kind}});carry=[];const ids=[...new Set(here.map(t=>t.id))],pri=id=>{const m=here.filter(t=>t.id===id);return [m.every(t=>t.opt)?1:0,m[0].level,m[0].end]};ids.sort((a,b)=>{const x=pri(a),y=pri(b);return x[0]-y[0]||x[1]-y[1]||x[2].localeCompare(y[2])});const want=String(over[kind+'~'+sun]||'').split(',').filter(x=>ids.includes(x)),lead=want.length?want[0]:ids.find(id=>pri(id)[1]<=3)||null,sprinkle=want.length>1?want[1]:ids.filter(id=>id!==lead)[0]||null;here.forEach(t=>{const moved=sunOf(t.date)!==sun,date=moved?add(sun,2):t.date;if(t.id===lead)out[t.key]={date,rank:'lead',moved,from:t.date,kind};else if(t.id===sprinkle)out[t.key]={date,rank:'sprinkle',lead,moved,from:t.date,kind};else if(t.opt||t.fixed)out[t.key]={date:t.date,rank:'hold',hold:1,kind};else carry.push(t)})}});return out};
-const PREP=l=>l<=3?['Find the story','Make the graphics','Build the web page']:['Find a story or photo','Write the post'];
+const PREP=l=>l<=3?['Find the story','','Build the web page']:['Find a story or photo','Write the post'];
 // </plan>
 const D_ = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
 const S_ = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -244,7 +247,7 @@ function sundayWeek_(c, sun) {
 }
 function tasksOf_(c) {
   const out = [], start = weeksOf_(c)[0].sun;
-  PREP(c.level).forEach((label, j) => out.push({ key: c.id + '~prep~' + j, date: add_(start, -3), ch: 'prep', label, opt: false, c }));
+  PREP(c.level).forEach((label, j) => { if (label) out.push({ key: c.id + '~prep~' + j, date: add_(start, -3), ch: 'prep', label, opt: false, c }); });
   weeksOf_(c).forEach(w => {
     if ((w.say === 'req' || w.say === 'opt') && w.sun <= c.date) out.push({ key: c.id + '~w' + w.k + '~say', date: w.sun, ch: 'say', label: w.angle, opt: w.say === 'opt', c, say: true });
     w.tasks.forEach((t, j) => {
@@ -256,6 +259,7 @@ function tasksOf_(c) {
   });
   AFTER(c.level).forEach((t, j) => out.push({ key: c.id + '~after~' + j, date: add_(c.date, t[0]), ch: t[1], label: t[2], opt: false, c }));
   const e = editsOf_(c);
+  ASSETLIST(weeksOf_(c), out.filter(t => e.del.indexOf(t.key) < 0), add_).forEach(a => out.push({ key: c.id + '~art~' + a.slug, date: a.date, ch: 'art', label: a.name, opt: a.opt, c }));
   e.add.forEach(x => out.push({ key: c.id + '~x~' + x.id, date: x.date, ch: x.say ? 'say' : x.ch || 'other', label: x.label, opt: false, c, say: !!x.say, added: true }));
   return out.filter(t => e.del.indexOf(t.key) < 0).map(t => (e.ren[t.key] ? Object.assign({}, t, { label: e.ren[t.key] }) : t));
 }

@@ -902,12 +902,15 @@ const WHYWEEK={
   2:{1:'Begin promotion churchwide with one story and one next step.',2:'Stay visible without oversaturating.',3:'Anchor it in a value and repurpose it across channels.',4:'Final push. Urgency is in the words, not more promos.'},
   4:{1:'Publish the web listings, announce it in the bulletin, send to the ministry list.',2:'Stay visible. Avoid repeating reminders.',3:'Repeat week 1 with new creative.',4:'Use urgency language: this weekend, final chance.'}};
 WHYWEEK[3]=WHYWEEK[2];WHYWEEK[5]=WHYWEEK[4];
-const PREP=l=>l<=3?['Find the story','Make the graphics','Build the web page']:['Find a story or photo','Write the post'];
+const PREP=l=>l<=3?['Find the story','','Build the web page']:['Find a story or photo','Write the post'];
 const WEEKMAP={8:[1,2,3,4,5,6,7,8],4:[1,2,3,4],3:[1,3,4],2:[1,4]};
 const RUNMAP=n=>n<2?[4]:n<5?WEEKMAP[n]:[1,...Array.from({length:n-2},(_,i)=>i%2?3:2),4];
 const RUNNAME={2:'Rest',3:'New story',4:'Last week'};
 const AFTER=l=>[[0,'post','Post live updates and behind-the-scenes'],[1,'post','Publish the recap post and email'],[1,'web',l==1?'Remove the banner, Launcher action and Info Card':'Remove the Launcher action and Next Steps section']];
 const HIGHLIGHT=[[2,'social','Post a spotlight sprinkle'],[2,'email','Send a churchwide sprinkle email',1],[2,'text','Send a churchwide sprinkle text',1]];
+const ASSETS=[['story','Instagram Story','1080 x 1920',t=>/Story/.test(t.label)],['poll','Story poll','1080 x 1920',t=>/poll/.test(t.label)],['feed','Feed post','1080 x 1350',(t,w)=>t.ch==='social'&&/sprinkle|reuse/.test(t.label)&&!/New (creative|story)/.test(w.angle)],['fresh','New creative: feed post','1080 x 1350',(t,w)=>t.ch==='social'&&/New (creative|story)/.test(w.angle)],['sprint','Sprint set: Story and feed','1080 x 1920, 1080 x 1350',t=>/^Run the sprint/.test(t.label)],['fb','Facebook event cover','1920 x 1005',t=>t.ch==='fb'],['email','Email header','600 wide',t=>t.ch==='email'],['launcher','Launcher graphic','',t=>/Launcher action$/.test(t.label)&&!/Upgrade/.test(t.label)],['page','Web page header','',t=>/web page|page or Next Steps/.test(t.label)],['info','Info Card graphic','',t=>/Info Card/.test(t.label)&&t.ch==='web'&&!/Remove/.test(t.label)],['banner','Floating banner','',t=>/floating banner/.test(t.label)],['post','Post image','',t=>/ministry collection/.test(t.label)],['calendar','Calendar image','',t=>/Calendar page/.test(t.label)]];
+const ASSETFLAGS=[['slide','Pre-service slide','1920 x 1080','slide'],['desk','Welcome Desk card','5 x 7 in','desk'],['bulletin','Bulletin image','','bull']];
+const ASSETLIST=(weeks,tasks,add)=>{const use={},weekOf=d=>[...weeks].reverse().find(w=>w.sun<=d)||weeks[0],mark=(a,w,date,opt)=>{const u=use[a[0]];if(!u)use[a[0]]={slug:a[0],name:a[1],spec:a[2],date:add(w.sun,-3),first:date,opt};else if(!opt)u.opt=false};weeks.forEach(w=>ASSETFLAGS.forEach(a=>{if(w[a[3]])mark(a,w,w.sun,false)}));tasks.forEach(t=>{if(t.say||t.ch==='prep')return;const w=weekOf(t.date);ASSETS.forEach(a=>{if(a[3](t,w))mark(a,w,t.date,!!t.opt)})});return Object.values(use).sort((a,b)=>a.first.localeCompare(b.first))};
 const RANKWEEKS=(ts,over,add,sunOf)=>{const out={};['social','msg'].forEach(kind=>{const items=ts.filter(t=>t.kind===kind);if(!items.length)return;const suns=items.map(t=>sunOf(t.date)),last=suns.reduce((a,b)=>a>b?a:b);let s=suns.reduce((a,b)=>a<b?a:b),carry=[];for(;s<=last||carry.length;s=add(s,7)){const sun=s,here=[...items.filter(t=>sunOf(t.date)===sun),...carry.filter(t=>add(sun,2)<=t.end)];carry.filter(t=>add(sun,2)>t.end).forEach(t=>{out[t.key]={date:t.date,rank:'hold',hold:1,kind}});carry=[];const ids=[...new Set(here.map(t=>t.id))],pri=id=>{const m=here.filter(t=>t.id===id);return [m.every(t=>t.opt)?1:0,m[0].level,m[0].end]};ids.sort((a,b)=>{const x=pri(a),y=pri(b);return x[0]-y[0]||x[1]-y[1]||x[2].localeCompare(y[2])});const want=String(over[kind+'~'+sun]||'').split(',').filter(x=>ids.includes(x)),lead=want.length?want[0]:ids.find(id=>pri(id)[1]<=3)||null,sprinkle=want.length>1?want[1]:ids.filter(id=>id!==lead)[0]||null;here.forEach(t=>{const moved=sunOf(t.date)!==sun,date=moved?add(sun,2):t.date;if(t.id===lead)out[t.key]={date,rank:'lead',moved,from:t.date,kind};else if(t.id===sprinkle)out[t.key]={date,rank:'sprinkle',lead,moved,from:t.date,kind};else if(t.opt||t.fixed)out[t.key]={date:t.date,rank:'hold',hold:1,kind};else carry.push(t)})}});return out};
 
 const PLAYBOOK={Reminder:'The Handoff',Recap:'The Callback','Build interest':'Move to interest','Why it matters':'Values and voice','New creative':'Fresh creative','Final sprint':'Sprint','Final push':'Urgency'};
@@ -1055,13 +1058,16 @@ const editsOf=c=>{try{const e=JSON.parse(c.edits||'{}');return {add:e.add||[],de
 const addedKey=(c,x)=>`${c.id}~x~${x.id}`;
 function planTasks(c){
   const out=[];
-  PREP(c.level).forEach((label,j)=>out.push({key:`${c.id}~prep~${j}`,date:add(startOf(c),-3),ch:'prep',label,opt:false,c,w:'prep'}));
+  PREP(c.level).forEach((label,j)=>{if(label)out.push({key:`${c.id}~prep~${j}`,date:add(startOf(c),-3),ch:'prep',label,opt:false,c,w:'prep'})});
   weeksOf(c).forEach(w=>{
     if(w.say==='req'||w.say==='opt'){if(w.sun<=c.date)out.push({key:sayKey(c,w),date:w.sun,ch:'say',label:w.angle,opt:w.say==='opt',c,w:w.i,say:true})}
     w.tasks.forEach((t,j)=>{let date=add(w.sun,t[0]);if(date>c.date){if(!c.start||c.level==1)return;date=add(date,-7)}
       out.push({key:`${c.id}~w${w.k}~${t[1]}${j}`,date,ch:t[1],label:t[2],opt:!!t[3],c,w:w.i})});
   });
   AFTER(c.level).forEach((t,j)=>out.push({key:`${c.id}~after~${j}`,date:add(c.date,t[0]),ch:t[1],label:t[2],opt:false,c,w:'after'}));
+  // The graphics this plan uses, each due the Thursday before its first use. Removing a task removes its graphic.
+  const del=editsOf(c).del;
+  ASSETLIST(weeksOf(c),out.filter(t=>!del.includes(t.key)),add).forEach(a=>out.push({key:`${c.id}~art~${a.slug}`,date:a.date,ch:'art',label:a.name,note:`${a.spec?a.spec+', ':''}for ${fmt(a.first)}`,opt:a.opt,c,w:'prep'}));
   return out;
 }
 // Each week one campaign leads on social and churchwide email and text, one rides along, and the rest wait.
@@ -1285,12 +1291,12 @@ function chrome(active,body){
 }
 
 // ---------- to do ----------
-const CHGROUP={prep:['prep'],sunday:['say'],slide:['slide'],desk:['desk'],bulletin:['bulletin'],msg:['email','text'],social:['social','fb'],web:['web'],after:['post'],print:['print','slide','desk','bulletin']};
+const CHGROUP={prep:['prep','art'],sunday:['say'],slide:['slide'],desk:['desk'],bulletin:['bulletin'],msg:['email','text'],social:['social','fb'],web:['web'],after:['post'],print:['print','slide','desk','bulletin'],art:['art']};
 const OWNERS=[['prep','Story and graphics'],['sunday','Sunday announcements'],['slide','Pre-service slides'],['desk','Welcome Desk'],['bulletin','Weekly Bulletin'],['msg','Email and text'],['social','Social'],['web','Website'],['after','After the event']];
 const groupOf=ch=>Object.keys(CHGROUP).find(k=>CHGROUP[k].includes(ch));
 const ownerOf=ch=>DB.owners[groupOf(ch)]||'';
 const chanHas=(chan,ch)=>!chan||(chan==='mine'?!!me&&ownerOf(ch).toLowerCase()===me.toLowerCase():(CHGROUP[chan]||[]).includes(ch));
-const SHOW=[['','Everything'],['mine','My tasks'],['print','In person and print'],['prep','Get ready: story and graphics'],['sunday','Sunday announcements'],['slide','Pre-service slides'],['desk','Welcome Desk'],['bulletin','Weekly Bulletin'],['msg','Email and text'],['social','Social'],['web','Website'],['after','After the event']];
+const SHOW=[['','Everything'],['mine','My tasks'],['print','In person and print'],['prep','Get ready: story and graphics'],['art','Graphics to make'],['sunday','Sunday announcements'],['slide','Pre-service slides'],['desk','Welcome Desk'],['bulletin','Weekly Bulletin'],['msg','Email and text'],['social','Social'],['web','Website'],['after','After the event']];
 const pickSel=(k,label,opts,val)=>`<label class="sel"><span>${label}</span><select data-sel="${k}">${opts.map(([v,l])=>`<option value="${v}"${v===val?' selected':''}>${esc(l)}</option>`).join('')}</select></label>`;
 const spanOf=c=>c.ongoing||!c.date?'Always on':`Campaign runs ${long(startOf(c))} – ${long(c.date)}`;
 const lvlTag=c=>`<span class="lvl">Level ${c.level}</span>`;
@@ -1317,7 +1323,7 @@ function campBlock(c,ts,noDate){
   const launching=ts.some(t=>t.w===1);
   const where=launching?(!c.ongoing&&startOf(c)>TODAY?`Launches ${fmt(startOf(c))}`:'Launch week'):w?`Week ${w.i} of ${w.n}, ${angleOf(w,c)}`:'';
   return `<section class="block"><a class="bh" href="#/c/${esc(c.id)}"><span class="bh-ic">${launching?rocket(20):I(ICON.mega,20)}</span><span class="bh-t"><b>${esc(c.name)}</b></span>${where?`<span class="bh-wh">${esc(where)}</span>`:''}</a>
-    <div class="bb">${daysBody(ts.map(t=>({date:t.date,html:taskLine(t,ownerOf(t.ch))})),noDate)}</div></section>`;
+    <div class="bb">${daysBody(ts.map(t=>({date:t.date,html:taskLine(t,t.note||ownerOf(t.ch))})),noDate)}</div></section>`;
 }
 function plainBlock(icon,title,rows,noDate,href,extra=''){
   const inner=`<span class="bh-ic">${I(icon,20)}</span><span class="bh-t"><b>${esc(title)}</b></span>${extra}`;
@@ -1416,7 +1422,7 @@ function pageTodo(){
   const asks=DB.campaigns.filter(c=>c.status==='request');
   const end=nextSun(TODAY),chan=view.schedCh||'',by=view.todoBy||'campaign';
   const n=weekCount(TODAY,end,chan),shown=n;
-  const late=overdue();
+  const late=overdue().filter(t=>chanHas(chan,t.ch));
   const head=n?`<em>${n===1?'One thing':cap(word(n))+' things'}</em> to do this week.`:`<em>All clear</em> this week. Nice work.`;
   const wkOpen=view.wkOpen=view.wkOpen||new Set();
   const weeks=view.schedWeeks||6;
@@ -1460,11 +1466,11 @@ function pageCampaigns(){
 
 // ---------- timeline ----------
 const TL_COL=()=>innerWidth<760?96:118;
-const TL_SHOW=[['','Everything'],['social','Social'],['msg','Email and text'],['sunday','Sunday announcements'],['room','In person and print'],['slide','Pre-service slides'],['desk','Welcome Desk'],['bulletin','Weekly Bulletin'],['web','Website']];
+const TL_SHOW=[['','Everything'],['art','Graphics to make'],['social','Social'],['msg','Email and text'],['sunday','Sunday announcements'],['room','In person and print'],['slide','Pre-service slides'],['desk','Welcome Desk'],['bulletin','Weekly Bulletin'],['web','Website']];
 const chipName=l=>{const t=l.replace(/^Post an? /,'').replace(/^Send (the|an?) /,'').replace(/^Social: /,'').replace(/^(Create|Publish|Add|Upgrade) (the |an? )?/,'').replace(/^(Run the sprint):.*/,'$1');return cap(t)};
 function tlItems(c,s,chan){
   const chip=t=>({day:fmt(t.date,{weekday:'short'}),label:chipName(t.label),title:`${shortDay(t.date)}: ${t.label}${t.moved?`, moved from ${fmt(t.from)}`:''}`,opt:t.opt,done:isDone(t.key),rank:contested(t)?t.rank:''});
-  if(['social','msg','web'].includes(chan))return tasksOf(c).filter(t=>!t.say&&chanHas(chan,t.ch)&&sunOf(t.date)===s).sort((a,b)=>a.date.localeCompare(b.date)).map(chip);
+  if(['social','msg','web','art'].includes(chan))return tasksOf(c).filter(t=>!t.say&&chanHas(chan,t.ch)&&sunOf(t.date)===s).sort((a,b)=>a.date.localeCompare(b.date)).map(chip);
   if(chan==='sunday'){const l=lineup(s),it=[l.stage,...l.booth].find(x=>x&&x.c.id===c.id&&!x.hl);return it?[{label:l.stage===it?'Stage':'Booth',title:it.w.angle,done:isDone(itemSayKey(it,s))}]:[]}
   const out=[],room=chan==='room';
   if(room)tasksOf(c).filter(t=>t.ch==='print'&&sunOf(t.date)===s).forEach(t=>out.push(chip(t)));
@@ -1497,7 +1503,7 @@ function pageTimelinePhone(list){
   const order=[...list].sort((a,b)=>a.level-b.level||a.date.localeCompare(b.date));
   const name=s=>s===nowSun?'This week':s===add(nowSun,-7)?'Last week':s===add(nowSun,7)?'Next week':`Week of ${fmt(s)}`;
   const lv=c=>`<span class="tl-lv" title="Level ${c.level}">L${c.level}</span>`;
-  const NOUN={social:'post',msg:'send',sunday:'announcement',web:'update'};
+  const NOUN={art:'graphic',social:'post',msg:'send',sunday:'announcement',web:'update'};
   const pages=wks.map(s=>{
     const launching=list.filter(c=>startOf(c)===s).length;
     let body,side='',count=0;
@@ -1622,8 +1628,11 @@ function pageCampaign(id){
   const earlyRow=early.length?rowShell('pw-early',pwHead(fmt(early[0].date),'Early','ph-prep'),`<div class="pw-col">${early.map(t=>earlyLine(c,t)).join('')}</div>`,false,'',{date:fmt(early[0].date),name:'Before launch',meta:rowMeta(early,false,c)}):'';
   const removed=editing?planTasks(c).filter(t=>editsOf(c).del.includes(t.key)):[];
   const prepNow=state==='next'&&startOf(c)<=add(TODAY,14);
-  const prepRow=!prep.length?'':rowShell('pw-prep',pwHead(shortDay(prep[0].date),'Get ready','ph-prep',prepNow),
-    `<div class="pw-col">${prep.map((t,j)=>taskLine(t,j===0&&storyIdea(c)?`Idea: ${storyIdea(c)}`:'',true)).join('')}</div>`,prepNow,!editing&&state!=='next'&&(prep.every(t=>isDone(t.key))||prep[0].date<(c.created||''))?`Get ready, ${shortDay(prep[0].date)}`:'',{date:fmt(prep[0].date),name:'Get ready',meta:rowMeta(prep,false,c)});
+  const prepDay=add(startOf(c),-3),prepBase=prep.filter(t=>t.ch!=='art');
+  // Once a campaign is under way, graphics for dates already gone drop off the list.
+  const prepArt=prep.filter(t=>t.ch==='art'&&(editing||isDone(t.key)||t.date>=(c.created||'')));
+  const prepRow=!prep.length?'':rowShell('pw-prep',pwHead(shortDay(prepDay),'Get ready','ph-prep',prepNow),
+    `${prepBase.length?`<div class="pw-col">${prepBase.map((t,j)=>taskLine(t,j===0&&storyIdea(c)?`Idea: ${storyIdea(c)}`:'',true)).join('')}</div>`:''}${prepArt.length?`<div class="pw-col"><h4>Graphics to make</h4>${prepArt.map(t=>taskLine(t,t.note,true)).join('')}</div>`:''}`,prepNow,!editing&&state!=='next'&&prep.every(t=>isDone(t.key)||t.opt||t.date<(c.created||''))?`Get ready, ${shortDay(prepDay)}`:'',{date:fmt(prepDay),name:'Get ready',meta:rowMeta(prep,false,c)});
   const after=ts.filter(t=>t.w==='after');
   const allAfter=after.every(t=>isDone(t.key));
   const afterRow=rowShell('pw-after',`${pwHead(fmt(c.date),'Wrap up','ph-after',state==='wrap')}<div class="pw-why">Show it was worth attending, and clean up expired promos straight away.</div>`,
@@ -1975,7 +1984,7 @@ function planList(level,weeks,date,start,created){
     const parts=[w.say==='req'?'Announcement':'',w.slide?'Slide':'',w.desk?'Welcome Desk':'',...chs,w.bull?'Bulletin':''].filter(Boolean);
     return `<li><time>${esc(fmt(w.sun))}</time><div><b>${esc(w.say==='req'||w.say==='opt'||level>=4?w.angle:'Rest')}</b><span>${esc(parts.join(', '))}</span></div></li>`});
   cache={};
-  return `<ul class="plan-list"><li><time>${esc(fmt(add(st,-3)))}</time><div><b>Get ready</b><span>${esc(PREP(level).join(', '))}</span></div></li>${rows.join('')}<li><time>${esc(fmt(add(date,1)))}</time><div><b>Wrap up</b><span>Recap post and email, take promos down</span></div></li></ul>`;
+  return `<ul class="plan-list"><li><time>${esc(fmt(add(st,-3)))}</time><div><b>Get ready</b><span>${esc([...PREP(level).filter(Boolean),'Make the graphics'].join(', '))}</span></div></li>${rows.join('')}<li><time>${esc(fmt(add(date,1)))}</time><div><b>Wrap up</b><span>Recap post and email, take promos down</span></div></li></ul>`;
 }
 function finishWizard(){
   const w=wiz,id=w.id||(w.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,32)+'-'+Date.now().toString(36));

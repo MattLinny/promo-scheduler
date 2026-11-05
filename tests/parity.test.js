@@ -40,7 +40,7 @@ const pick = n => { const a = html.indexOf('const ' + n + '='); return html.slic
 const blockStart = gs.indexOf('// <plan>'), blockEnd = gs.indexOf('// </plan>');
 const block = gs.slice(blockStart, blockEnd);
 assert(block.includes(clientTables.trim()), 'playbook tables match index.html');
-['WEEKMAP', 'RUNMAP', 'RUNNAME', 'AFTER', 'HIGHLIGHT', 'RANKWEEKS', 'PREP'].forEach(n => assert(block.includes(pick(n)), n + ' matches index.html'));
+['WEEKMAP', 'RUNMAP', 'RUNNAME', 'AFTER', 'HIGHLIGHT', 'RANKWEEKS', 'ASSETS', 'ASSETFLAGS', 'ASSETLIST', 'PREP'].forEach(n => assert(block.includes(pick(n)), n + ' matches index.html'));
 
 ctx.setup();
 const code = props.OFFICE_CODE;
@@ -82,6 +82,18 @@ const renamed = ctx.norm_({ id: 'e2', name: 'R', level: 1, status: 'active', dat
 const renTasks = ctx.tasksOf_(renamed);
 assert(renTasks.find(t => t.key === 'e2~prep~0').label === 'Find two stories' && renTasks.find(t => t.key === 'e2~x~f').ch === 'print', 'tasks can be renamed and typed');
 assert(ctx.lineup_(ctx.weeksOf_(renamed)[0].sun, { campaigns: [renamed], stories: [], ticks: [], sundays: [] }).stage.w.angle === 'Big reveal', 'a renamed announcement shows on Sunday');
+
+// the plan says which graphics to make, due the Thursday before first use
+const artOf = c => ctx.tasksOf_(c).filter(t => t.ch === 'art');
+const xmas = ctx.norm_({ id: 'x', level: 1, status: 'active', date: '2026-12-24', created: '2026-10-01' }), xArt = artOf(xmas);
+const byKey = k => xArt.find(t => t.key === 'x~art~' + k);
+assert(['story', 'feed', 'fb', 'email', 'slide', 'desk', 'launcher', 'info', 'page', 'poll', 'banner', 'sprint'].every(byKey), 'a Level 1 plan lists its graphics');
+assert(byKey('story').date === '2026-10-29' && byKey('banner').date === '2026-12-17', 'each graphic is due the Thursday before its first use');
+assert(!ctx.tasksOf_(xmas).some(t => t.label === 'Make the graphics') && ctx.tasksOf_(xmas).some(t => t.key === 'x~prep~2' && t.label === 'Build the web page'), 'the list replaces Make the graphics and keeps other task keys');
+const small5 = artOf(ctx.norm_({ id: 'y', level: 5, weeks: 4, status: 'active', date: '2026-12-24', created: '2026-10-01' }));
+assert(!small5.some(t => t.key === 'y~art~slide') && small5.some(t => t.key === 'y~art~desk') && small5.find(t => t.key === 'y~art~feed').opt, 'a small event gets only what its plan uses');
+const noFb = artOf(ctx.norm_({ id: 'x', level: 1, status: 'active', date: '2026-12-24', created: '2026-10-01', edits: JSON.stringify({ add: [], del: ['x~w1~fb5'] }) }));
+assert(!noFb.some(t => t.key === 'x~art~fb'), 'removing a task removes its graphic');
 
 // four launches in a week: one leads, one rides along, the rest wait for room
 const rt = (id, level, end, date = '2026-11-03', extra = {}) => ({ key: id + '~s', id, level, end, date, opt: false, fixed: false, kind: 'social', ...extra });
