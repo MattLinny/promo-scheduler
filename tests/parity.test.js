@@ -4,6 +4,8 @@ const fs = require('fs'), vm = require('vm'), path = require('path');
 const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const gs = fs.readFileSync(path.join(root, 'apps-script/Code.gs'), 'utf8');
+// the page's own scripts must parse, or the whole app loads blank
+[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].forEach((m, i) => { try { new (require('vm').Script)(m[1]); } catch (e) { console.error('FAIL index.html script ' + i + ' does not parse: ' + e.message); process.exit(1); } });
 let failed = 0;
 const assert = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) { failed++; process.exitCode = 1; } };
 
